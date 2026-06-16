@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: worksync-postgres
+    environment:
+      POSTGRES_DB: worksync
+      POSTGRES_USER: worksync
+      POSTGRES_PASSWORD: worksync
+    ports:
+      - "5432:5432"
+    volumes:
+      - worksync-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U worksync -d worksync"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: worksync-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - worksync-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:RELEASE.2024-06-29T01-20-47Z
+    container_name: worksync-minio
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: worksync
+      MINIO_ROOT_PASSWORD: worksync-local-secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - worksync-minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  worksync-postgres-data:
+  worksync-redis-data:
+  worksync-minio-data:

@@ -1,0 +1,24 @@
+{
+  "name": "worksync",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "corepack pnpm --parallel --filter @worksync/frontend --filter @worksync/backend dev",
+    "dev:frontend": "corepack pnpm --filter @worksync/frontend dev",
+    "dev:backend": "corepack pnpm --filter @worksync/backend dev",
+    "typecheck": "corepack pnpm -r typecheck",
+    "lint": "corepack pnpm -r lint",
+    "test": "corepack pnpm -r test",
+    "build": "corepack pnpm -r build",
+    "prisma:generate": "corepack pnpm --filter @worksync/backend prisma:generate",
+    "prisma:validate": "corepack pnpm --filter @worksync/backend prisma:validate",
+    "prisma:migrate": "corepack pnpm --filter @worksync/backend prisma:migrate",
+    "docker:up": "docker compose -f docker/compose.yml up -d",
+    "docker:down": "docker compose -f docker/compose.yml down",
+    "check": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm test && corepack pnpm build"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}
