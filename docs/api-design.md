@@ -7,8 +7,12 @@ This document defines API conventions for WorkSync. Swagger/OpenAPI should refle
 - Use REST.
 - Prefer JSON request and response bodies.
 - Use resource-oriented routes.
+- Prefix application routes with `/api`.
 - Keep response shapes predictable.
 - Enforce authentication and authorization on the backend.
+
+Operational routes such as `/health`, `/health/live`, `/health/ready`, and
+Swagger at `/docs` remain outside the application API prefix.
 
 ## HTTP Methods
 
@@ -59,11 +63,24 @@ Errors should be useful without leaking internals:
   data?: {
     code?: string;
     fields?: Record<string, string[]>;
+    correlationId?: string;
   }
 }
 ```
 
 Do not expose stack traces, raw database errors, secrets, tokens, provider payloads, or internal infrastructure details.
+
+Every HTTP response includes `x-correlation-id`. A valid incoming
+`x-correlation-id` is preserved; otherwise the backend generates one. Error
+responses include the same identifier in `data.correlationId` when request
+context is available.
+
+## Operational Endpoints
+
+- `GET /health` remains the compatibility liveness endpoint.
+- `GET /health/live` reports process liveness without checking dependencies.
+- `GET /health/ready` verifies PostgreSQL connectivity and returns `503` with
+  code `SERVICE_NOT_READY` when the backend cannot serve database-backed work.
 
 ## Status Codes
 

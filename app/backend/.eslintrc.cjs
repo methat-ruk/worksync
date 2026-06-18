@@ -12,7 +12,13 @@ module.exports = {
     node: true,
     es2022: true
   },
-  ignorePatterns: ["dist", "node_modules"],
+  ignorePatterns: [
+    "dist",
+    "node_modules",
+    ".eslintrc.cjs",
+    "jest.config.cjs",
+    "test/setup-env.cjs"
+  ],
   rules: {
     "@typescript-eslint/consistent-type-imports": "error",
     "@typescript-eslint/no-floating-promises": "error"

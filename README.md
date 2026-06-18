@@ -12,6 +12,10 @@ Already in place:
 
 - frontend and backend application skeletons
 - Prisma schema and initial migration baseline
+- validated backend configuration and centralized Prisma lifecycle
+- structured request logging, correlation IDs, and standardized API errors
+- liveness and PostgreSQL readiness endpoints
+- backend unit, integration, and API contract test harnesses
 - local service topology for PostgreSQL, Redis, and S3-compatible storage
 - CI workflow and repository validation commands
 - product, domain, API, security, testing, deployment, and workflow documentation
@@ -106,7 +110,10 @@ Default local URLs:
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:4000`
 - Backend health check: `http://localhost:4000/health`
+- Backend liveness check: `http://localhost:4000/health/live`
+- Backend readiness check: `http://localhost:4000/health/ready`
 - Swagger docs: `http://localhost:4000/docs`
+- Business API base URL: `http://localhost:4000/api`
 
 ## Available Scripts
 
@@ -118,6 +125,9 @@ Default local URLs:
 | `pnpm typecheck` | Run TypeScript checks across workspaces |
 | `pnpm lint` | Run frontend and backend lint checks |
 | `pnpm test` | Run configured test scripts |
+| `pnpm --filter @worksync/backend test:unit` | Run backend unit tests |
+| `pnpm --filter @worksync/backend test:integration` | Run backend PostgreSQL integration tests |
+| `pnpm --filter @worksync/backend test:e2e` | Run backend API contract and E2E tests |
 | `pnpm build` | Build frontend and backend |
 | `pnpm check` | Run typecheck, lint, test, and build |
 | `pnpm prisma:validate` | Validate the Prisma schema |
@@ -146,7 +156,9 @@ pnpm prisma:generate
 pnpm check
 ```
 
-`pnpm test` is currently a command wiring placeholder until real test harnesses are added.
+Backend tests are configured with Jest. PostgreSQL integration tests use
+`TEST_DATABASE_URL` and are reported as skipped when that test dependency is
+not available.
 
 Docker Compose validation should be rerun on machines with Docker installed:
 

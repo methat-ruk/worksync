@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@9.15.0",
+  "pnpm": {
+    "overrides": {
+      "js-yaml": "4.2.0",
+      "lodash": "4.18.1",
+      "multer": "2.2.0",
+      "postcss": "8.5.10",
+      "qs": "6.15.2"
+    }
+  },
   "scripts": {
     "dev": "corepack pnpm --parallel --filter @worksync/frontend --filter @worksync/backend dev",
     "dev:frontend": "corepack pnpm --filter @worksync/frontend dev",
