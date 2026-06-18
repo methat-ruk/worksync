@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: worksync
       POSTGRES_PASSWORD: worksync
     ports:
-      - "5432:5432"
+      - "55432:5432"
     volumes:
       - worksync-postgres-data:/var/lib/postgresql/data
     healthcheck:
