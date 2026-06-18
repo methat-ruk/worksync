@@ -27,6 +27,7 @@ pnpm dev
 | Build | `pnpm build` | Produce frontend and backend build artifacts |
 | Prisma generate | `pnpm prisma:generate` | Validate Prisma schema and generated client |
 | Prisma validate | `pnpm prisma:validate` | Validate Prisma schema syntax and relation consistency |
+| Dependency audit | `pnpm audit --prod --audit-level moderate` | Fail on moderate-, high-, or critical-severity production dependency findings |
 | Docker services | `pnpm docker:up` | Start local PostgreSQL, Redis, and S3-compatible storage |
 
 ## Current Limitations
