@@ -15,6 +15,7 @@ module.exports = {
   ignorePatterns: [
     "dist",
     "node_modules",
+    "src/generated",
     ".eslintrc.cjs",
     "jest.config.cjs",
     "test/setup-env.cjs"

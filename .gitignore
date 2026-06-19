@@ -16,6 +16,7 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+/app/backend/src/generated/prisma/
 
 # Logs
 *.log

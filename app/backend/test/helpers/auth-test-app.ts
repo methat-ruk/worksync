@@ -1,9 +1,9 @@
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { Prisma, type User } from "@prisma/client";
 
 import { AppModule } from "../../src/app.module";
 import { PrismaService } from "../../src/database/prisma.service";
+import { Prisma, type User } from "../../src/generated/prisma/client";
 import { configureApplication } from "../../src/main";
 
 type StoredUser = User;

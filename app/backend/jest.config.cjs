@@ -4,7 +4,14 @@ const baseConfig = {
   transform: {
     "^.+\\.ts$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.json" }]
   },
-  collectCoverageFrom: ["src/**/*.ts", "!src/main.ts"],
+  moduleNameMapper: {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
+  collectCoverageFrom: [
+    "src/**/*.ts",
+    "!src/main.ts",
+    "!src/generated/**/*.ts"
+  ],
   setupFiles: ["<rootDir>/test/setup-env.cjs"],
   testEnvironment: "node"
 };

@@ -1,3 +1,6 @@
+import { ConfigService } from "@nestjs/config";
+
+import type { Environment } from "../../src/config/environment";
 import { PrismaService } from "../../src/database/prisma.service";
 
 const describeWithDatabase = process.env.TEST_DATABASE_URL
@@ -9,7 +12,10 @@ describeWithDatabase("PrismaService integration", () => {
 
   beforeAll(async () => {
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
-    prisma = new PrismaService();
+    const config = new ConfigService<Environment, true>({
+      DATABASE_URL: process.env.TEST_DATABASE_URL
+    } as Environment);
+    prisma = new PrismaService(config);
     await prisma.onModuleInit();
   });
 

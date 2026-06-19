@@ -58,7 +58,7 @@ references/        WorkSync project profile and implementation decisions
 
 ## Prerequisites
 
-- Node.js 20 or newer
+- Node.js 22 LTS
 - Corepack
 - Docker and Docker Compose
 - Git
