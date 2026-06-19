@@ -54,6 +54,7 @@ export function createPinoHttpOptions(
         "req.headers['set-cookie']",
         "res.headers['set-cookie']",
         "*.password",
+        "*.passwordHash",
         "*.token",
         "*.accessToken",
         "*.refreshToken",

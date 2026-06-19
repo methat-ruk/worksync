@@ -72,7 +72,15 @@ export function configureApplication(app: INestApplication): void {
     .setTitle("WorkSync API")
     .setDescription("WorkSync backend API")
     .setVersion("0.1.0")
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+        description: "JWT access token"
+      },
+      "access-token"
+    )
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup("docs", app, swaggerDocument);

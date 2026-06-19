@@ -102,10 +102,18 @@ Use 404 instead of 403 when revealing resource existence would leak cross-worksp
 
 ## Authentication
 
-- Use JWT access tokens and refresh tokens.
-- Access tokens authenticate API calls.
-- Refresh token rotation, invalidation, and reuse handling must be specified during implementation.
-- Logout must invalidate the relevant refresh token/session state.
+The authentication foundation exposes:
+
+- `POST /api/auth/signup` to create a password-authenticated user and issue an access token.
+- `POST /api/auth/login` to authenticate and issue an access token.
+- `GET /api/auth/me` to return the authenticated public user.
+
+Access tokens use the `Authorization: Bearer <token>` header. Public user
+contracts never include password hashes. Unknown-email and incorrect-password
+login attempts return the same public failure.
+
+Refresh tokens, session persistence, logout, OAuth, account recovery, and
+email verification remain future lifecycle work.
 
 ## Authorization
 
