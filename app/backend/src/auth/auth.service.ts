@@ -3,10 +3,10 @@ import {
   Injectable,
   UnauthorizedException
 } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
 import { PinoLogger } from "nestjs-pino";
 
 import { PrismaService } from "../database/prisma.service";
+import { Prisma } from "../generated/prisma/client";
 import { CorrelationContextService } from "../observability/correlation-context.service";
 import { AccessTokenService } from "./access-token.service";
 import type {

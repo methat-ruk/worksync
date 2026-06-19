@@ -21,6 +21,8 @@ pnpm dev
 
 | Check | Command | Purpose |
 |---|---|---|
+| Complete backend validation | `pnpm validate:backend` | Validate Prisma, backend static checks, all backend test projects, build output, and runtime artifact shape |
+| Backend artifact | `pnpm validate:backend:artifact` | Require `dist/main.js` and compiled Prisma client while rejecting tests and nested source output |
 | Typecheck | `pnpm typecheck` | Validate TypeScript contracts across workspaces |
 | Lint | `pnpm lint` | Enforce static quality and framework rules |
 | Test | `pnpm test` | Run configured automated tests |
@@ -40,6 +42,9 @@ pnpm dev
 - Frontend tests remain a placeholder until the frontend test harness is configured.
 - Backend PostgreSQL integration tests skip when `TEST_DATABASE_URL` is unavailable.
 - Docker Compose validates local dependencies only; it is not a production deployment manifest.
+
+`pnpm validate:backend` must run with `TEST_DATABASE_URL` in CI so the
+PostgreSQL integration project passes rather than skips.
 
 ## Next Validation Upgrades
 

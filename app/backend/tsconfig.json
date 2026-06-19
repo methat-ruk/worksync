@@ -11,6 +11,11 @@
     "sourceMap": true,
     "types": ["node", "jest"]
   },
-  "include": ["src/**/*.ts", "prisma/**/*.ts", "test/**/*.ts"],
+  "include": [
+    "src/**/*.ts",
+    "prisma.config.ts",
+    "prisma/**/*.ts",
+    "test/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

@@ -62,6 +62,38 @@ Use `domain-modeling` when concepts, invariants, ownership, or lifecycle change.
 - Prefer framework-native capabilities when they fit existing patterns.
 - Do not weaken typecheck, lint, test, build, or security checks to make work pass.
 
+### TypeScript Configuration Files
+
+- Root-level TypeScript configuration files such as `prisma.config.ts` must be
+  included by the TSConfig used in ESLint `parserOptions.project`.
+- The repository lint command must name configuration files outside the normal
+  source glob so editor and CI behavior remain aligned.
+- Generated Prisma Client source is excluded from lint and coverage; regenerate
+  it with `pnpm prisma:generate` rather than editing it.
+
+### Prisma 7 and Jest
+
+- Prisma connection URLs belong in `app/backend/prisma.config.ts`, not the
+  datasource block in `schema.prisma`.
+- Runtime PostgreSQL access uses `@prisma/adapter-pg`; migration history remains
+  under `app/backend/prisma/migrations/`.
+- Prisma-generated TypeScript uses `.js` import specifiers. Jest maps those
+  relative specifiers back to TypeScript sources through `moduleNameMapper`.
+- Prisma's query compiler loads WASM through dynamic import, so backend Jest
+  scripts run Node with `--experimental-vm-modules`.
+- ORM or runtime upgrades must validate Prisma CLI commands, real PostgreSQL
+  integration, compiled generated-client output, and runtime startup.
+
+### Windows Dependency Recovery
+
+If `pnpm install` stalls while recreating `node_modules`:
+
+1. Stop repository-owned backend/dev-server Node processes.
+2. Confirm no process is running `dist/main.js`, `pnpm ... start`, or the local
+   dev server.
+3. Rerun `pnpm install --frozen-lockfile`.
+4. Do not delete the lockfile or dependency declarations as a workaround.
+
 ## Review Expectations
 
 Use the routed review flow:

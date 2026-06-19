@@ -7,9 +7,9 @@ import {
   type ExceptionFilter,
   type LoggerService
 } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
 import type { Response } from "express";
 
+import { Prisma } from "../../generated/prisma/client";
 import { CorrelationContextService } from "../../observability/correlation-context.service";
 
 type ErrorData = {

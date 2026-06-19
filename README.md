@@ -58,7 +58,7 @@ references/        WorkSync project profile and implementation decisions
 
 ## Prerequisites
 
-- Node.js 20 or newer
+- Node.js 22 LTS
 - Corepack
 - Docker and Docker Compose
 - Git
@@ -135,6 +135,8 @@ Default local URLs:
 | `pnpm prisma:validate` | Validate the Prisma schema |
 | `pnpm prisma:generate` | Generate Prisma Client |
 | `pnpm prisma:migrate` | Apply local Prisma migrations |
+| `pnpm validate:backend` | Run complete backend validation including artifact checks |
+| `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
 | `pnpm docker:up` | Start local PostgreSQL, Redis, and MinIO |
 | `pnpm docker:down` | Stop local Docker services |
 
