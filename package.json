@@ -27,6 +27,8 @@
     "prisma:generate": "corepack pnpm --filter @worksync/backend prisma:generate",
     "prisma:validate": "corepack pnpm --filter @worksync/backend prisma:validate",
     "prisma:migrate": "corepack pnpm --filter @worksync/backend prisma:migrate",
+    "validate:backend:artifact": "node scripts/validate-backend-artifact.cjs",
+    "validate:backend": "corepack pnpm prisma:validate && corepack pnpm prisma:generate && corepack pnpm --filter @worksync/backend typecheck && corepack pnpm --filter @worksync/backend lint && corepack pnpm --filter @worksync/backend test && corepack pnpm --filter @worksync/backend build && corepack pnpm validate:backend:artifact",
     "docker:up": "docker compose -f docker/compose.yml up -d",
     "docker:down": "docker compose -f docker/compose.yml down",
     "check": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm test && corepack pnpm build"
