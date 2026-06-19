@@ -14,6 +14,15 @@ Run the relevant repository commands for:
 
 Use commands defined by the repository rather than inventing parallel scripts.
 
+## Validation Evidence
+
+- Backend builds must produce `app/backend/dist/main.js`.
+- Backend production artifacts must not contain `app/backend/dist/test` or a nested `app/backend/dist/src/main.js`.
+- PostgreSQL integration tests require `TEST_DATABASE_URL` and must pass rather than skip in CI.
+- Report skipped suites separately from passed tests.
+- Business API routes use `/api`; `/health`, `/health/live`, `/health/ready`, and `/docs` remain outside that prefix.
+- For GitHub Actions failures, inspect the exact failing step and distinguish setup, primary-command, cache, cleanup, and post-step failures before changing code or dependency policy.
+
 ## Documentation
 
 - Update Swagger documentation when API contracts change.
