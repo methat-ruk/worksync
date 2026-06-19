@@ -11,15 +11,19 @@
     "test": "jest --runInBand",
     "test:unit": "jest --runInBand --selectProjects unit",
     "test:integration": "jest --runInBand --selectProjects integration",
+    "test:contract": "jest --runInBand --selectProjects contract",
+    "test:security": "jest --runInBand --selectProjects security",
     "test:e2e": "jest --runInBand --selectProjects e2e",
     "prisma:generate": "dotenv -e .env.example -- prisma generate",
     "prisma:validate": "dotenv -e .env.example -- prisma validate",
-    "prisma:migrate": "dotenv -e .env -- prisma migrate dev"
+    "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@nestjs/common": "11.1.27",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "11.1.27",
+    "@nestjs/jwt": "^11.0.1",
     "@nestjs/platform-express": "11.1.27",
     "@nestjs/swagger": "11.4.4",
     "@nestjs/terminus": "^11.0.0",

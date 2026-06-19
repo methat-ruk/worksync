@@ -6,15 +6,33 @@ const validEnvironment = {
   CORS_ORIGIN: "http://localhost:3000",
   DATABASE_URL:
     "postgresql://worksync:worksync@localhost:55432/worksync?schema=public",
-  LOG_LEVEL: "info"
+  LOG_LEVEL: "info",
+  JWT_ACCESS_SECRET: "a-secure-access-secret-with-at-least-32-bytes",
+  JWT_ACCESS_EXPIRES_IN: "15m"
 };
 
 describe("validateEnvironment", () => {
   it("parses the active runtime configuration", () => {
     expect(validateEnvironment(validEnvironment)).toEqual({
       ...validEnvironment,
-      PORT: 4000
+      PORT: 4000,
+      JWT_ACCESS_EXPIRES_IN: 900
     });
+  });
+
+  it("rejects weak JWT secrets and invalid token lifetimes", () => {
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        JWT_ACCESS_SECRET: "too-short"
+      })
+    ).toThrow("JWT_ACCESS_SECRET must contain at least 32 bytes");
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        JWT_ACCESS_EXPIRES_IN: "forever"
+      })
+    ).toThrow("JWT_ACCESS_EXPIRES_IN must be a positive duration");
   });
 
   it("rejects a missing active setting", () => {

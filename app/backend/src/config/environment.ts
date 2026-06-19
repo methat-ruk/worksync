@@ -18,6 +18,8 @@ export type Environment = {
   CORS_ORIGIN: string;
   DATABASE_URL: string;
   LOG_LEVEL: LogLevel;
+  JWT_ACCESS_SECRET: string;
+  JWT_ACCESS_EXPIRES_IN: number;
   EMAIL_PROVIDER?: string;
   EMAIL_API_KEY?: string;
 };
@@ -50,6 +52,42 @@ function parsePort(value: string): number {
   }
 
   return port;
+}
+
+const DURATION_PATTERN = /^(\d+)(s|m|h|d)$/;
+const DURATION_MULTIPLIERS = {
+  s: 1,
+  m: 60,
+  h: 60 * 60,
+  d: 24 * 60 * 60
+} as const;
+
+function parsePositiveDuration(value: string, key: string): number {
+  const match = DURATION_PATTERN.exec(value);
+  if (!match) {
+    throw new Error(
+      `Environment variable ${key} must be a positive duration such as 15m`
+    );
+  }
+
+  const amount = Number(match[1]);
+  const unit = match[2] as keyof typeof DURATION_MULTIPLIERS;
+  const seconds = amount * DURATION_MULTIPLIERS[unit];
+  if (!Number.isSafeInteger(seconds) || seconds <= 0) {
+    throw new Error(`Environment variable ${key} must be a positive duration`);
+  }
+
+  return seconds;
+}
+
+function parseJwtSecret(value: string): string {
+  if (Buffer.byteLength(value, "utf8") < 32) {
+    throw new Error(
+      "Environment variable JWT_ACCESS_SECRET must contain at least 32 bytes"
+    );
+  }
+
+  return value;
 }
 
 function parseEnum<T extends readonly string[]>(
@@ -103,6 +141,13 @@ export function validateEnvironment(
       "DATABASE_URL"
     ),
     LOG_LEVEL: logLevel,
+    JWT_ACCESS_SECRET: parseJwtSecret(
+      requireValue(config, "JWT_ACCESS_SECRET")
+    ),
+    JWT_ACCESS_EXPIRES_IN: parsePositiveDuration(
+      requireValue(config, "JWT_ACCESS_EXPIRES_IN"),
+      "JWT_ACCESS_EXPIRES_IN"
+    ),
     ...(emailProvider ? { EMAIL_PROVIDER: emailProvider } : {}),
     ...(emailApiKey ? { EMAIL_API_KEY: emailApiKey } : {})
   };

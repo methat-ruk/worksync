@@ -127,6 +127,8 @@ Default local URLs:
 | `pnpm test` | Run configured test scripts |
 | `pnpm --filter @worksync/backend test:unit` | Run backend unit tests |
 | `pnpm --filter @worksync/backend test:integration` | Run backend PostgreSQL integration tests |
+| `pnpm --filter @worksync/backend test:contract` | Run backend API and Swagger contract tests |
+| `pnpm --filter @worksync/backend test:security` | Run backend authentication security tests |
 | `pnpm --filter @worksync/backend test:e2e` | Run backend API contract and E2E tests |
 | `pnpm build` | Build frontend and backend |
 | `pnpm check` | Run typecheck, lint, test, and build |
