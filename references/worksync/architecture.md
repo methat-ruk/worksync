@@ -23,6 +23,12 @@ Follow the existing structure. Do not move files, restructure modules, or introd
 ```
 
 - Use JWT access and refresh tokens.
+- PostgreSQL-backed authentication sessions are the source of truth for refresh rotation, revocation, logout, and immediate access-token invalidation.
+- Access tokens identify the user and session. Refresh tokens rotate through an HttpOnly cookie and are stored only as cryptographic hashes.
+- Refresh-token replay or unsafe concurrent reuse revokes the affected session family.
+- Session lifetime is absolute; do not silently convert it to sliding expiration.
+- Cookie-authenticated refresh and logout commands require the configured request-origin protection.
+- Password and external-provider authentication issue sessions through the same session boundary; provider-only users may have no password hash.
 - Roles are OWNER, ADMIN, MEMBER, and VIEWER.
 - Enforce role checks, resource ownership, and workspace isolation in trusted backend boundaries.
 - Frontend restrictions are not authorization.
@@ -49,7 +55,7 @@ Follow the existing structure. Do not move files, restructure modules, or introd
 - PostgreSQL is the persistent business source of truth.
 - Prefer Prisma over raw SQL.
 - Raw SQL requires a concrete reason and safe parameterization.
-- Redis is limited to cache, online-user state, and notification cache.
+- Redis is limited to cache, online-user state, and notification cache. It is not the authentication-session source of truth.
 - Never use Redis as the source of truth for persistent business data.
 
 ## Realtime and Background Work

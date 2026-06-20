@@ -29,10 +29,27 @@ model User {
   passwordHash String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  authSessions AuthSession[]
   memberships WorkspaceMember[]
   comments    Comment[]
   tasksCreated Task[]   @relation("TaskCreator")
   tasksAssigned Task[]  @relation("TaskAssignee")
+}
+
+model AuthSession {
+  id               String   @id @default(cuid())
+  userId           String
+  refreshTokenHash String
+  userAgent        String?  @db.VarChar(512)
+  expiresAt        DateTime
+  lastUsedAt       DateTime @default(now())
+  revokedAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
 }
 
 model Workspace {

@@ -45,8 +45,13 @@ Use:
 Required controls:
 
 - reject missing, malformed, expired, and revoked tokens
-- invalidate refresh tokens on logout
-- detect or safely handle refresh token reuse
+- persist authoritative session state in PostgreSQL
+- store only refresh-token hashes and deliver refresh tokens through a scoped HttpOnly cookie
+- rotate refresh tokens after every successful refresh
+- invalidate the current session immediately on logout and all sessions on logout-all
+- revoke the affected session family when refresh-token reuse is detected
+- enforce an absolute session lifetime rather than extending it on refresh
+- validate browser request origins for cookie-authenticated auth commands
 - avoid storing tokens in logs, telemetry, screenshots, or errors
 - define token lifetimes before production
 
@@ -176,7 +181,6 @@ See `references/worksync/testing.md` for the detailed testing profile.
 ## Open Decisions
 
 - Exact role matrix for project/task/comment/file actions
-- Refresh token storage and rotation implementation
 - File type allowlist and size limits
 - Audit log retention
 - Whether viewer can comment or only read

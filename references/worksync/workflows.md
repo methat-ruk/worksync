@@ -32,6 +32,8 @@ When automated coverage is impractical, record the reason, alternative evidence,
 - Backend builds must produce `app/backend/dist/main.js`.
 - Backend production artifacts must not contain `app/backend/dist/test` or a nested `app/backend/dist/src/main.js`.
 - PostgreSQL integration tests require `TEST_DATABASE_URL` and must pass rather than skip in CI.
+- Local backend test setup may load `app/backend/.env` without overriding environment variables already injected by CI.
+- Authentication integration and security suites must fail closed in CI when the PostgreSQL test prerequisite is unavailable.
 - Report skipped suites separately from passed tests.
 - Business API routes use `/api`; `/health`, `/health/live`, `/health/ready`, and `/docs` remain outside that prefix.
 - For GitHub Actions failures, inspect the exact failing step and distinguish setup, primary-command, cache, cleanup, and post-step failures before changing code or dependency policy.

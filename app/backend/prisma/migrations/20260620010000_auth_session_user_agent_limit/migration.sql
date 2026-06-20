@@ -1,0 +1,2 @@
+ALTER TABLE "AuthSession"
+ALTER COLUMN "userAgent" TYPE VARCHAR(512);

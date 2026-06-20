@@ -7,10 +7,10 @@ import {
 } from "@nestjs/swagger";
 
 import {
-  ErrorResponseDto,
   HealthResponseDto,
   ReadinessResponseDto
 } from "./health.dto";
+import { ApiErrorResponseDto } from "../common/errors/api-error.dto";
 import { HealthService } from "./health.service";
 
 @ApiTags("health")
@@ -38,7 +38,7 @@ export class HealthController {
   @ApiResponse({
     status: 503,
     description: "PostgreSQL is unavailable",
-    type: ErrorResponseDto
+    type: ApiErrorResponseDto
   })
   getReadiness(): Promise<ReadinessResponseDto> {
     return this.healthService.getReadiness();

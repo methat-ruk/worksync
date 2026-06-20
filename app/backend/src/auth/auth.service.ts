@@ -8,29 +8,24 @@ import { PinoLogger } from "nestjs-pino";
 import { PrismaService } from "../database/prisma.service";
 import { Prisma } from "../generated/prisma/client";
 import { CorrelationContextService } from "../observability/correlation-context.service";
-import { AccessTokenService } from "./access-token.service";
+import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import type {
-  AuthDataDto,
   LoginRequestDto,
   SignUpRequestDto
 } from "./auth.dto";
 import { normalizeEmail } from "./auth.dto";
 import type { PublicUser } from "./auth.types";
 import { PasswordHasher } from "./password-hasher.service";
+import {
+  SessionService,
+  type SessionAuthentication
+} from "./session.service";
 
 const AUTH_USER_SELECT = {
   id: true,
   email: true,
   displayName: true,
   passwordHash: true,
-  createdAt: true,
-  updatedAt: true
-} satisfies Prisma.UserSelect;
-
-const PUBLIC_USER_SELECT = {
-  id: true,
-  email: true,
-  displayName: true,
   createdAt: true,
   updatedAt: true
 } satisfies Prisma.UserSelect;
@@ -56,27 +51,36 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly passwordHasher: PasswordHasher,
-    private readonly accessTokens: AccessTokenService,
+    private readonly sessions: SessionService,
     private readonly logger: PinoLogger,
     private readonly correlationContext: CorrelationContextService
   ) {
     this.logger.setContext(AuthService.name);
   }
 
-  async signUp(input: SignUpRequestDto): Promise<AuthDataDto> {
+  async signUp(
+    input: SignUpRequestDto,
+    userAgent: string | undefined
+  ): Promise<SessionAuthentication> {
     const email = normalizeEmail(input.email);
     const passwordHash = await this.passwordHasher.hash(input.password);
 
     try {
-      const user = await this.prisma.user.create({
-        data: {
-          email,
-          displayName: input.displayName.trim(),
-          passwordHash
-        },
-        select: AUTH_USER_SELECT
+      return await this.prisma.$transaction(async (transaction) => {
+        const user = await transaction.user.create({
+          data: {
+            email,
+            displayName: input.displayName.trim(),
+            passwordHash
+          },
+          select: AUTH_USER_SELECT
+        });
+        return this.sessions.create(
+          toPublicUser(user),
+          userAgent,
+          transaction
+        );
       });
-      return this.createAuthData(user);
     } catch (error: unknown) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -84,7 +88,7 @@ export class AuthService {
       ) {
         throw new ConflictException({
           message: "An account with this email already exists",
-          code: "AUTH_EMAIL_CONFLICT"
+          code: API_ERROR_CODE.AUTH_EMAIL_CONFLICT
         });
       }
 
@@ -92,7 +96,10 @@ export class AuthService {
     }
   }
 
-  async login(input: LoginRequestDto): Promise<AuthDataDto> {
+  async login(
+    input: LoginRequestDto,
+    userAgent: string | undefined
+  ): Promise<SessionAuthentication> {
     const user = await this.prisma.user.findUnique({
       where: { email: normalizeEmail(input.email) },
       select: AUTH_USER_SELECT
@@ -118,26 +125,10 @@ export class AuthService {
       );
       throw new UnauthorizedException({
         message: "Invalid email or password",
-        code: "INVALID_CREDENTIALS"
+        code: API_ERROR_CODE.INVALID_CREDENTIALS
       });
     }
 
-    return this.createAuthData(user);
-  }
-
-  async findPublicUserById(userId: string): Promise<PublicUser | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: PUBLIC_USER_SELECT
-    });
-    return user ? toPublicUser(user) : null;
-  }
-
-  private async createAuthData(user: AuthUser): Promise<AuthDataDto> {
-    const token = await this.accessTokens.issue(user.id);
-    return {
-      user: toPublicUser(user),
-      ...token
-    };
+    return this.sessions.create(toPublicUser(user), userAgent);
   }
 }

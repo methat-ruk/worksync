@@ -58,6 +58,7 @@ export function createPinoHttpOptions(
         "*.token",
         "*.accessToken",
         "*.refreshToken",
+        "*.refreshTokenHash",
         "*.secret",
         "*.apiKey"
       ],

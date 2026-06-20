@@ -1,6 +1,6 @@
 import { AuthService } from "../../src/auth/auth.service";
-import type { AccessTokenService } from "../../src/auth/access-token.service";
 import type { PasswordHasher } from "../../src/auth/password-hasher.service";
+import type { SessionService } from "../../src/auth/session.service";
 import type { PrismaService } from "../../src/database/prisma.service";
 import type { CorrelationContextService } from "../../src/observability/correlation-context.service";
 import type { PinoLogger } from "nestjs-pino";
@@ -41,7 +41,7 @@ describe("AuthService", () => {
     const passwordHasher = {
       verifyWithDummy: jest.fn().mockResolvedValue(false)
     } as unknown as PasswordHasher;
-    const tokens = {} as AccessTokenService;
+    const sessions = {} as SessionService;
     const logger = {
       setContext: jest.fn(),
       warn: jest.fn()
@@ -52,7 +52,7 @@ describe("AuthService", () => {
     const service = new AuthService(
       prisma,
       passwordHasher,
-      tokens,
+      sessions,
       logger,
       correlationContext
     );
@@ -61,7 +61,7 @@ describe("AuthService", () => {
       service.login({
         email: " ADA@Example.com ",
         password: "incorrect password"
-      })
+      }, undefined)
     ).rejects.toMatchObject({
       response: {
         message: "Invalid email or password",

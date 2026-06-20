@@ -17,9 +17,11 @@
     }
   },
   "scripts": {
+    "prepare": "husky",
     "dev": "corepack pnpm --parallel --filter @worksync/frontend --filter @worksync/backend dev",
     "dev:frontend": "corepack pnpm --filter @worksync/frontend dev",
     "dev:backend": "corepack pnpm --filter @worksync/backend dev",
+    "lint:staged": "lint-staged",
     "typecheck": "corepack pnpm -r typecheck",
     "lint": "corepack pnpm -r lint",
     "test": "corepack pnpm -r test",
@@ -31,9 +33,17 @@
     "validate:backend": "corepack pnpm prisma:validate && corepack pnpm prisma:generate && corepack pnpm --filter @worksync/backend typecheck && corepack pnpm --filter @worksync/backend lint && corepack pnpm --filter @worksync/backend test && corepack pnpm --filter @worksync/backend build && corepack pnpm validate:backend:artifact",
     "docker:up": "docker compose -f docker/compose.yml up -d",
     "docker:down": "docker compose -f docker/compose.yml down",
+    "validate:push": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm --filter @worksync/backend test:unit",
     "check": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm test && corepack pnpm build"
   },
+  "lint-staged": {
+    "app/backend/src/**/*.ts": "corepack pnpm --dir app/backend exec eslint --fix",
+    "app/backend/prisma.config.ts": "corepack pnpm --dir app/backend exec eslint --fix",
+    "app/frontend/src/**/*.{ts,tsx}": "corepack pnpm --dir app/frontend exec eslint --fix"
+  },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "typescript": "^5.5.4"
   }
 }

@@ -71,6 +71,9 @@ Do not use unit tests as proof of authorization, persistence, queue, or realtime
 Prioritize:
 
 - login, refresh, logout, and token invalidation
+- refresh rotation against real PostgreSQL persistence
+- concurrent refresh where one request succeeds, the competing request is rejected, and the affected session is revoked
+- signup transaction rollback so user and initial session cannot partially commit
 - RBAC guards and workspace ownership checks
 - workspace, project, task, comment, file, notification, and activity-log flows
 - Prisma persistence and transaction behavior
@@ -137,6 +140,9 @@ High-value security checks:
 - BullMQ jobs do not process or emit cross-workspace side effects
 - file upload rejects mismatched content type, oversized payloads, unsafe filenames, and unauthorized access
 - refresh token reuse, revoked tokens, expired tokens, and malformed tokens are rejected safely
+- access tokens are rejected after their persisted session is revoked
+- refresh and logout reject untrusted origins and set or clear cookies with the required attributes
+- password login treats provider-only users as the same public invalid-credentials failure
 - sensitive data does not appear in browser storage, logs, telemetry, errors, or public file responses
 
 Browser checks supplement backend security tests; they do not prove backend authorization by themselves.

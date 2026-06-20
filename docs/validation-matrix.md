@@ -29,13 +29,24 @@ pnpm dev
 | Backend unit tests | `pnpm --filter @worksync/backend test:unit` | Validate configuration, errors, correlation, logging policy, and health logic |
 | Backend integration tests | `pnpm --filter @worksync/backend test:integration` | Validate Prisma lifecycle and PostgreSQL connectivity through `TEST_DATABASE_URL` |
 | Backend contract tests | `pnpm --filter @worksync/backend test:contract` | Validate API envelopes, status codes, DTO validation, and Swagger/OpenAPI contracts |
-| Backend security tests | `pnpm --filter @worksync/backend test:security` | Validate token rejection, minimum claims, generic credential failures, and sensitive-data handling |
+| Backend security tests | `pnpm --filter @worksync/backend test:security` | Validate access/refresh rejection, rotation and reuse handling, session revocation, generic credential failures, and sensitive-data handling |
 | Backend API tests | `pnpm --filter @worksync/backend test:e2e` | Validate health, readiness, error, validation, correlation, and route-prefix contracts |
 | Build | `pnpm build` | Produce frontend and backend build artifacts |
 | Prisma generate | `pnpm prisma:generate` | Validate Prisma schema and generated client |
 | Prisma validate | `pnpm prisma:validate` | Validate Prisma schema syntax and relation consistency |
 | Dependency audit | `pnpm audit --prod --audit-level moderate` | Fail on moderate-, high-, or critical-severity production dependency findings |
 | Docker services | `pnpm docker:up` | Start local PostgreSQL, Redis, and S3-compatible storage |
+
+## Validation Layers
+
+| Layer | Command or trigger | Scope |
+|---|---|---|
+| Local targeted validation | Repository scripts selected for the changed surface | Fast feedback while implementing |
+| Pre-commit hook | `pnpm lint:staged` | ESLint on staged backend and frontend TypeScript files |
+| Pre-push hook | `pnpm validate:push` | Typecheck, lint, and backend unit tests |
+| CI | Pull requests and pushes to `main` | Database migrations, complete backend validation, frontend validation, build artifacts, and dependency audit |
+
+Git hooks provide local feedback and can be bypassed. CI remains the authoritative merge gate.
 
 ## Current Limitations
 

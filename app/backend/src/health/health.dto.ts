@@ -28,22 +28,3 @@ export class ReadinessResponseDto {
   @ApiProperty({ type: ReadinessStatusDto })
   data!: ReadinessStatusDto;
 }
-
-class ErrorDataDto {
-  @ApiProperty({ example: "SERVICE_NOT_READY", required: false })
-  code?: string;
-
-  @ApiProperty({ example: "0f877824-8e57-45ef-b2e0-c10ee9d2e022", required: false })
-  correlationId?: string;
-}
-
-export class ErrorResponseDto {
-  @ApiProperty({ example: false, enum: [false] })
-  success!: false;
-
-  @ApiProperty({ example: "Service is not ready" })
-  message!: string;
-
-  @ApiProperty({ type: ErrorDataDto, required: false })
-  data?: ErrorDataDto;
-}

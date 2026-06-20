@@ -52,6 +52,11 @@ Required categories:
 
 See `.env.example` for initial variable names.
 
+Production authentication configuration must use independent access and
+refresh secrets of at least 32 bytes. Refresh cookies must be secure in
+TLS-backed environments, and the configured cookie domain and CORS origin must
+match the deployed frontend/API topology.
+
 ## Build and Artifact Expectations
 
 - Build frontend and backend from reviewed source.

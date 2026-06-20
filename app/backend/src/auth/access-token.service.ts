@@ -2,10 +2,11 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
+import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import type { Environment } from "../config/environment";
 import type { AccessTokenPayload } from "./auth.types";
 
-type IssuedAccessToken = {
+export type IssuedAccessToken = {
   accessToken: string;
   tokenType: "Bearer";
   expiresIn: number;
@@ -18,10 +19,10 @@ export class AccessTokenService {
     private readonly config: ConfigService<Environment, true>
   ) {}
 
-  async issue(userId: string): Promise<IssuedAccessToken> {
+  async issue(userId: string, sessionId: string): Promise<IssuedAccessToken> {
     const expiresIn = this.config.get("JWT_ACCESS_EXPIRES_IN", { infer: true });
     const accessToken = await this.jwtService.signAsync(
-      {},
+      { sid: sessionId },
       {
         algorithm: "HS256",
         subject: userId,
@@ -41,6 +42,8 @@ export class AccessTokenService {
       if (
         typeof payload.sub !== "string" ||
         payload.sub.length === 0 ||
+        typeof payload.sid !== "string" ||
+        payload.sid.length === 0 ||
         typeof payload.iat !== "number" ||
         typeof payload.exp !== "number"
       ) {
@@ -51,9 +54,8 @@ export class AccessTokenService {
     } catch {
       throw new UnauthorizedException({
         message: "Invalid access token",
-        code: "INVALID_ACCESS_TOKEN"
+        code: API_ERROR_CODE.INVALID_ACCESS_TOKEN
       });
     }
   }
 }
-

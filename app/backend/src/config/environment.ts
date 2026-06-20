@@ -20,6 +20,10 @@ export type Environment = {
   LOG_LEVEL: LogLevel;
   JWT_ACCESS_SECRET: string;
   JWT_ACCESS_EXPIRES_IN: number;
+  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_EXPIRES_IN: number;
+  COOKIE_SECURE: boolean;
+  COOKIE_DOMAIN?: string;
   EMAIL_PROVIDER?: string;
   EMAIL_API_KEY?: string;
 };
@@ -80,14 +84,24 @@ function parsePositiveDuration(value: string, key: string): number {
   return seconds;
 }
 
-function parseJwtSecret(value: string): string {
+function parseJwtSecret(value: string, key: string): string {
   if (Buffer.byteLength(value, "utf8") < 32) {
     throw new Error(
-      "Environment variable JWT_ACCESS_SECRET must contain at least 32 bytes"
+      `Environment variable ${key} must contain at least 32 bytes`
     );
   }
 
   return value;
+}
+
+function parseBoolean(value: string, key: string): boolean {
+  if (value === "true") {
+    return true;
+  }
+  if (value === "false") {
+    return false;
+  }
+  throw new Error(`Environment variable ${key} must be true or false`);
 }
 
 function parseEnum<T extends readonly string[]>(
@@ -125,10 +139,37 @@ export function validateEnvironment(
     typeof config.EMAIL_API_KEY === "string"
       ? config.EMAIL_API_KEY.trim()
       : undefined;
+  const cookieDomain =
+    typeof config.COOKIE_DOMAIN === "string" &&
+    config.COOKIE_DOMAIN.trim() !== ""
+      ? config.COOKIE_DOMAIN.trim()
+      : undefined;
 
   if (emailProvider && emailProvider !== "disabled" && !emailApiKey) {
     throw new Error(
       "Environment variable EMAIL_API_KEY is required when EMAIL_PROVIDER is enabled"
+    );
+  }
+  const accessSecret = parseJwtSecret(
+    requireValue(config, "JWT_ACCESS_SECRET"),
+    "JWT_ACCESS_SECRET"
+  );
+  const refreshSecret = parseJwtSecret(
+    requireValue(config, "JWT_REFRESH_SECRET"),
+    "JWT_REFRESH_SECRET"
+  );
+  if (accessSecret === refreshSecret) {
+    throw new Error(
+      "Environment variables JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ"
+    );
+  }
+  const cookieSecure = parseBoolean(
+    requireValue(config, "COOKIE_SECURE"),
+    "COOKIE_SECURE"
+  );
+  if (nodeEnvironment === "production" && !cookieSecure) {
+    throw new Error(
+      "Environment variable COOKIE_SECURE must be true in production"
     );
   }
 
@@ -141,13 +182,18 @@ export function validateEnvironment(
       "DATABASE_URL"
     ),
     LOG_LEVEL: logLevel,
-    JWT_ACCESS_SECRET: parseJwtSecret(
-      requireValue(config, "JWT_ACCESS_SECRET")
-    ),
+    JWT_ACCESS_SECRET: accessSecret,
     JWT_ACCESS_EXPIRES_IN: parsePositiveDuration(
       requireValue(config, "JWT_ACCESS_EXPIRES_IN"),
       "JWT_ACCESS_EXPIRES_IN"
     ),
+    JWT_REFRESH_SECRET: refreshSecret,
+    JWT_REFRESH_EXPIRES_IN: parsePositiveDuration(
+      requireValue(config, "JWT_REFRESH_EXPIRES_IN"),
+      "JWT_REFRESH_EXPIRES_IN"
+    ),
+    COOKIE_SECURE: cookieSecure,
+    ...(cookieDomain ? { COOKIE_DOMAIN: cookieDomain } : {}),
     ...(emailProvider ? { EMAIL_PROVIDER: emailProvider } : {}),
     ...(emailApiKey ? { EMAIL_API_KEY: emailApiKey } : {})
   };
