@@ -6,6 +6,16 @@ import {
   createAuthTestApp,
   type AuthTestContext
 } from "../helpers/auth-test-app";
+import { REFRESH_TOKEN_COOKIE } from "../../src/auth/session-cookie.service";
+
+function getRefreshCookie(response: request.Response): string {
+  const header = response.headers["set-cookie"];
+  const cookie = Array.isArray(header) ? header[0] : header;
+  if (!cookie) {
+    throw new Error("Expected refresh-token cookie");
+  }
+  return cookie.split(";")[0]!;
+}
 
 describe("authentication API contract", () => {
   let context: AuthTestContext;
@@ -47,6 +57,19 @@ describe("authentication API contract", () => {
       }
     });
     expect(response.body.data.user).not.toHaveProperty("passwordHash");
+    expect(response.body.data).not.toHaveProperty("refreshToken");
+    expect(response.headers["set-cookie"]?.[0]).toEqual(
+      expect.stringContaining(`${REFRESH_TOKEN_COOKIE}=`)
+    );
+    expect(response.headers["set-cookie"]?.[0]).toEqual(
+      expect.stringContaining("HttpOnly")
+    );
+    expect(response.headers["set-cookie"]?.[0]).toEqual(
+      expect.stringContaining("SameSite=Lax")
+    );
+    expect(response.headers["set-cookie"]?.[0]).toEqual(
+      expect.stringContaining("Path=/api/auth")
+    );
   });
 
   it("returns the defined duplicate-email conflict", async () => {
@@ -95,6 +118,60 @@ describe("authentication API contract", () => {
     });
   });
 
+  it("rotates the refresh cookie and returns the existing auth envelope", async () => {
+    const login = await request(app.getHttpServer())
+      .post("/api/auth/login")
+      .send({
+        email: "ada@example.com",
+        password: "correct horse battery staple"
+      })
+      .expect(200);
+    const refresh = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", getRefreshCookie(login))
+      .expect(200);
+
+    expect(refresh.body).toMatchObject({
+      success: true,
+      message: "Authentication refreshed",
+      data: {
+        user: { email: "ada@example.com" },
+        accessToken: expect.any(String),
+        tokenType: "Bearer",
+        expiresIn: 900
+      }
+    });
+    expect(refresh.body.data).not.toHaveProperty("refreshToken");
+    expect(getRefreshCookie(refresh)).not.toBe(getRefreshCookie(login));
+  });
+
+  it("defines missing refresh cookie and invalid browser origin failures", async () => {
+    const missing = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .expect(401);
+    expect(missing.body.data.code).toBe("REFRESH_TOKEN_REQUIRED");
+
+    const origin = await request(app.getHttpServer())
+      .post("/api/auth/login")
+      .set("origin", "https://attacker.example")
+      .send({
+        email: "ada@example.com",
+        password: "correct horse battery staple"
+      })
+      .expect(403);
+    expect(origin.body.data.code).toBe("INVALID_REQUEST_ORIGIN");
+  });
+
+  it("keeps logout idempotent when the refresh cookie is absent", async () => {
+    const response = await request(app.getHttpServer())
+      .post("/api/auth/logout")
+      .expect(200);
+    expect(response.body).toEqual({ success: true, message: "Logged out" });
+    expect(response.headers["set-cookie"]?.[0]).toEqual(
+      expect.stringContaining(`${REFRESH_TOKEN_COOKIE}=`)
+    );
+  });
+
   it("documents auth requests, responses, bearer security, and errors", () => {
     const config = new DocumentBuilder()
       .setTitle("WorkSync API")
@@ -102,6 +179,11 @@ describe("authentication API contract", () => {
       .addBearerAuth(
         { type: "http", scheme: "bearer", bearerFormat: "JWT" },
         "access-token"
+      )
+      .addCookieAuth(
+        REFRESH_TOKEN_COOKIE,
+        { type: "apiKey", in: "cookie" },
+        "refresh-token"
       )
       .build();
     const document = SwaggerModule.createDocument(app, config);
@@ -120,6 +202,29 @@ describe("authentication API contract", () => {
       "401": expect.any(Object)
     });
     expect(document.paths["/api/auth/me"]?.get).toMatchObject({
+      security: [{ "access-token": [] }],
+      responses: {
+        "200": expect.any(Object),
+        "401": expect.any(Object)
+      }
+    });
+    expect(document.paths["/api/auth/refresh"]?.post).toMatchObject({
+      security: [{ "refresh-token": [] }],
+      responses: {
+        "200": expect.objectContaining({
+          headers: expect.objectContaining({
+            "Set-Cookie": expect.any(Object)
+          })
+        }),
+        "401": expect.any(Object),
+        "403": expect.any(Object)
+      }
+    });
+    expect(document.paths["/api/auth/logout"]?.post?.responses).toMatchObject({
+      "200": expect.any(Object),
+      "403": expect.any(Object)
+    });
+    expect(document.paths["/api/auth/logout-all"]?.post).toMatchObject({
       security: [{ "access-token": [] }],
       responses: {
         "200": expect.any(Object),

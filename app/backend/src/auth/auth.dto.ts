@@ -118,3 +118,11 @@ export class CurrentUserResponseDto {
   @ApiProperty({ type: CurrentUserDataDto })
   data!: CurrentUserDataDto;
 }
+
+export class AuthMessageResponseDto {
+  @ApiProperty({ example: true, enum: [true] })
+  success!: true;
+
+  @ApiProperty({ example: "Logged out" })
+  message!: string;
+}

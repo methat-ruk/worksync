@@ -7,14 +7,14 @@ import {
 
 import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import { AccessTokenService } from "./access-token.service";
-import { AuthService } from "./auth.service";
 import type { AuthenticatedRequest } from "./auth.types";
+import { SessionService } from "./session.service";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private readonly accessTokens: AccessTokenService,
-    private readonly authService: AuthService
+    private readonly sessions: SessionService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -36,7 +36,10 @@ export class AuthGuard implements CanActivate {
     }
 
     const payload = await this.accessTokens.verify(match[1]);
-    const user = await this.authService.findPublicUserById(payload.sub);
+    const user = await this.sessions.findActivePublicUser(
+      payload.sid,
+      payload.sub
+    );
     if (!user) {
       throw new UnauthorizedException({
         message: "Invalid access token",
@@ -45,6 +48,7 @@ export class AuthGuard implements CanActivate {
     }
 
     request.user = user;
+    request.sessionId = payload.sid;
     return true;
   }
 }

@@ -21,6 +21,7 @@ describe("createPinoHttpOptions", () => {
         "*.passwordHash",
         "*.accessToken",
         "*.refreshToken",
+        "*.refreshTokenHash",
         "*.secret",
         "*.apiKey"
       ])
@@ -50,7 +51,8 @@ describe("createPinoHttpOptions", () => {
       },
       auth: {
         password: "plaintext-password",
-        passwordHash: "scrypt$encoded-password-hash"
+        passwordHash: "scrypt$encoded-password-hash",
+        refreshTokenHash: "encoded-refresh-token-hash"
       }
     });
 
@@ -58,5 +60,6 @@ describe("createPinoHttpOptions", () => {
     expect(output).not.toContain("sensitive-access-token");
     expect(output).not.toContain("plaintext-password");
     expect(output).not.toContain("encoded-password-hash");
+    expect(output).not.toContain("encoded-refresh-token-hash");
   });
 });

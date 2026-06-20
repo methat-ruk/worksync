@@ -8,7 +8,10 @@ const validEnvironment = {
     "postgresql://worksync:worksync@localhost:55432/worksync?schema=public",
   LOG_LEVEL: "info",
   JWT_ACCESS_SECRET: "a-secure-access-secret-with-at-least-32-bytes",
-  JWT_ACCESS_EXPIRES_IN: "15m"
+  JWT_ACCESS_EXPIRES_IN: "15m",
+  JWT_REFRESH_SECRET: "a-secure-refresh-secret-with-at-least-32-bytes",
+  JWT_REFRESH_EXPIRES_IN: "30d",
+  COOKIE_SECURE: "false"
 };
 
 describe("validateEnvironment", () => {
@@ -16,7 +19,9 @@ describe("validateEnvironment", () => {
     expect(validateEnvironment(validEnvironment)).toEqual({
       ...validEnvironment,
       PORT: 4000,
-      JWT_ACCESS_EXPIRES_IN: 900
+      JWT_ACCESS_EXPIRES_IN: 900,
+      JWT_REFRESH_EXPIRES_IN: 2_592_000,
+      COOKIE_SECURE: false
     });
   });
 
@@ -33,6 +38,24 @@ describe("validateEnvironment", () => {
         JWT_ACCESS_EXPIRES_IN: "forever"
       })
     ).toThrow("JWT_ACCESS_EXPIRES_IN must be a positive duration");
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        JWT_REFRESH_SECRET: "too-short"
+      })
+    ).toThrow("JWT_REFRESH_SECRET must contain at least 32 bytes");
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        JWT_REFRESH_EXPIRES_IN: "forever"
+      })
+    ).toThrow("JWT_REFRESH_EXPIRES_IN must be a positive duration");
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        JWT_REFRESH_SECRET: validEnvironment.JWT_ACCESS_SECRET
+      })
+    ).toThrow("JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ");
   });
 
   it("rejects a missing active setting", () => {
@@ -51,6 +74,16 @@ describe("validateEnvironment", () => {
     expect(() =>
       validateEnvironment({ ...validEnvironment, PORT: "70000" })
     ).toThrow("Environment variable PORT must be an integer");
+    expect(() =>
+      validateEnvironment({ ...validEnvironment, COOKIE_SECURE: "sometimes" })
+    ).toThrow("Environment variable COOKIE_SECURE must be true or false");
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: "production",
+        COOKIE_SECURE: "false"
+      })
+    ).toThrow("COOKIE_SECURE must be true in production");
   });
 
   it("requires an API key only when email is enabled", () => {

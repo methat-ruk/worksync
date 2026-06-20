@@ -7,8 +7,12 @@ import { ObservabilityModule } from "../observability/observability.module";
 import { AccessTokenService } from "./access-token.service";
 import { AuthController } from "./auth.controller";
 import { AuthGuard } from "./auth.guard";
+import { AuthOriginGuard } from "./auth-origin.guard";
 import { AuthService } from "./auth.service";
 import { PasswordHasher } from "./password-hasher.service";
+import { RefreshTokenService } from "./refresh-token.service";
+import { SessionCookieService } from "./session-cookie.service";
+import { SessionService } from "./session.service";
 
 @Module({
   imports: [
@@ -25,8 +29,12 @@ import { PasswordHasher } from "./password-hasher.service";
   providers: [
     AuthService,
     AuthGuard,
+    AuthOriginGuard,
     PasswordHasher,
-    AccessTokenService
+    AccessTokenService,
+    RefreshTokenService,
+    SessionCookieService,
+    SessionService
   ],
   exports: [AuthGuard]
 })

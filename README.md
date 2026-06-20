@@ -18,11 +18,12 @@ Already in place:
 - backend unit, integration, and API contract test harnesses
 - local service topology for PostgreSQL, Redis, and S3-compatible storage
 - CI workflow and repository validation commands
+- password authentication with persisted session lifecycle, refresh rotation, and logout controls
 - product, domain, API, security, testing, deployment, and workflow documentation
 
 Not complete yet:
 
-- authentication and workspace membership implementation
+- Google OAuth and workspace membership implementation
 - RBAC and workspace isolation enforcement
 - production Docker images and deployment pipeline
 - real unit, integration, contract, E2E, and security test suites

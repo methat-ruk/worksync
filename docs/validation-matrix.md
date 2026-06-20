@@ -29,7 +29,7 @@ pnpm dev
 | Backend unit tests | `pnpm --filter @worksync/backend test:unit` | Validate configuration, errors, correlation, logging policy, and health logic |
 | Backend integration tests | `pnpm --filter @worksync/backend test:integration` | Validate Prisma lifecycle and PostgreSQL connectivity through `TEST_DATABASE_URL` |
 | Backend contract tests | `pnpm --filter @worksync/backend test:contract` | Validate API envelopes, status codes, DTO validation, and Swagger/OpenAPI contracts |
-| Backend security tests | `pnpm --filter @worksync/backend test:security` | Validate token rejection, minimum claims, generic credential failures, and sensitive-data handling |
+| Backend security tests | `pnpm --filter @worksync/backend test:security` | Validate access/refresh rejection, rotation and reuse handling, session revocation, generic credential failures, and sensitive-data handling |
 | Backend API tests | `pnpm --filter @worksync/backend test:e2e` | Validate health, readiness, error, validation, correlation, and route-prefix contracts |
 | Build | `pnpm build` | Produce frontend and backend build artifacts |
 | Prisma generate | `pnpm prisma:generate` | Validate Prisma schema and generated client |

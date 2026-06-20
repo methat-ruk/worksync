@@ -7,11 +7,21 @@ import {
   type AuthTestContext
 } from "../helpers/auth-test-app";
 
+function refreshCookie(response: request.Response): string {
+  const header = response.headers["set-cookie"];
+  const cookie = Array.isArray(header) ? header[0] : header;
+  if (!cookie) {
+    throw new Error("Expected refresh-token cookie");
+  }
+  return cookie.split(";")[0]!;
+}
+
 describe("authentication security controls", () => {
   let context: AuthTestContext;
   let app: INestApplication;
   let accessToken: string;
   let userId: string;
+  let sessionId: string;
 
   beforeAll(async () => {
     context = await createAuthTestApp();
@@ -26,6 +36,7 @@ describe("authentication security controls", () => {
       .expect(201);
     accessToken = signup.body.data.accessToken as string;
     userId = signup.body.data.user.id as string;
+    sessionId = new JwtService().decode(accessToken).sid as string;
   });
 
   afterAll(async () => {
@@ -36,6 +47,7 @@ describe("authentication security controls", () => {
     const payload = new JwtService().decode(accessToken);
     expect(payload).toEqual({
       sub: userId,
+      sid: sessionId,
       iat: expect.any(Number),
       exp: expect.any(Number)
     });
@@ -158,5 +170,126 @@ describe("authentication security controls", () => {
       )
       .expect(401);
     expect(response.body.data.code).toBe("INVALID_ACCESS_TOKEN");
+  });
+
+  it("rejects refresh-token reuse and revokes that session family", async () => {
+    const signup = await request(app.getHttpServer())
+      .post("/api/auth/signup")
+      .send({
+        displayName: "Rotation User",
+        email: "rotation@example.com",
+        password: "correct horse battery staple"
+      })
+      .expect(201);
+    const originalCookie = refreshCookie(signup);
+    const rotated = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", originalCookie)
+      .expect(200);
+
+    const reuse = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", originalCookie)
+      .expect(401);
+    expect(reuse.body.data.code).toBe("INVALID_REFRESH_TOKEN");
+
+    await request(app.getHttpServer())
+      .get("/api/auth/me")
+      .set("authorization", `Bearer ${rotated.body.data.accessToken as string}`)
+      .expect(401);
+  });
+
+  it("invalidates the current access token immediately on logout", async () => {
+    const signup = await request(app.getHttpServer())
+      .post("/api/auth/signup")
+      .send({
+        displayName: "Logout User",
+        email: "logout@example.com",
+        password: "correct horse battery staple"
+      })
+      .expect(201);
+
+    const logout = await request(app.getHttpServer())
+      .post("/api/auth/logout")
+      .set("cookie", refreshCookie(signup))
+      .expect(200);
+    expect(logout.body).toEqual({ success: true, message: "Logged out" });
+    expect(logout.headers["set-cookie"]?.[0]).toEqual(
+      expect.stringContaining("Expires=Thu, 01 Jan 1970")
+    );
+
+    await request(app.getHttpServer())
+      .get("/api/auth/me")
+      .set("authorization", `Bearer ${signup.body.data.accessToken as string}`)
+      .expect(401);
+  });
+
+  it("revokes every user session through logout-all", async () => {
+    const signup = await request(app.getHttpServer())
+      .post("/api/auth/signup")
+      .send({
+        displayName: "All Sessions",
+        email: "logout-all@example.com",
+        password: "correct horse battery staple"
+      })
+      .expect(201);
+    const login = await request(app.getHttpServer())
+      .post("/api/auth/login")
+      .send({
+        email: "logout-all@example.com",
+        password: "correct horse battery staple"
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post("/api/auth/logout-all")
+      .set("authorization", `Bearer ${signup.body.data.accessToken as string}`)
+      .expect(200);
+
+    for (const token of [
+      signup.body.data.accessToken as string,
+      login.body.data.accessToken as string
+    ]) {
+      await request(app.getHttpServer())
+        .get("/api/auth/me")
+        .set("authorization", `Bearer ${token}`)
+        .expect(401);
+    }
+    await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", refreshCookie(login))
+      .expect(401);
+  });
+
+  it("rejects wrong-signature, expired, and malformed refresh tokens", async () => {
+    const jwt = new JwtService({
+      secret: process.env.JWT_REFRESH_SECRET!
+    });
+    const claims = { sid: "session-1" };
+    const cases = [
+      new JwtService({
+        secret: "different-refresh-secret-with-at-least-32-bytes"
+      }).sign(claims, {
+        subject: "user-1",
+        jwtid: "wrong-signature",
+        algorithm: "HS256",
+        expiresIn: 900
+      }),
+      jwt.sign(claims, {
+        subject: "user-1",
+        jwtid: "expired",
+        algorithm: "HS256",
+        expiresIn: -1
+      }),
+      "not-a-refresh-token"
+    ];
+
+    for (const token of cases) {
+      const response = await request(app.getHttpServer())
+        .post("/api/auth/refresh")
+        .set("cookie", `worksync_refresh_token=${token}`)
+        .expect(401);
+      expect(response.body.data.code).toBe("INVALID_REFRESH_TOKEN");
+    }
   });
 });
