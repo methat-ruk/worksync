@@ -5,10 +5,10 @@ import {
   UnauthorizedException
 } from "@nestjs/common";
 
-import { API_ERROR_CODE } from "../common/errors/api-error-code";
-import { AccessTokenService } from "./access-token.service";
-import type { AuthenticatedRequest } from "./auth.types";
-import { SessionService } from "./session.service";
+import { API_ERROR_CODE } from "../../common/errors/api-error-code";
+import { AccessTokenService } from "../services/access-token.service";
+import { SessionService } from "../services/session.service";
+import type { AuthenticatedRequest } from "../types/auth.types";
 
 @Injectable()
 export class AuthGuard implements CanActivate {

@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { CookieOptions, Response } from "express";
 
-import type { Environment } from "../config/environment";
+import type { Environment } from "../../config/environment";
 
 export const REFRESH_TOKEN_COOKIE = "worksync_refresh_token";
 

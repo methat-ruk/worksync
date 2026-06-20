@@ -6,7 +6,7 @@ import {
   createAuthTestApp,
   type AuthTestContext
 } from "../helpers/auth-test-app";
-import { REFRESH_TOKEN_COOKIE } from "../../src/auth/session-cookie.service";
+import { REFRESH_TOKEN_COOKIE } from "../../src/auth/services/session-cookie.service";
 
 function getRefreshCookie(response: request.Response): string {
   const header = response.headers["set-cookie"];

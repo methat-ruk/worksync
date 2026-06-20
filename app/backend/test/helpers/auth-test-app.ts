@@ -8,7 +8,7 @@ import {
   type AuthSession,
   type User
 } from "../../src/generated/prisma/client";
-import type { PublicUser } from "../../src/auth/auth.types";
+import type { PublicUser } from "../../src/auth/types/auth.types";
 import { configureApplication } from "../../src/main";
 
 type StoredUser = User;

@@ -2,11 +2,11 @@ import type { ExecutionContext } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { Request, Response } from "express";
 
-import { AuthOriginGuard } from "../../src/auth/auth-origin.guard";
+import { AuthOriginGuard } from "../../src/auth/guards/auth-origin.guard";
 import {
   REFRESH_TOKEN_COOKIE,
   SessionCookieService
-} from "../../src/auth/session-cookie.service";
+} from "../../src/auth/services/session-cookie.service";
 import type { Environment } from "../../src/config/environment";
 
 describe("session transport", () => {

@@ -24,22 +24,22 @@ import {
 } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 
-import { API_ERROR_CODE } from "../common/errors/api-error-code";
-import { ApiErrorResponseDto } from "../common/errors/api-error.dto";
+import { API_ERROR_CODE } from "../../common/errors/api-error-code";
+import { ApiErrorResponseDto } from "../../common/errors/api-error.dto";
 import {
   AuthMessageResponseDto,
   AuthResponseDto,
   CurrentUserResponseDto,
   LoginRequestDto,
   SignUpRequestDto
-} from "./auth.dto";
-import { AuthGuard } from "./auth.guard";
-import { AuthOriginGuard } from "./auth-origin.guard";
-import { AuthService } from "./auth.service";
-import { CurrentUser } from "./current-user.decorator";
-import type { PublicUser } from "./auth.types";
-import { SessionCookieService } from "./session-cookie.service";
-import { SessionService } from "./session.service";
+} from "../dto/auth.dto";
+import { CurrentUser } from "../decorators/current-user.decorator";
+import { AuthGuard } from "../guards/auth.guard";
+import { AuthOriginGuard } from "../guards/auth-origin.guard";
+import { AuthService } from "../services/auth.service";
+import { SessionCookieService } from "../services/session-cookie.service";
+import { SessionService } from "../services/session.service";
+import type { PublicUser } from "../types/auth.types";
 
 const REFRESH_COOKIE_RESPONSE_HEADERS = {
   "Set-Cookie": {

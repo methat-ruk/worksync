@@ -1,7 +1,7 @@
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
-import { RefreshTokenService } from "../../src/auth/refresh-token.service";
+import { RefreshTokenService } from "../../src/auth/services/refresh-token.service";
 import type { Environment } from "../../src/config/environment";
 
 describe("RefreshTokenService", () => {

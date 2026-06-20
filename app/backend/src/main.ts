@@ -17,7 +17,7 @@ import {
   resolveCorrelationId
 } from "./observability/correlation";
 import { CorrelationContextService } from "./observability/correlation-context.service";
-import { REFRESH_TOKEN_COOKIE } from "./auth/session-cookie.service";
+import { REFRESH_TOKEN_COOKIE } from "./auth/services/session-cookie.service";
 
 type RequestWithId = Request & {
   id?: string;

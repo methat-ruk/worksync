@@ -5,16 +5,16 @@ import {
 } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino";
 
-import { PrismaService } from "../database/prisma.service";
-import { Prisma } from "../generated/prisma/client";
-import { CorrelationContextService } from "../observability/correlation-context.service";
-import { API_ERROR_CODE } from "../common/errors/api-error-code";
+import { API_ERROR_CODE } from "../../common/errors/api-error-code";
+import { PrismaService } from "../../database/prisma.service";
+import { Prisma } from "../../generated/prisma/client";
+import { CorrelationContextService } from "../../observability/correlation-context.service";
 import type {
   LoginRequestDto,
   SignUpRequestDto
-} from "./auth.dto";
-import { normalizeEmail } from "./auth.dto";
-import type { PublicUser } from "./auth.types";
+} from "../dto/auth.dto";
+import { normalizeEmail } from "../dto/auth.dto";
+import type { PublicUser } from "../types/auth.types";
 import { PasswordHasher } from "./password-hasher.service";
 import {
   SessionService,

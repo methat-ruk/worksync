@@ -1,6 +1,6 @@
-import { AuthService } from "../../src/auth/auth.service";
-import type { PasswordHasher } from "../../src/auth/password-hasher.service";
-import type { SessionService } from "../../src/auth/session.service";
+import { AuthService } from "../../src/auth/services/auth.service";
+import type { PasswordHasher } from "../../src/auth/services/password-hasher.service";
+import type { SessionService } from "../../src/auth/services/session.service";
 import type { PrismaService } from "../../src/database/prisma.service";
 import type { CorrelationContextService } from "../../src/observability/correlation-context.service";
 import type { PinoLogger } from "nestjs-pino";
