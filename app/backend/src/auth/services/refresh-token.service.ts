@@ -4,9 +4,9 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
-import { API_ERROR_CODE } from "../common/errors/api-error-code";
-import type { Environment } from "../config/environment";
-import type { RefreshTokenPayload } from "./auth.types";
+import { API_ERROR_CODE } from "../../common/errors/api-error-code";
+import type { Environment } from "../../config/environment";
+import type { RefreshTokenPayload } from "../types/auth.types";
 
 export type IssuedRefreshToken = {
   refreshToken: string;

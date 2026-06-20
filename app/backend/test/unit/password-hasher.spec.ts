@@ -1,4 +1,4 @@
-import { PasswordHasher } from "../../src/auth/password-hasher.service";
+import { PasswordHasher } from "../../src/auth/services/password-hasher.service";
 
 describe("PasswordHasher", () => {
   const hasher = new PasswordHasher();
@@ -31,4 +31,3 @@ describe("PasswordHasher", () => {
     ).resolves.toBe(false);
   });
 });
-

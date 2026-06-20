@@ -7,8 +7,8 @@ import {
 import { ConfigService } from "@nestjs/config";
 import type { Request } from "express";
 
-import { API_ERROR_CODE } from "../common/errors/api-error-code";
-import type { Environment } from "../config/environment";
+import { API_ERROR_CODE } from "../../common/errors/api-error-code";
+import type { Environment } from "../../config/environment";
 
 @Injectable()
 export class AuthOriginGuard implements CanActivate {

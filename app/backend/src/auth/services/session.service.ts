@@ -3,16 +3,16 @@ import { randomUUID } from "node:crypto";
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
-import { API_ERROR_CODE } from "../common/errors/api-error-code";
-import type { Environment } from "../config/environment";
-import { PrismaService } from "../database/prisma.service";
-import type { Prisma } from "../generated/prisma/client";
+import { API_ERROR_CODE } from "../../common/errors/api-error-code";
+import type { Environment } from "../../config/environment";
+import { PrismaService } from "../../database/prisma.service";
+import type { Prisma } from "../../generated/prisma/client";
+import type { AuthDataDto } from "../dto/auth.dto";
+import type { PublicUser } from "../types/auth.types";
 import {
   AccessTokenService,
   type IssuedAccessToken
 } from "./access-token.service";
-import type { AuthDataDto } from "./auth.dto";
-import type { PublicUser } from "./auth.types";
 import {
   RefreshTokenService,
   type IssuedRefreshToken

@@ -4,15 +4,15 @@ import { JwtModule } from "@nestjs/jwt";
 
 import type { Environment } from "../config/environment";
 import { ObservabilityModule } from "../observability/observability.module";
-import { AccessTokenService } from "./access-token.service";
-import { AuthController } from "./auth.controller";
-import { AuthGuard } from "./auth.guard";
-import { AuthOriginGuard } from "./auth-origin.guard";
-import { AuthService } from "./auth.service";
-import { PasswordHasher } from "./password-hasher.service";
-import { RefreshTokenService } from "./refresh-token.service";
-import { SessionCookieService } from "./session-cookie.service";
-import { SessionService } from "./session.service";
+import { AuthController } from "./controllers/auth.controller";
+import { AuthGuard } from "./guards/auth.guard";
+import { AuthOriginGuard } from "./guards/auth-origin.guard";
+import { AccessTokenService } from "./services/access-token.service";
+import { AuthService } from "./services/auth.service";
+import { PasswordHasher } from "./services/password-hasher.service";
+import { RefreshTokenService } from "./services/refresh-token.service";
+import { SessionCookieService } from "./services/session-cookie.service";
+import { SessionService } from "./services/session.service";
 
 @Module({
   imports: [

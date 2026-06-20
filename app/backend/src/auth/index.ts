@@ -1,4 +1,4 @@
-export { AuthGuard } from "./auth.guard";
+export { CurrentUser } from "./decorators/current-user.decorator";
+export { AuthGuard } from "./guards/auth.guard";
 export { AuthModule } from "./auth.module";
-export { CurrentUser } from "./current-user.decorator";
-export type { PublicUser } from "./auth.types";
+export type { PublicUser } from "./types/auth.types";
