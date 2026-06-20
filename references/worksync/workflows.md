@@ -14,6 +14,19 @@ Run the relevant repository commands for:
 
 Use commands defined by the repository rather than inventing parallel scripts.
 
+## Feature Quality Gate
+
+Every feature, bug fix, or observable behavior change requires:
+
+- proportionate automated behavioral evidence mapped to the changed guarantees
+- `coding-standards` validation for code-level maintainability
+- `frontend-review` and/or `backend-review` for the affected implementation domain
+- specialized review when architecture, security, data, reliability, observability, timeout, or performance concerns are triggered
+
+Existing tests may be extended; a new test file is not required when the current suite already owns the behavior.
+
+When automated coverage is impractical, record the reason, alternative evidence, unverified behavior, remaining risk, and follow-up owner. Required integration, contract, end-to-end, or security suites that skip leave validation incomplete.
+
 ## Validation Evidence
 
 - Backend builds must produce `app/backend/dist/main.js`.
@@ -36,6 +49,8 @@ Use commands defined by the repository rather than inventing parallel scripts.
 
 ## Completion
 
+- Map material acceptance criteria to validation evidence.
+- Confirm implementation is maintainable, locally understandable, and proportional to the requirement.
 - Fix review findings and rerun affected checks.
 - Report checks that could not run and the remaining risk.
 - Require delivery-pipeline and infrastructure-readiness evidence for production deployment.

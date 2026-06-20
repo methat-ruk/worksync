@@ -99,7 +99,8 @@ If `pnpm install` stalls while recreating `node_modules`:
 Use the routed review flow:
 
 - `scrutinize` for intent and end-to-end claim checking
-- `coding-standards` for implementation hygiene
+- `coding-standards` for implementation hygiene and code-level maintainability
+- `frontend-review` and `backend-review` for independent domain review
 - `domain-modeling` for business invariants and lifecycle changes
 - `architecture-review` for boundary and dependency changes
 - `security-review` and `security-testing` for trust boundaries and evidence
@@ -125,6 +126,10 @@ Run relevant checks for the changed surface:
 
 If a check cannot run, report why and what remains unverified.
 
+Every feature, bug fix, or observable behavior change must map its material acceptance criteria to proportionate automated behavioral evidence. Extend existing tests when they already own the behavior; a new test file is not inherently required.
+
+If automated coverage is impractical, document the reason, alternative evidence, unverified behavior, remaining risk, and follow-up owner. Required integration, contract, end-to-end, or security suites that skip mean validation is incomplete.
+
 ## Documentation Updates
 
 Update documentation when work changes:
@@ -144,8 +149,11 @@ Swagger documentation must be updated when API contracts change.
 Work is complete only when:
 
 - requirements and acceptance criteria are satisfied
+- material acceptance criteria and changed guarantees are mapped to validation evidence
 - routed skill exit criteria are satisfied
 - relevant profile constraints are satisfied
+- affected implementation received the applicable `frontend-review` and/or `backend-review`
+- code is locally understandable, maintainable, and no more complex than the requirement justifies
 - review findings are resolved or explicitly accepted
 - affected checks pass or limitations are reported
 - no temporary debug code, dead code, or unused implementation remains
