@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   HttpStatus,
   NotFoundException
 } from "@nestjs/common";
@@ -52,6 +53,31 @@ describe("normalizeException", () => {
     expect(normalizeException(new NotFoundException("Missing"))).toEqual({
       status: HttpStatus.NOT_FOUND,
       body: { success: false, message: "Missing" }
+    });
+  });
+
+  it("preserves registered error codes and drops unknown codes", () => {
+    expect(
+      normalizeException(
+        new HttpException(
+          { message: "Conflict", code: "RESOURCE_CONFLICT" },
+          HttpStatus.CONFLICT
+        )
+      )
+    ).toMatchObject({
+      body: { data: { code: "RESOURCE_CONFLICT" } }
+    });
+
+    expect(
+      normalizeException(
+        new HttpException(
+          { message: "Conflict", code: "UNREGISTERED_CODE" },
+          HttpStatus.CONFLICT
+        )
+      )
+    ).toEqual({
+      status: HttpStatus.CONFLICT,
+      body: { success: false, message: "Conflict" }
     });
   });
 

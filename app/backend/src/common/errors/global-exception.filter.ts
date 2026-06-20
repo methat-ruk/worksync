@@ -11,22 +11,12 @@ import type { Response } from "express";
 
 import { Prisma } from "../../generated/prisma/client";
 import { CorrelationContextService } from "../../observability/correlation-context.service";
-
-type ErrorData = {
-  code?: string;
-  fields?: Record<string, string[]>;
-  correlationId?: string;
-};
-
-export type ApiErrorResponse = {
-  success: false;
-  message: string;
-  data?: ErrorData;
-};
+import { API_ERROR_CODE, isApiErrorCode } from "./api-error-code";
+import type { ApiErrorResponseDto } from "./api-error.dto";
 
 type NormalizedError = {
   status: number;
-  body: ApiErrorResponse;
+  body: ApiErrorResponseDto;
 };
 
 function validationFields(messages: string[]): Record<string, string[]> {
@@ -52,7 +42,7 @@ function normalizeHttpException(exception: HttpException): NormalizedError {
           success: false,
           message: "Validation failed",
           data: {
-            code: "VALIDATION_ERROR",
+            code: API_ERROR_CODE.VALIDATION_ERROR,
             fields: validationFields(messages)
           }
         }
@@ -64,7 +54,7 @@ function normalizeHttpException(exception: HttpException): NormalizedError {
     const details = response as { message?: unknown; code?: unknown };
     const message =
       typeof details.message === "string" ? details.message : exception.message;
-    const code = typeof details.code === "string" ? details.code : undefined;
+    const code = isApiErrorCode(details.code) ? details.code : undefined;
     return {
       status,
       body: {
@@ -96,7 +86,7 @@ export function normalizeException(exception: unknown): NormalizedError {
         body: {
           success: false,
           message: "A resource with the same unique value already exists",
-          data: { code: "RESOURCE_CONFLICT" }
+          data: { code: API_ERROR_CODE.RESOURCE_CONFLICT }
         }
       };
     }
@@ -107,7 +97,7 @@ export function normalizeException(exception: unknown): NormalizedError {
         body: {
           success: false,
           message: "Resource not found",
-          data: { code: "RESOURCE_NOT_FOUND" }
+          data: { code: API_ERROR_CODE.RESOURCE_NOT_FOUND }
         }
       };
     }
@@ -118,7 +108,7 @@ export function normalizeException(exception: unknown): NormalizedError {
     body: {
       success: false,
       message: "Internal server error",
-      data: { code: "INTERNAL_SERVER_ERROR" }
+      data: { code: API_ERROR_CODE.INTERNAL_SERVER_ERROR }
     }
   };
 }
@@ -138,7 +128,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       ...normalized.body.data,
       ...(correlationId ? { correlationId } : {})
     };
-    const body: ApiErrorResponse = {
+    const body: ApiErrorResponseDto = {
       ...normalized.body,
       ...(Object.keys(data).length > 0 ? { data } : {})
     };

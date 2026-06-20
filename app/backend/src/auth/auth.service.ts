@@ -8,6 +8,7 @@ import { PinoLogger } from "nestjs-pino";
 import { PrismaService } from "../database/prisma.service";
 import { Prisma } from "../generated/prisma/client";
 import { CorrelationContextService } from "../observability/correlation-context.service";
+import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import { AccessTokenService } from "./access-token.service";
 import type {
   AuthDataDto,
@@ -84,7 +85,7 @@ export class AuthService {
       ) {
         throw new ConflictException({
           message: "An account with this email already exists",
-          code: "AUTH_EMAIL_CONFLICT"
+          code: API_ERROR_CODE.AUTH_EMAIL_CONFLICT
         });
       }
 
@@ -118,7 +119,7 @@ export class AuthService {
       );
       throw new UnauthorizedException({
         message: "Invalid email or password",
-        code: "INVALID_CREDENTIALS"
+        code: API_ERROR_CODE.INVALID_CREDENTIALS
       });
     }
 

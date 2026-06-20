@@ -70,6 +70,10 @@ Errors should be useful without leaking internals:
 
 Do not expose stack traces, raw database errors, secrets, tokens, provider payloads, or internal infrastructure details.
 
+Public error codes must be registered in the shared backend error-code registry
+before use. Runtime normalization and Swagger documentation use the shared API
+error DTO so feature modules do not define competing error envelopes.
+
 Every HTTP response includes `x-correlation-id`. A valid incoming
 `x-correlation-id` is preserved; otherwise the backend generates one. Error
 responses include the same identifier in `data.correlationId` when request

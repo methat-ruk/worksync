@@ -1,0 +1,5 @@
+case "$(uname -s)" in
+  MINGW*|MSYS*) export PATH="/mingw64/bin:/usr/bin:$PATH" ;;
+esac
+
+corepack pnpm lint:staged

@@ -122,6 +122,7 @@ Default local URLs:
 | `pnpm dev` | Start frontend and backend in development mode |
 | `pnpm dev:frontend` | Start only the frontend |
 | `pnpm dev:backend` | Start only the backend |
+| `pnpm lint:staged` | Run ESLint on staged TypeScript files through the pre-commit hook |
 | `pnpm typecheck` | Run TypeScript checks across workspaces |
 | `pnpm lint` | Run frontend and backend lint checks |
 | `pnpm test` | Run configured test scripts |
@@ -137,6 +138,7 @@ Default local URLs:
 | `pnpm prisma:migrate` | Apply local Prisma migrations |
 | `pnpm validate:backend` | Run complete backend validation including artifact checks |
 | `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
+| `pnpm validate:push` | Run typecheck, lint, and backend unit tests through the pre-push hook |
 | `pnpm docker:up` | Start local PostgreSQL, Redis, and MinIO |
 | `pnpm docker:down` | Stop local Docker services |
 

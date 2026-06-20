@@ -1,6 +1,7 @@
 import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { PrismaHealthIndicator } from "@nestjs/terminus";
 
+import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import { PrismaService } from "../database/prisma.service";
 import type {
   HealthResponseDto,
@@ -40,7 +41,7 @@ export class HealthService {
     } catch {
       throw new ServiceUnavailableException({
         message: "Service is not ready",
-        code: "SERVICE_NOT_READY"
+        code: API_ERROR_CODE.SERVICE_NOT_READY
       });
     }
   }

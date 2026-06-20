@@ -5,6 +5,7 @@ import {
   UnauthorizedException
 } from "@nestjs/common";
 
+import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import { AccessTokenService } from "./access-token.service";
 import { AuthService } from "./auth.service";
 import type { AuthenticatedRequest } from "./auth.types";
@@ -22,7 +23,7 @@ export class AuthGuard implements CanActivate {
     if (!authorization) {
       throw new UnauthorizedException({
         message: "Authentication required",
-        code: "AUTHENTICATION_REQUIRED"
+        code: API_ERROR_CODE.AUTHENTICATION_REQUIRED
       });
     }
 
@@ -30,7 +31,7 @@ export class AuthGuard implements CanActivate {
     if (!match?.[1]) {
       throw new UnauthorizedException({
         message: "Invalid access token",
-        code: "INVALID_ACCESS_TOKEN"
+        code: API_ERROR_CODE.INVALID_ACCESS_TOKEN
       });
     }
 
@@ -39,7 +40,7 @@ export class AuthGuard implements CanActivate {
     if (!user) {
       throw new UnauthorizedException({
         message: "Invalid access token",
-        code: "INVALID_ACCESS_TOKEN"
+        code: API_ERROR_CODE.INVALID_ACCESS_TOKEN
       });
     }
 
@@ -47,4 +48,3 @@ export class AuthGuard implements CanActivate {
     return true;
   }
 }
-

@@ -19,12 +19,12 @@ import {
 } from "@nestjs/swagger";
 
 import {
-  AuthErrorResponseDto,
   AuthResponseDto,
   CurrentUserResponseDto,
   LoginRequestDto,
   SignUpRequestDto
 } from "./auth.dto";
+import { ApiErrorResponseDto } from "../common/errors/api-error.dto";
 import { AuthGuard } from "./auth.guard";
 import { AuthService } from "./auth.service";
 import { CurrentUser } from "./current-user.decorator";
@@ -40,11 +40,11 @@ export class AuthController {
   @ApiCreatedResponse({ type: AuthResponseDto })
   @ApiBadRequestResponse({
     description: "Request validation failed",
-    type: AuthErrorResponseDto
+    type: ApiErrorResponseDto
   })
   @ApiConflictResponse({
     description: "The normalized email is already registered",
-    type: AuthErrorResponseDto
+    type: ApiErrorResponseDto
   })
   async signUp(@Body() input: SignUpRequestDto): Promise<AuthResponseDto> {
     return {
@@ -60,11 +60,11 @@ export class AuthController {
   @ApiOkResponse({ type: AuthResponseDto })
   @ApiBadRequestResponse({
     description: "Request validation failed",
-    type: AuthErrorResponseDto
+    type: ApiErrorResponseDto
   })
   @ApiUnauthorizedResponse({
     description: "Invalid email or password",
-    type: AuthErrorResponseDto
+    type: ApiErrorResponseDto
   })
   async login(@Body() input: LoginRequestDto): Promise<AuthResponseDto> {
     return {
@@ -81,7 +81,7 @@ export class AuthController {
   @ApiOkResponse({ type: CurrentUserResponseDto })
   @ApiUnauthorizedResponse({
     description: "A valid JWT access token is required",
-    type: AuthErrorResponseDto
+    type: ApiErrorResponseDto
   })
   getCurrentUser(
     @CurrentUser() user: PublicUser
@@ -89,4 +89,3 @@ export class AuthController {
     return { success: true, data: { user } };
   }
 }
-

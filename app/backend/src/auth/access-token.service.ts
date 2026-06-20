@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 
+import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import type { Environment } from "../config/environment";
 import type { AccessTokenPayload } from "./auth.types";
 
@@ -51,9 +52,8 @@ export class AccessTokenService {
     } catch {
       throw new UnauthorizedException({
         message: "Invalid access token",
-        code: "INVALID_ACCESS_TOKEN"
+        code: API_ERROR_CODE.INVALID_ACCESS_TOKEN
       });
     }
   }
 }
-

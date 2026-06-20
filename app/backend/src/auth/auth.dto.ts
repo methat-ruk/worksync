@@ -118,33 +118,3 @@ export class CurrentUserResponseDto {
   @ApiProperty({ type: CurrentUserDataDto })
   data!: CurrentUserDataDto;
 }
-
-class AuthErrorDataDto {
-  @ApiProperty({ example: "INVALID_CREDENTIALS", required: false })
-  code?: string;
-
-  @ApiProperty({
-    example: { email: ["email must be an email"] },
-    required: false,
-    type: Object,
-    additionalProperties: { type: "array", items: { type: "string" } }
-  })
-  fields?: Record<string, string[]>;
-
-  @ApiProperty({
-    example: "0f877824-8e57-45ef-b2e0-c10ee9d2e022",
-    required: false
-  })
-  correlationId?: string;
-}
-
-export class AuthErrorResponseDto {
-  @ApiProperty({ example: false, enum: [false] })
-  success!: false;
-
-  @ApiProperty({ example: "Invalid email or password" })
-  message!: string;
-
-  @ApiProperty({ type: AuthErrorDataDto, required: false })
-  data?: AuthErrorDataDto;
-}

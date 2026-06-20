@@ -126,8 +126,38 @@ describe("authentication API contract", () => {
         "401": expect.any(Object)
       }
     });
+    expect(
+      document.paths["/api/auth/login"]?.post?.responses?.["401"]
+    ).toMatchObject({
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/ApiErrorResponseDto" }
+        }
+      }
+    });
+    expect(document.paths["/health/ready"]?.get?.responses?.["503"]).toMatchObject({
+      content: {
+        "application/json": {
+          schema: { $ref: "#/components/schemas/ApiErrorResponseDto" }
+        }
+      }
+    });
     expect(document.components?.schemas).toHaveProperty("SignUpRequestDto");
     expect(document.components?.schemas).toHaveProperty("AuthResponseDto");
-    expect(document.components?.schemas).toHaveProperty("AuthErrorResponseDto");
+    expect(document.components?.schemas).toHaveProperty("ApiErrorResponseDto");
+    expect(document.components?.schemas).toHaveProperty("ApiErrorDataDto");
+    const errorDataSchema = document.components?.schemas?.ApiErrorDataDto;
+    if (!errorDataSchema || "$ref" in errorDataSchema) {
+      throw new Error("ApiErrorDataDto must be an inline OpenAPI schema");
+    }
+    expect(errorDataSchema.properties?.code).toMatchObject({
+      enum: expect.arrayContaining([
+        "AUTH_EMAIL_CONFLICT",
+        "AUTHENTICATION_REQUIRED",
+        "INVALID_ACCESS_TOKEN",
+        "INVALID_CREDENTIALS",
+        "VALIDATION_ERROR"
+      ])
+    });
   });
 });

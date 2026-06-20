@@ -37,6 +37,17 @@ pnpm dev
 | Dependency audit | `pnpm audit --prod --audit-level moderate` | Fail on moderate-, high-, or critical-severity production dependency findings |
 | Docker services | `pnpm docker:up` | Start local PostgreSQL, Redis, and S3-compatible storage |
 
+## Validation Layers
+
+| Layer | Command or trigger | Scope |
+|---|---|---|
+| Local targeted validation | Repository scripts selected for the changed surface | Fast feedback while implementing |
+| Pre-commit hook | `pnpm lint:staged` | ESLint on staged backend and frontend TypeScript files |
+| Pre-push hook | `pnpm validate:push` | Typecheck, lint, and backend unit tests |
+| CI | Pull requests and pushes to `main` | Database migrations, complete backend validation, frontend validation, build artifacts, and dependency audit |
+
+Git hooks provide local feedback and can be bypassed. CI remains the authoritative merge gate.
+
 ## Current Limitations
 
 - Frontend tests remain a placeholder until the frontend test harness is configured.
