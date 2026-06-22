@@ -19,11 +19,12 @@ Already in place:
 - local service topology for PostgreSQL, Redis, and S3-compatible storage
 - CI workflow and repository validation commands
 - password authentication with persisted session lifecycle, refresh rotation, and logout controls
+- backend Google OAuth login with PKCE, safe identity linking, and the existing session lifecycle
 - product, domain, API, security, testing, deployment, and workflow documentation
 
 Not complete yet:
 
-- Google OAuth and workspace membership implementation
+- workspace membership implementation
 - RBAC and workspace isolation enforcement
 - production Docker images and deployment pipeline
 - frontend test harness and browser E2E coverage
@@ -188,12 +189,13 @@ docker compose -f docker/compose.yml config
 - [Validation Matrix](docs/validation-matrix.md)
 - [Development Workflow](docs/development-workflow.md)
 - [Project Setup](docs/project-setup.md)
+- [Google OAuth Setup](docs/google-oauth-setup.md)
 - [Technology and Dependency Inventory](docs/technology-stack.md)
 - [WorkSync Project Profile](references/worksync/profile.md)
 
 ## Current Priorities
 
-1. Add Google OAuth through the existing authentication session lifecycle.
+1. Add the frontend auth client, Google button, and callback handling.
 2. Implement workspace membership, RBAC guards, and workspace isolation.
 3. Implement projects, tasks, comments, mentions, notifications, and activity logs.
 4. Add the frontend test harness and browser E2E coverage.

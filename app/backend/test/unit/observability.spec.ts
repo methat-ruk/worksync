@@ -17,6 +17,7 @@ describe("createPinoHttpOptions", () => {
       expect.arrayContaining([
         "req.headers.authorization",
         "req.headers.cookie",
+        "res.headers.location",
         "*.password",
         "*.passwordHash",
         "*.accessToken",
@@ -29,6 +30,49 @@ describe("createPinoHttpOptions", () => {
     expect(options.redact.censor).toBe("[REDACTED]");
     expect(options).not.toHaveProperty("serializers.req.body");
     expect(options).not.toHaveProperty("serializers.res.body");
+  });
+
+  it("removes Google callback material and redirect locations from logs", () => {
+    let output = "";
+    const destination = new Writable({
+      write(chunk, _encoding, callback) {
+        output += chunk.toString();
+        callback();
+      }
+    });
+    const config = new ConfigService<Environment, true>({
+      LOG_LEVEL: "info"
+    });
+    const options = createPinoHttpOptions(config);
+    const logger = pino(
+      {
+        redact: options.redact,
+        serializers: options.serializers
+      },
+      destination
+    );
+
+    logger.info({
+      req: {
+        method: "GET",
+        originalUrl:
+          "/api/auth/google/callback?code=secret-code&state=secret-state",
+        query: { code: "secret-code", state: "secret-state" },
+        headers: {}
+      },
+      res: {
+        headers: {
+          location:
+            "https://accounts.google.com/o/oauth2/v2/auth?state=secret-state&nonce=secret-nonce"
+        }
+      }
+    });
+
+    expect(output).toContain("/api/auth/google/callback");
+    expect(output).toContain("[REDACTED]");
+    expect(output).not.toContain("secret-code");
+    expect(output).not.toContain("secret-state");
+    expect(output).not.toContain("secret-nonce");
   });
 
   it("removes bearer tokens, passwords, and password hashes from emitted logs", () => {

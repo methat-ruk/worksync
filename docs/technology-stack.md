@@ -56,10 +56,12 @@ real frontend test harness remain future work.
 | `@nestjs/jwt` | Active | Access and refresh JWT handling |
 | PostgreSQL auth sessions | Active | Rotation, replay detection, revocation, and logout |
 | HttpOnly refresh cookie | Active | Browser refresh-token transport |
-| Google OAuth | Planned, not installed | Next authentication provider |
+| Google OAuth / OpenID Connect | Active backend flow | Authorization Code + PKCE identity provider |
+| google-auth-library | Active | Google ID-token signature and claim verification |
 
-Google OAuth must reuse the existing session issuance and lifecycle boundary
-rather than create a second token or cookie system.
+Google OAuth reuses the existing session issuance and lifecycle boundary rather
+than creating a second token or cookie system. Frontend Google UI remains
+future work.
 
 ## Persistence
 

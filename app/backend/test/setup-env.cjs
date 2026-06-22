@@ -8,6 +8,7 @@ require("dotenv").config({
 
 process.env.NODE_ENV = "test";
 process.env.PORT = "4001";
+process.env.FRONTEND_URL = "http://localhost:3000";
 process.env.CORS_ORIGIN = "http://localhost:3000";
 process.env.DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
@@ -21,3 +22,9 @@ process.env.JWT_REFRESH_SECRET =
 process.env.JWT_REFRESH_EXPIRES_IN = "30d";
 process.env.COOKIE_SECURE = "false";
 process.env.COOKIE_DOMAIN = "";
+process.env.GOOGLE_OAUTH_ENABLED = "true";
+process.env.GOOGLE_OAUTH_CLIENT_ID = "test-google-client-id";
+process.env.GOOGLE_OAUTH_CLIENT_SECRET = "test-google-client-secret";
+process.env.GOOGLE_OAUTH_REDIRECT_URI =
+  "http://localhost:4001/api/auth/google/callback";
+process.env.GOOGLE_OAUTH_TOKEN_TIMEOUT_MS = "5000";

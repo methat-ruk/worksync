@@ -16,6 +16,24 @@ function refreshCookie(response: request.Response): string {
   return cookie.split(";")[0]!;
 }
 
+function googleTransaction(response: request.Response): {
+  cookie: string;
+  state: string;
+} {
+  const header = response.headers["set-cookie"];
+  const cookies = (Array.isArray(header) ? header : header ? [header] : [])
+    .filter((value) => value.startsWith("worksync_google_oauth_"));
+  const location = response.headers.location as string | undefined;
+  const state = location ? new URL(location).searchParams.get("state") : null;
+  if (cookies.length !== 3 || !state) {
+    throw new Error("Expected Google OAuth transaction");
+  }
+  return {
+    cookie: cookies.map((value) => value.split(";")[0]!).join("; "),
+    state
+  };
+}
+
 describe("authentication security controls", () => {
   let context: AuthTestContext;
   let app: INestApplication;
@@ -24,7 +42,13 @@ describe("authentication security controls", () => {
   let sessionId: string;
 
   beforeAll(async () => {
-    context = await createAuthTestApp();
+    context = await createAuthTestApp({
+      googleProfile: {
+        subject: "google-security-subject",
+        email: "google.security@gmail.com",
+        displayName: "Google Security"
+      }
+    });
     app = context.app;
     const signup = await request(app.getHttpServer())
       .post("/api/auth/signup")
@@ -291,5 +315,74 @@ describe("authentication security controls", () => {
         .expect(401);
       expect(response.body.data.code).toBe("INVALID_REFRESH_TOKEN");
     }
+  });
+
+  it("rejects mismatched Google state before provider authentication", async () => {
+    const start = await request(app.getHttpServer())
+      .get("/api/auth/google")
+      .expect(302);
+    const transaction = googleTransaction(start);
+    const response = await request(app.getHttpServer())
+      .get("/api/auth/google/callback")
+      .query({ code: "state-secret-code", state: "attacker-state" })
+      .set("cookie", transaction.cookie)
+      .expect(303);
+
+    expect(response.headers.location).toBe(
+      "http://localhost:3000/?auth=google-error&code=GOOGLE_LOGIN_FAILED"
+    );
+    expect(response.headers.location).not.toContain("state-secret-code");
+    const cleared = response.headers["set-cookie"] as string[] | undefined;
+    expect(cleared).toHaveLength(3);
+    for (const cookie of cleared ?? []) {
+      expect(cookie).toContain("Expires=Thu, 01 Jan 1970");
+      expect(cookie).toContain("Path=/api/auth/google/callback");
+    }
+  });
+
+  it("maps Google authorization-code replay to the same generic redirect", async () => {
+    const start = await request(app.getHttpServer())
+      .get("/api/auth/google")
+      .expect(302);
+    const transaction = googleTransaction(start);
+    const first = await request(app.getHttpServer())
+      .get("/api/auth/google/callback")
+      .query({ code: "single-use-code", state: transaction.state })
+      .set("cookie", transaction.cookie)
+      .expect(303);
+    expect(first.headers.location).toBe(
+      "http://localhost:3000/?auth=google-success"
+    );
+
+    const replay = await request(app.getHttpServer())
+      .get("/api/auth/google/callback")
+      .query({ code: "single-use-code", state: transaction.state })
+      .set("cookie", transaction.cookie)
+      .expect(303);
+    expect(replay.headers.location).toBe(
+      "http://localhost:3000/?auth=google-error&code=GOOGLE_LOGIN_FAILED"
+    );
+  });
+
+  it("never exposes Google transaction or provider material in redirects", async () => {
+    const start = await request(app.getHttpServer())
+      .get("/api/auth/google")
+      .expect(302);
+    const transaction = googleTransaction(start);
+    const failure = await request(app.getHttpServer())
+      .get("/api/auth/google/callback")
+      .query({
+        error: "provider_specific_failure",
+        error_description: "provider-secret-description",
+        state: transaction.state
+      })
+      .set("cookie", transaction.cookie)
+      .expect(303);
+
+    expect(failure.headers.location).toBe(
+      "http://localhost:3000/?auth=google-error&code=GOOGLE_LOGIN_FAILED"
+    );
+    expect(failure.headers.location).not.toContain("provider");
+    expect(failure.headers.location).not.toContain(transaction.state);
   });
 });

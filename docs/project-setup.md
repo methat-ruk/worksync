@@ -63,6 +63,9 @@ bytes. Keep `COOKIE_SECURE=false` only for local HTTP development.
 
 Never commit `.env` or `.env.local` files.
 
+Google OAuth is disabled by default for local development. Follow
+`docs/google-oauth-setup.md` when enabling it.
+
 ## 4. Start Local Infrastructure
 
 ```bash

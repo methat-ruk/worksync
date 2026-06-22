@@ -30,9 +30,9 @@ following `docs/project-setup.md`.
 | Lint | `pnpm lint` | Enforce static quality and framework rules |
 | Test | `pnpm test` | Run configured automated tests |
 | Backend unit tests | `pnpm --filter @worksync/backend test:unit` | Validate configuration, errors, correlation, logging policy, and health logic |
-| Backend integration tests | `pnpm --filter @worksync/backend test:integration` | Validate Prisma lifecycle and PostgreSQL connectivity through `TEST_DATABASE_URL` |
+| Backend integration tests | `pnpm --filter @worksync/backend test:integration` | Validate Prisma lifecycle, PostgreSQL connectivity, Google identity linking, transaction rollback, and uniqueness races |
 | Backend contract tests | `pnpm --filter @worksync/backend test:contract` | Validate API envelopes, status codes, DTO validation, and Swagger/OpenAPI contracts |
-| Backend security tests | `pnpm --filter @worksync/backend test:security` | Validate access/refresh rejection, rotation and reuse handling, session revocation, generic credential failures, and sensitive-data handling |
+| Backend security tests | `pnpm --filter @worksync/backend test:security` | Validate access/refresh controls plus Google state, replay, generic failure, and sensitive-data handling |
 | Backend API tests | `pnpm --filter @worksync/backend test:e2e` | Validate health, readiness, error, validation, correlation, and route-prefix contracts |
 | Build | `pnpm build` | Produce frontend and backend build artifacts |
 | Prisma generate | `pnpm prisma:generate` | Validate Prisma schema and generated client |
@@ -63,7 +63,7 @@ PostgreSQL integration project passes rather than skips.
 
 ## Next Validation Upgrades
 
-1. Add Google OAuth contract, integration, and security tests.
+1. Add frontend Google OAuth callback and Playwright browser coverage.
 2. Add Playwright E2E smoke tests for authentication and task flows.
 3. Add security isolation tests for workspace boundaries and RBAC.
 4. Add Docker image builds when runtime Dockerfiles are introduced.

@@ -10,11 +10,35 @@ import { REFRESH_TOKEN_COOKIE } from "../../src/auth/services/session-cookie.ser
 
 function getRefreshCookie(response: request.Response): string {
   const header = response.headers["set-cookie"];
-  const cookie = Array.isArray(header) ? header[0] : header;
+  const cookies = Array.isArray(header) ? header : header ? [header] : [];
+  const cookie = cookies.find((value) =>
+    value.startsWith(`${REFRESH_TOKEN_COOKIE}=`)
+  );
   if (!cookie) {
     throw new Error("Expected refresh-token cookie");
   }
   return cookie.split(";")[0]!;
+}
+
+function googleTransaction(response: request.Response): {
+  cookie: string;
+  state: string;
+} {
+  const header = response.headers["set-cookie"];
+  const cookies = (Array.isArray(header) ? header : header ? [header] : [])
+    .filter((value) => value.startsWith("worksync_google_oauth_"));
+  const location = response.headers.location as string | undefined;
+  if (cookies.length !== 3 || !location) {
+    throw new Error("Expected Google OAuth transaction");
+  }
+  const state = new URL(location).searchParams.get("state");
+  if (!state) {
+    throw new Error("Expected OAuth state");
+  }
+  return {
+    cookie: cookies.map((value) => value.split(";")[0]!).join("; "),
+    state
+  };
 }
 
 describe("authentication API contract", () => {
@@ -22,7 +46,13 @@ describe("authentication API contract", () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    context = await createAuthTestApp();
+    context = await createAuthTestApp({
+      googleProfile: {
+        subject: "google-contract-subject",
+        email: "google.contract@gmail.com",
+        displayName: "Google Contract"
+      }
+    });
     app = context.app;
   });
 
@@ -172,6 +202,77 @@ describe("authentication API contract", () => {
     );
   });
 
+  it("starts Google OAuth with redirect and callback-scoped transaction cookies", async () => {
+    const response = await request(app.getHttpServer())
+      .get("/api/auth/google")
+      .expect(302);
+    const transaction = googleTransaction(response);
+
+    expect(response.headers.location).toContain(
+      "https://accounts.google.test/authorize"
+    );
+    expect(transaction.state).toEqual(expect.any(String));
+    const setCookies = response.headers["set-cookie"];
+    for (const cookie of Array.isArray(setCookies)
+      ? setCookies
+      : setCookies
+        ? [setCookies]
+        : []) {
+      expect(cookie).toContain("HttpOnly");
+      expect(cookie).toContain("SameSite=Lax");
+      expect(cookie).toContain("Path=/api/auth/google/callback");
+      expect(cookie).toContain("Max-Age=600");
+    }
+  });
+
+  it("completes Google OAuth through a generic frontend redirect and refresh cookie", async () => {
+    const start = await request(app.getHttpServer())
+      .get("/api/auth/google")
+      .expect(302);
+    const transaction = googleTransaction(start);
+    const callback = await request(app.getHttpServer())
+      .get("/api/auth/google/callback")
+      .query({ code: "authorization-code", state: transaction.state })
+      .set("cookie", transaction.cookie)
+      .expect(303);
+
+    expect(callback.headers.location).toBe(
+      "http://localhost:3000/?auth=google-success"
+    );
+    expect(getRefreshCookie(callback)).toContain(REFRESH_TOKEN_COOKIE);
+    expect(callback.headers.location).not.toContain("token");
+    expect(callback.headers.location).not.toContain("email");
+  });
+
+  it("redirects cancellation and callback failures without provider details", async () => {
+    const cancelledStart = await request(app.getHttpServer())
+      .get("/api/auth/google")
+      .expect(302);
+    const cancelledTransaction = googleTransaction(cancelledStart);
+    const cancelled = await request(app.getHttpServer())
+      .get("/api/auth/google/callback")
+      .query({
+        error: "access_denied",
+        error_description: "sensitive provider description",
+        state: cancelledTransaction.state
+      })
+      .set("cookie", cancelledTransaction.cookie)
+      .expect(303);
+    expect(cancelled.headers.location).toBe(
+      "http://localhost:3000/?auth=google-cancelled"
+    );
+
+    const failed = await request(app.getHttpServer())
+      .get("/api/auth/google/callback")
+      .query({ code: "secret-code", state: "wrong-state" })
+      .expect(303);
+    expect(failed.headers.location).toBe(
+      "http://localhost:3000/?auth=google-error&code=GOOGLE_LOGIN_FAILED"
+    );
+    expect(failed.headers.location).not.toContain("secret-code");
+    expect(failed.headers.location).not.toContain("sensitive");
+  });
+
   it("documents auth requests, responses, bearer security, and errors", () => {
     const config = new DocumentBuilder()
       .setTitle("WorkSync API")
@@ -200,6 +301,16 @@ describe("authentication API contract", () => {
       "200": expect.any(Object),
       "400": expect.any(Object),
       "401": expect.any(Object)
+    });
+    expect(document.paths["/api/auth/google"]?.get?.responses).toMatchObject({
+      "302": expect.any(Object),
+      "503": expect.any(Object)
+    });
+    expect(
+      document.paths["/api/auth/google/callback"]?.get?.responses
+    ).toMatchObject({
+      "303": expect.any(Object),
+      "503": expect.any(Object)
     });
     expect(document.paths["/api/auth/me"]?.get).toMatchObject({
       security: [{ "access-token": [] }],
@@ -259,6 +370,8 @@ describe("authentication API contract", () => {
       enum: expect.arrayContaining([
         "AUTH_EMAIL_CONFLICT",
         "AUTHENTICATION_REQUIRED",
+        "GOOGLE_LOGIN_FAILED",
+        "GOOGLE_OAUTH_NOT_CONFIGURED",
         "INVALID_ACCESS_TOKEN",
         "INVALID_CREDENTIALS",
         "VALIDATION_ERROR"
