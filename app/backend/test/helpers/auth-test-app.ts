@@ -5,11 +5,16 @@ import { AppModule } from "../../src/app.module";
 import { PrismaService } from "../../src/database/prisma.service";
 import {
   Prisma,
+  type AuthIdentity,
+  type AuthProvider,
   type AuthSession,
   type User
 } from "../../src/generated/prisma/client";
+import { GoogleOAuthProviderService } from "../../src/auth/services/google-oauth-provider.service";
+import type { GoogleIdentityProfile } from "../../src/auth/types/google-oauth.types";
 import type { PublicUser } from "../../src/auth/types/auth.types";
 import { configureApplication } from "../../src/main";
+import { createGoogleOAuthTestHarness } from "./google-oauth-test-harness";
 
 type StoredUser = User;
 
@@ -25,11 +30,20 @@ function publicUser(user: StoredUser): PublicUser {
 
 export type AuthTestContext = {
   app: INestApplication;
+  identities: Map<string, AuthIdentity>;
   users: Map<string, StoredUser>;
   sessions: Map<string, AuthSession>;
 };
 
-export async function createAuthTestApp(): Promise<AuthTestContext> {
+export type AuthTestOptions = {
+  googleProfile?: GoogleIdentityProfile;
+  googleFailure?: Error;
+};
+
+export async function createAuthTestApp(
+  options: AuthTestOptions = {}
+): Promise<AuthTestContext> {
+  const identities = new Map<string, AuthIdentity>();
   const users = new Map<string, StoredUser>();
   const sessions = new Map<string, AuthSession>();
   let sequence = 0;
@@ -142,6 +156,92 @@ export async function createAuthTestApp(): Promise<AuthTestContext> {
         }
       )
     },
+    authIdentity: {
+      findUnique: jest.fn(
+        ({
+          where
+        }: {
+          where: {
+            provider_providerSubject: {
+              provider: AuthProvider;
+              providerSubject: string;
+            };
+          };
+        }) => {
+          const identity = [...identities.values()].find(
+            (candidate) =>
+              candidate.provider ===
+                where.provider_providerSubject.provider &&
+              candidate.providerSubject ===
+                where.provider_providerSubject.providerSubject
+          );
+          if (!identity) {
+            return null;
+          }
+          const user = users.get(identity.userId);
+          return user ? { ...identity, user } : null;
+        }
+      ),
+      update: jest.fn(
+        ({
+          where,
+          data
+        }: {
+          where: { id: string };
+          data: { providerEmail: string };
+        }) => {
+          const identity = identities.get(where.id);
+          if (!identity) {
+            throw new Error("Identity not found");
+          }
+          const updated = {
+            ...identity,
+            ...data,
+            updatedAt: new Date()
+          };
+          identities.set(updated.id, updated);
+          return updated;
+        }
+      ),
+      create: jest.fn(
+        ({
+          data
+        }: {
+          data: {
+            userId: string;
+            provider: AuthProvider;
+            providerSubject: string;
+            providerEmail: string;
+          };
+        }) => {
+          const duplicate = [...identities.values()].some(
+            (identity) =>
+              (identity.provider === data.provider &&
+                identity.providerSubject === data.providerSubject) ||
+              (identity.userId === data.userId &&
+                identity.provider === data.provider)
+          );
+          if (duplicate) {
+            throw new Prisma.PrismaClientKnownRequestError(
+              "Unique constraint failed",
+              {
+                code: "P2002",
+                clientVersion: "7.8.0"
+              }
+            );
+          }
+          const now = new Date();
+          const identity: AuthIdentity = {
+            id: `identity-${++sequence}`,
+            ...data,
+            createdAt: now,
+            updatedAt: now
+          };
+          identities.set(identity.id, identity);
+          return identity;
+        }
+      )
+    },
     user: {
       create: jest.fn(
         ({
@@ -150,7 +250,7 @@ export async function createAuthTestApp(): Promise<AuthTestContext> {
           data: {
             email: string;
             displayName: string;
-            passwordHash: string;
+            passwordHash: string | null;
           };
         }) => {
           if ([...users.values()].some((user) => user.email === data.email)) {
@@ -201,16 +301,23 @@ export async function createAuthTestApp(): Promise<AuthTestContext> {
     )
   });
 
-  const moduleRef = await Test.createTestingModule({
+  const googleHarness = createGoogleOAuthTestHarness({
+    profile: options.googleProfile,
+    failure: options.googleFailure
+  });
+  const moduleBuilder = Test.createTestingModule({
     imports: [AppModule]
-  })
-    .overrideProvider(PrismaService)
-    .useValue(prisma)
-    .compile();
+  }).overrideProvider(PrismaService).useValue(prisma);
+  if (options.googleProfile || options.googleFailure) {
+    moduleBuilder
+      .overrideProvider(GoogleOAuthProviderService)
+      .useValue(googleHarness.provider);
+  }
+  const moduleRef = await moduleBuilder.compile();
 
   const app = moduleRef.createNestApplication();
   configureApplication(app);
   await app.init();
 
-  return { app, users, sessions };
+  return { app, identities, users, sessions };
 }

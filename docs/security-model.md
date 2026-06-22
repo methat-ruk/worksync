@@ -55,6 +55,19 @@ Required controls:
 - avoid storing tokens in logs, telemetry, screenshots, or errors
 - define token lifetimes before production
 
+Google OAuth controls:
+
+- use Authorization Code flow with PKCE, state, and OpenID Connect nonce
+- keep state, nonce, and verifier in short-lived scoped HttpOnly cookies
+- validate ID-token signature, issuer, audience, expiry, nonce, subject, email,
+  and `email_verified`
+- use Google `sub` as provider identity; never use email as the provider key
+- store only minimum provider identity metadata, never Google tokens
+- auto-link existing users only when Google is authoritative for the email
+- use a bounded timeout for the provider token exchange
+- clear transaction cookies on every callback outcome
+- return only generic frontend callback failures and structured secret-free logs
+
 ## Authorization Model
 
 Roles:

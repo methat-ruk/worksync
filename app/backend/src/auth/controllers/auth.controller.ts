@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
   Res,
   UnauthorizedException,
@@ -17,8 +18,12 @@ import {
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
+  ApiFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
+  ApiSeeOtherResponse,
+  ApiServiceUnavailableResponse,
   ApiTags,
   ApiUnauthorizedResponse
 } from "@nestjs/swagger";
@@ -34,9 +39,12 @@ import {
   SignUpRequestDto
 } from "../dto/auth.dto";
 import { CurrentUser } from "../decorators/current-user.decorator";
+import { GoogleOAuthError } from "../errors/google-oauth.error";
 import { AuthGuard } from "../guards/auth.guard";
 import { AuthOriginGuard } from "../guards/auth-origin.guard";
 import { AuthService } from "../services/auth.service";
+import { GoogleOAuthService } from "../services/google-oauth.service";
+import { GoogleOAuthTransactionService } from "../services/google-oauth-transaction.service";
 import { SessionCookieService } from "../services/session-cookie.service";
 import { SessionService } from "../services/session.service";
 import type { PublicUser } from "../types/auth.types";
@@ -55,8 +63,97 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly sessions: SessionService,
-    private readonly cookies: SessionCookieService
+    private readonly cookies: SessionCookieService,
+    private readonly googleOAuth: GoogleOAuthService,
+    private readonly googleTransactions: GoogleOAuthTransactionService
   ) {}
+
+  @Get("google")
+  @ApiOperation({ summary: "Start Google OAuth login" })
+  @ApiFoundResponse({
+    description: "Redirects the browser to Google authorization"
+  })
+  @ApiServiceUnavailableResponse({
+    description: "Google OAuth is disabled or not configured",
+    type: ApiErrorResponseDto
+  })
+  googleLogin(
+    @Res() response: Response
+  ): void {
+    const start = this.googleOAuth.begin();
+    this.googleTransactions.set(response, start.transaction);
+    response.redirect(HttpStatus.FOUND, start.authorizationUrl);
+  }
+
+  @Get("google/callback")
+  @ApiOperation({ summary: "Complete Google OAuth login" })
+  @ApiQuery({ name: "code", required: false, type: String })
+  @ApiQuery({ name: "state", required: false, type: String })
+  @ApiQuery({ name: "error", required: false, type: String })
+  @ApiSeeOtherResponse({
+    description:
+      "Sets the refresh cookie on success and redirects to the frontend with a generic status"
+  })
+  @ApiServiceUnavailableResponse({
+    description: "Google OAuth is disabled or not configured",
+    type: ApiErrorResponseDto
+  })
+  async googleCallback(
+    @Query("code") code: string | undefined,
+    @Query("state") state: string | undefined,
+    @Query("error") providerError: string | undefined,
+    @Req() request: Request,
+    @Res() response: Response
+  ): Promise<void> {
+    this.googleOAuth.ensureEnabled();
+    const transaction = this.googleTransactions.read(request.headers.cookie);
+    this.googleTransactions.clear(response);
+
+    if (providerError) {
+      try {
+        this.googleOAuth.validateState(state, transaction);
+        if (providerError === "access_denied") {
+          response.redirect(
+            HttpStatus.SEE_OTHER,
+            this.googleOAuth.cancelledRedirect()
+          );
+          return;
+        }
+        throw new GoogleOAuthError("PROVIDER_ERROR");
+      } catch (error: unknown) {
+        this.googleOAuth.logFailure(error);
+        response.redirect(
+          HttpStatus.SEE_OTHER,
+          this.googleOAuth.failureRedirect()
+        );
+        return;
+      }
+    }
+
+    try {
+      const authentication = await this.googleOAuth.complete(
+        code,
+        state,
+        transaction,
+        request.headers["user-agent"]
+      );
+      this.cookies.set(
+        response,
+        authentication.refreshToken,
+        authentication.refreshExpiresAt
+      );
+      response.redirect(
+        HttpStatus.SEE_OTHER,
+        this.googleOAuth.successRedirect()
+      );
+    } catch (error: unknown) {
+      this.googleOAuth.logFailure(error);
+      response.redirect(
+        HttpStatus.SEE_OTHER,
+        this.googleOAuth.failureRedirect()
+      );
+    }
+  }
 
   @Post("signup")
   @UseGuards(AuthOriginGuard)

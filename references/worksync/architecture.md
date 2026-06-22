@@ -29,6 +29,11 @@ Follow the existing structure. Do not move files, restructure modules, or introd
 - Session lifetime is absolute; do not silently convert it to sliding expiration.
 - Cookie-authenticated refresh and logout commands require the configured request-origin protection.
 - Password and external-provider authentication issue sessions through the same session boundary; provider-only users may have no password hash.
+- Google identities are keyed by provider subject in PostgreSQL and store only
+  minimum identity metadata. Google tokens are not persisted.
+- Gmail and Google Workspace identities may link to an existing normalized
+  email; third-party Google email collisions require a future explicit linking
+  flow.
 - Roles are OWNER, ADMIN, MEMBER, and VIEWER.
 - Enforce role checks, resource ownership, and workspace isolation in trusted backend boundaries.
 - Frontend restrictions are not authorization.

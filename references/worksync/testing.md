@@ -53,6 +53,11 @@ WorkSync risk is concentrated in:
 
 Prefer integration, contract, end-to-end, and security isolation tests over a large number of low-value unit tests.
 
+Maintain one reusable Google OAuth provider harness for deterministic profiles,
+provider failures, single-use authorization codes, and callback transactions.
+Reuse it across contract, security, and integration suites rather than creating
+independent provider semantics in each suite.
+
 ## Unit Tests
 
 Use unit tests for isolated deterministic logic:
@@ -71,6 +76,9 @@ Do not use unit tests as proof of authorization, persistence, queue, or realtime
 Prioritize:
 
 - login, refresh, logout, and token invalidation
+- Google OAuth state, nonce, PKCE, verified claims, identity creation, safe
+  linking, rejected unsafe linking, callback redirects, provider timeout, and
+  transaction rollback
 - refresh rotation against real PostgreSQL persistence
 - concurrent refresh where one request succeeds, the competing request is rejected, and the affected session is revoked
 - signup transaction rollback so user and initial session cannot partially commit
@@ -143,6 +151,8 @@ High-value security checks:
 - access tokens are rejected after their persisted session is revoked
 - refresh and logout reject untrusted origins and set or clear cookies with the required attributes
 - password login treats provider-only users as the same public invalid-credentials failure
+- Google callbacks reject state mismatch, replayed codes, invalid claims, and
+  non-authoritative email collisions without exposing provider material
 - sensitive data does not appear in browser storage, logs, telemetry, errors, or public file responses
 
 Browser checks supplement backend security tests; they do not prove backend authorization by themselves.

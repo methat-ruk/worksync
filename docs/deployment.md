@@ -48,6 +48,7 @@ Required categories:
 - object storage credentials and bucket
 - CORS and cookie settings
 - email/provider settings when enabled
+- Google OAuth client ID, client secret, exact callback URI, and token-exchange timeout
 - observability settings
 
 See `.env.example` for initial variable names.

@@ -15,6 +15,7 @@ export type LogLevel = (typeof LOG_LEVEL_VALUES)[number];
 export type Environment = {
   NODE_ENV: NodeEnvironment;
   PORT: number;
+  FRONTEND_URL: string;
   CORS_ORIGIN: string;
   DATABASE_URL: string;
   LOG_LEVEL: LogLevel;
@@ -24,6 +25,11 @@ export type Environment = {
   JWT_REFRESH_EXPIRES_IN: number;
   COOKIE_SECURE: boolean;
   COOKIE_DOMAIN?: string;
+  GOOGLE_OAUTH_ENABLED: boolean;
+  GOOGLE_OAUTH_CLIENT_ID?: string;
+  GOOGLE_OAUTH_CLIENT_SECRET?: string;
+  GOOGLE_OAUTH_REDIRECT_URI?: string;
+  GOOGLE_OAUTH_TOKEN_TIMEOUT_MS?: number;
   EMAIL_PROVIDER?: string;
   EMAIL_API_KEY?: string;
 };
@@ -104,6 +110,26 @@ function parseBoolean(value: string, key: string): boolean {
   throw new Error(`Environment variable ${key} must be true or false`);
 }
 
+function parsePositiveInteger(
+  value: string,
+  key: string,
+  maximum?: number
+): number {
+  const parsed = Number(value);
+  if (
+    !Number.isSafeInteger(parsed) ||
+    parsed <= 0 ||
+    (maximum !== undefined && parsed > maximum)
+  ) {
+    throw new Error(
+      `Environment variable ${key} must be a positive integer${
+        maximum === undefined ? "" : ` no greater than ${maximum}`
+      }`
+    );
+  }
+  return parsed;
+}
+
 function parseEnum<T extends readonly string[]>(
   value: string,
   key: string,
@@ -144,6 +170,43 @@ export function validateEnvironment(
     config.COOKIE_DOMAIN.trim() !== ""
       ? config.COOKIE_DOMAIN.trim()
       : undefined;
+  const googleOAuthEnabled =
+    typeof config.GOOGLE_OAUTH_ENABLED === "string" &&
+    config.GOOGLE_OAUTH_ENABLED.trim() !== ""
+      ? parseBoolean(
+          config.GOOGLE_OAUTH_ENABLED.trim(),
+          "GOOGLE_OAUTH_ENABLED"
+        )
+      : nodeEnvironment === "development"
+        ? false
+        : parseBoolean(
+            requireValue(config, "GOOGLE_OAUTH_ENABLED"),
+            "GOOGLE_OAUTH_ENABLED"
+          );
+  if (nodeEnvironment !== "development" && !googleOAuthEnabled) {
+    throw new Error(
+      "Environment variable GOOGLE_OAUTH_ENABLED must be true outside development"
+    );
+  }
+  const googleClientId = googleOAuthEnabled
+    ? requireValue(config, "GOOGLE_OAUTH_CLIENT_ID")
+    : undefined;
+  const googleClientSecret = googleOAuthEnabled
+    ? requireValue(config, "GOOGLE_OAUTH_CLIENT_SECRET")
+    : undefined;
+  const googleRedirectUri = googleOAuthEnabled
+    ? parseUrl(
+        requireValue(config, "GOOGLE_OAUTH_REDIRECT_URI"),
+        "GOOGLE_OAUTH_REDIRECT_URI"
+      )
+    : undefined;
+  const googleTokenTimeout = googleOAuthEnabled
+    ? parsePositiveInteger(
+        requireValue(config, "GOOGLE_OAUTH_TOKEN_TIMEOUT_MS"),
+        "GOOGLE_OAUTH_TOKEN_TIMEOUT_MS",
+        30_000
+      )
+    : undefined;
 
   if (emailProvider && emailProvider !== "disabled" && !emailApiKey) {
     throw new Error(
@@ -176,6 +239,10 @@ export function validateEnvironment(
   return {
     NODE_ENV: nodeEnvironment,
     PORT: parsePort(requireValue(config, "PORT")),
+    FRONTEND_URL: parseUrl(
+      requireValue(config, "FRONTEND_URL"),
+      "FRONTEND_URL"
+    ),
     CORS_ORIGIN: parseUrl(requireValue(config, "CORS_ORIGIN"), "CORS_ORIGIN"),
     DATABASE_URL: parseUrl(
       requireValue(config, "DATABASE_URL"),
@@ -194,6 +261,17 @@ export function validateEnvironment(
     ),
     COOKIE_SECURE: cookieSecure,
     ...(cookieDomain ? { COOKIE_DOMAIN: cookieDomain } : {}),
+    GOOGLE_OAUTH_ENABLED: googleOAuthEnabled,
+    ...(googleClientId ? { GOOGLE_OAUTH_CLIENT_ID: googleClientId } : {}),
+    ...(googleClientSecret
+      ? { GOOGLE_OAUTH_CLIENT_SECRET: googleClientSecret }
+      : {}),
+    ...(googleRedirectUri
+      ? { GOOGLE_OAUTH_REDIRECT_URI: googleRedirectUri }
+      : {}),
+    ...(googleTokenTimeout
+      ? { GOOGLE_OAUTH_TOKEN_TIMEOUT_MS: googleTokenTimeout }
+      : {}),
     ...(emailProvider ? { EMAIL_PROVIDER: emailProvider } : {}),
     ...(emailApiKey ? { EMAIL_API_KEY: emailApiKey } : {})
   };

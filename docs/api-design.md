@@ -114,6 +114,9 @@ The authentication foundation exposes:
 - `POST /api/auth/logout` to revoke the current refresh-token session.
 - `POST /api/auth/logout-all` to revoke every session for the authenticated user.
 - `GET /api/auth/me` to return the authenticated public user.
+- `GET /api/auth/google` to start Google Authorization Code + PKCE login.
+- `GET /api/auth/google/callback` to verify Google OpenID Connect identity,
+  issue the normal WorkSync session, and redirect to the configured frontend.
 
 Access tokens use the `Authorization: Bearer <token>` header. Public user
 contracts never include password hashes. Unknown-email and incorrect-password
@@ -126,8 +129,12 @@ and logout invalidates access tokens for the revoked session immediately.
 Browser auth requests with an `Origin` header must match the configured CORS
 origin.
 
-OAuth, account recovery, email verification, and session/device listing remain
-future lifecycle work.
+Google callbacks return only fixed frontend status parameters. Authorization
+codes, access tokens, refresh tokens, provider payloads, and account identifiers
+must never appear in callback redirect URLs.
+
+Explicit account linking, account recovery, email verification, and
+session/device listing remain future lifecycle work.
 
 ## Authorization
 

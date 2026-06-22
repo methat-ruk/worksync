@@ -15,18 +15,19 @@ Already in place:
 - validated backend configuration and centralized Prisma lifecycle
 - structured request logging, correlation IDs, and standardized API errors
 - liveness and PostgreSQL readiness endpoints
-- backend unit, integration, and API contract test harnesses
+- backend unit, PostgreSQL integration, API contract, security, and API test suites
 - local service topology for PostgreSQL, Redis, and S3-compatible storage
 - CI workflow and repository validation commands
 - password authentication with persisted session lifecycle, refresh rotation, and logout controls
+- backend Google OAuth login with PKCE, safe identity linking, and the existing session lifecycle
 - product, domain, API, security, testing, deployment, and workflow documentation
 
 Not complete yet:
 
-- Google OAuth and workspace membership implementation
+- workspace membership implementation
 - RBAC and workspace isolation enforcement
 - production Docker images and deployment pipeline
-- real unit, integration, contract, E2E, and security test suites
+- frontend test harness and browser E2E coverage
 - production observability and incident-response automation
 
 ## Tech Stack
@@ -34,13 +35,13 @@ Not complete yet:
 | Area | Technology |
 |---|---|
 | Frontend | Next.js App Router, React, TypeScript |
-| UI | Tailwind CSS, shadcn/ui |
+| UI | Tailwind CSS; shadcn/ui selected but not installed |
 | Backend | NestJS, TypeScript |
 | Data | PostgreSQL, Prisma |
-| Cache | Redis |
-| Queue | BullMQ |
-| Realtime | Socket.IO |
-| Storage | AWS S3-compatible object storage |
+| Cache | Redis local service; application integration pending |
+| Queue | BullMQ planned |
+| Realtime | Socket.IO planned |
+| Storage | MinIO local service; AWS S3 integration planned |
 | API Docs | Swagger / OpenAPI |
 | Runtime | Docker, Docker Compose |
 | Package Manager | pnpm via Corepack |
@@ -66,13 +67,13 @@ references/        WorkSync project profile and implementation decisions
 
 This repository uses `pnpm@9.15.0` through Corepack.
 
-## Getting Started
+## Quick Start
 
-Enable Corepack and install dependencies:
+Enable Corepack and install the locked dependencies:
 
 ```bash
 corepack enable
-pnpm install
+corepack pnpm install --frozen-lockfile
 ```
 
 Create a local environment file:
@@ -94,17 +95,20 @@ Copy-Item app/backend/.env.example app/backend/.env
 Start local services and prepare Prisma:
 
 ```bash
-pnpm docker:up
-pnpm prisma:validate
-pnpm prisma:generate
-pnpm prisma:migrate
+corepack pnpm docker:up
+corepack pnpm prisma:validate
+corepack pnpm prisma:generate
+corepack pnpm prisma:migrate
 ```
 
 Start the applications:
 
 ```bash
-pnpm dev
+corepack pnpm dev
 ```
+
+See [Project Setup](docs/project-setup.md) for creating and migrating the test
+database, Windows commands, validation, and troubleshooting.
 
 Default local URLs:
 
@@ -137,8 +141,10 @@ Default local URLs:
 | `pnpm prisma:validate` | Validate the Prisma schema |
 | `pnpm prisma:generate` | Generate Prisma Client |
 | `pnpm prisma:migrate` | Apply local Prisma migrations |
+| `pnpm prisma:migrate:status:test` | Verify committed migrations against `TEST_DATABASE_URL` |
 | `pnpm validate:backend` | Run complete backend validation including artifact checks |
 | `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
+| `pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
 | `pnpm validate:push` | Run typecheck, lint, and backend unit tests through the pre-push hook |
 | `pnpm docker:up` | Start local PostgreSQL, Redis, and MinIO |
 | `pnpm docker:down` | Stop local Docker services |
@@ -164,8 +170,8 @@ pnpm check
 ```
 
 Backend tests are configured with Jest. PostgreSQL integration tests use
-`TEST_DATABASE_URL` and are reported as skipped when that test dependency is
-not available.
+`TEST_DATABASE_URL`. Database-backed integration and security evidence is
+incomplete when the required test database is unavailable or a suite skips.
 
 Docker Compose validation should be rerun on machines with Docker installed:
 
@@ -184,12 +190,15 @@ docker compose -f docker/compose.yml config
 - [Deployment](docs/deployment.md)
 - [Validation Matrix](docs/validation-matrix.md)
 - [Development Workflow](docs/development-workflow.md)
+- [Project Setup](docs/project-setup.md)
+- [Google OAuth Setup](docs/google-oauth-setup.md)
+- [Technology and Dependency Inventory](docs/technology-stack.md)
 - [WorkSync Project Profile](references/worksync/profile.md)
 
 ## Current Priorities
 
-1. Implement authentication, refresh-token handling, and session lifecycle.
+1. Add the frontend auth client, Google button, and callback handling.
 2. Implement workspace membership, RBAC guards, and workspace isolation.
 3. Implement projects, tasks, comments, mentions, notifications, and activity logs.
-4. Replace placeholder test scripts with real unit, integration, contract, E2E, and security tests.
+4. Add the frontend test harness and browser E2E coverage.
 5. Add production Dockerfiles, deployment pipeline, observability, and release evidence.
