@@ -26,8 +26,10 @@ following `docs/project-setup.md`.
 |---|---|---|
 | Complete backend validation | `pnpm validate:backend` | Validate Prisma, backend static checks, all backend test projects, build output, and runtime artifact shape |
 | Backend artifact | `pnpm validate:backend:artifact` | Require `dist/main.js` and compiled Prisma client while rejecting tests and nested source output |
+| Test migration status | `pnpm prisma:migrate:status:test` | Verify `worksync_test` has every committed migration using `TEST_DATABASE_URL` |
+| Backend runtime smoke | `pnpm smoke:backend:runtime` | Start the built backend against `worksync_test` and verify health, Swagger, disabled Google OAuth, and refresh failure contracts |
 | Typecheck | `pnpm typecheck` | Validate TypeScript contracts across workspaces |
-| Lint | `pnpm lint` | Enforce static quality and framework rules |
+| Lint | `pnpm lint` | Enforce static quality and framework rules across backend source, backend tests, and frontend source |
 | Test | `pnpm test` | Run configured automated tests |
 | Backend unit tests | `pnpm --filter @worksync/backend test:unit` | Validate configuration, errors, correlation, logging policy, and health logic |
 | Backend integration tests | `pnpm --filter @worksync/backend test:integration` | Validate Prisma lifecycle, PostgreSQL connectivity, Google identity linking, transaction rollback, and uniqueness races |

@@ -6,7 +6,7 @@
     "dev": "dotenv -e .env -- nest start --watch",
     "build": "nest build",
     "start": "dotenv -e .env -- node dist/main.js",
-    "lint": "eslint \"src/**/*.ts\" \"prisma.config.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"prisma.config.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=ExperimentalWarning --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
     "test:unit": "node --disable-warning=ExperimentalWarning --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --selectProjects unit",
@@ -17,7 +17,9 @@
     "prisma:generate": "dotenv -e .env.example -- prisma generate",
     "prisma:validate": "dotenv -e .env.example -- prisma validate",
     "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
-    "prisma:migrate:deploy": "prisma migrate deploy"
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:status:test": "node ../../scripts/prisma-test-migration-status.cjs",
+    "smoke:runtime": "node ../../scripts/smoke-backend-runtime.cjs"
   },
   "dependencies": {
     "@nestjs/common": "11.1.27",

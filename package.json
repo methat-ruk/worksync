@@ -29,7 +29,9 @@
     "prisma:generate": "corepack pnpm --filter @worksync/backend prisma:generate",
     "prisma:validate": "corepack pnpm --filter @worksync/backend prisma:validate",
     "prisma:migrate": "corepack pnpm --filter @worksync/backend prisma:migrate",
+    "prisma:migrate:status:test": "corepack pnpm --filter @worksync/backend prisma:migrate:status:test",
     "validate:backend:artifact": "node scripts/validate-backend-artifact.cjs",
+    "smoke:backend:runtime": "corepack pnpm --filter @worksync/backend smoke:runtime",
     "validate:backend": "corepack pnpm prisma:validate && corepack pnpm prisma:generate && corepack pnpm --filter @worksync/backend typecheck && corepack pnpm --filter @worksync/backend lint && corepack pnpm --filter @worksync/backend test && corepack pnpm --filter @worksync/backend build && corepack pnpm validate:backend:artifact",
     "docker:up": "docker compose -f docker/compose.yml up -d",
     "docker:down": "docker compose -f docker/compose.yml down",
@@ -38,6 +40,7 @@
   },
   "lint-staged": {
     "app/backend/src/**/*.ts": "corepack pnpm --dir app/backend exec eslint --fix",
+    "app/backend/test/**/*.ts": "corepack pnpm --dir app/backend exec eslint --fix",
     "app/backend/prisma.config.ts": "corepack pnpm --dir app/backend exec eslint --fix",
     "app/frontend/src/**/*.{ts,tsx}": "corepack pnpm --dir app/frontend exec eslint --fix"
   },

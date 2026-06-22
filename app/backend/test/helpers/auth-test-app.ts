@@ -11,10 +11,10 @@ import {
   type User
 } from "../../src/generated/prisma/client";
 import { GoogleOAuthProviderService } from "../../src/auth/services/google-oauth-provider.service";
-import { GoogleOAuthError } from "../../src/auth/errors/google-oauth.error";
 import type { GoogleIdentityProfile } from "../../src/auth/types/google-oauth.types";
 import type { PublicUser } from "../../src/auth/types/auth.types";
 import { configureApplication } from "../../src/main";
+import { createGoogleOAuthTestHarness } from "./google-oauth-test-harness";
 
 type StoredUser = User;
 
@@ -301,33 +301,17 @@ export async function createAuthTestApp(
     )
   });
 
-  const usedGoogleCodes = new Set<string>();
-  const googleProvider = {
-    authorizationUrl: jest.fn(
-      (transaction: { state: string }) =>
-        `https://accounts.google.test/authorize?state=${encodeURIComponent(transaction.state)}`
-    ),
-    authenticate: jest.fn(async (code: string) => {
-      if (options.googleFailure) {
-        throw options.googleFailure;
-      }
-      if (usedGoogleCodes.has(code)) {
-        throw new GoogleOAuthError("TOKEN_EXCHANGE_FAILED");
-      }
-      usedGoogleCodes.add(code);
-      if (!options.googleProfile) {
-        throw new Error("Google profile is not configured for this test");
-      }
-      return options.googleProfile;
-    })
-  };
+  const googleHarness = createGoogleOAuthTestHarness({
+    profile: options.googleProfile,
+    failure: options.googleFailure
+  });
   const moduleBuilder = Test.createTestingModule({
     imports: [AppModule]
   }).overrideProvider(PrismaService).useValue(prisma);
   if (options.googleProfile || options.googleFailure) {
     moduleBuilder
       .overrideProvider(GoogleOAuthProviderService)
-      .useValue(googleProvider);
+      .useValue(googleHarness.provider);
   }
   const moduleRef = await moduleBuilder.compile();
 

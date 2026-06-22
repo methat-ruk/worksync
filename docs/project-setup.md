@@ -177,6 +177,8 @@ must not be accepted as complete when skipped.
 | `corepack pnpm dev:backend` | Start only NestJS |
 | `corepack pnpm check` | Typecheck, lint, test, and build all workspaces |
 | `corepack pnpm validate:backend` | Run complete backend validation |
+| `corepack pnpm prisma:migrate:status:test` | Verify migration status against `TEST_DATABASE_URL` |
+| `corepack pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
 | `corepack pnpm docker:down` | Stop local infrastructure |
 | `corepack pnpm --filter @worksync/backend test:integration` | Run PostgreSQL integration tests |
 | `corepack pnpm --filter @worksync/backend test:contract` | Run API and Swagger contract tests |

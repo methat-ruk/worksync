@@ -141,8 +141,10 @@ Default local URLs:
 | `pnpm prisma:validate` | Validate the Prisma schema |
 | `pnpm prisma:generate` | Generate Prisma Client |
 | `pnpm prisma:migrate` | Apply local Prisma migrations |
+| `pnpm prisma:migrate:status:test` | Verify committed migrations against `TEST_DATABASE_URL` |
 | `pnpm validate:backend` | Run complete backend validation including artifact checks |
 | `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
+| `pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
 | `pnpm validate:push` | Run typecheck, lint, and backend unit tests through the pre-push hook |
 | `pnpm docker:up` | Start local PostgreSQL, Redis, and MinIO |
 | `pnpm docker:down` | Stop local Docker services |

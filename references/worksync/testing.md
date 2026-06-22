@@ -53,6 +53,11 @@ WorkSync risk is concentrated in:
 
 Prefer integration, contract, end-to-end, and security isolation tests over a large number of low-value unit tests.
 
+Maintain one reusable Google OAuth provider harness for deterministic profiles,
+provider failures, single-use authorization codes, and callback transactions.
+Reuse it across contract, security, and integration suites rather than creating
+independent provider semantics in each suite.
+
 ## Unit Tests
 
 Use unit tests for isolated deterministic logic:

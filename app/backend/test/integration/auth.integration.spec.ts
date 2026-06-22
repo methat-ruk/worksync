@@ -11,6 +11,7 @@ import type { GoogleIdentityProfile } from "../../src/auth/types/google-oauth.ty
 import { PrismaService } from "../../src/database/prisma.service";
 import { AuthProvider } from "../../src/generated/prisma/client";
 import { configureApplication } from "../../src/main";
+import { createGoogleOAuthTestHarness } from "../helpers/google-oauth-test-harness";
 
 const describeWithDatabase = process.env.TEST_DATABASE_URL
   ? describe
@@ -51,28 +52,23 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
   let prisma: PrismaService;
   let googleIdentities: GoogleIdentityService;
   let sessions: SessionService;
-  let currentGoogleProfile: GoogleIdentityProfile | undefined;
+  const googleHarness = createGoogleOAuthTestHarness();
   const email = `auth-${Date.now()}@example.com`;
+
+  function useGoogleProfile(
+    profile: GoogleIdentityProfile
+  ): GoogleIdentityProfile {
+    googleHarness.setProfile(profile);
+    return profile;
+  }
 
   beforeAll(async () => {
     process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
-    const googleProvider = {
-      authorizationUrl: jest.fn(
-        (transaction: { state: string }) =>
-          `https://accounts.google.test/authorize?state=${encodeURIComponent(transaction.state)}`
-      ),
-      authenticate: jest.fn(async () => {
-        if (!currentGoogleProfile) {
-          throw new Error("Google profile is not configured");
-        }
-        return currentGoogleProfile;
-      })
-    };
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule]
     })
       .overrideProvider(GoogleOAuthProviderService)
-      .useValue(googleProvider)
+      .useValue(googleHarness.provider)
       .compile();
     app = moduleRef.createNestApplication();
     configureApplication(app);
@@ -249,11 +245,11 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
 
   it("creates and reuses a Google identity without a password hash", async () => {
     const googleEmail = `google-new-${Date.now()}@gmail.com`;
-    currentGoogleProfile = {
+    let googleProfile = useGoogleProfile({
       subject: `google-new-subject-${Date.now()}`,
       email: googleEmail,
       displayName: "Google New User"
-    };
+    });
     const start = await request(app.getHttpServer())
       .get("/api/auth/google")
       .expect(302);
@@ -276,16 +272,16 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
       where: {
         provider_providerSubject: {
           provider: AuthProvider.GOOGLE,
-          providerSubject: currentGoogleProfile.subject
+          providerSubject: googleProfile.subject
         }
       }
     });
     expect(identity.userId).toBe(user.id);
 
-    currentGoogleProfile = {
-      ...currentGoogleProfile,
+    googleProfile = useGoogleProfile({
+      ...googleProfile,
       email: `google-renamed-${Date.now()}@gmail.com`
-    };
+    });
     const repeatedStart = await request(app.getHttpServer())
       .get("/api/auth/google")
       .expect(302);
@@ -303,7 +299,7 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
       where: { id: identity.id }
     });
     expect(unchangedUser.email).toBe(googleEmail);
-    expect(updatedIdentity.providerEmail).toBe(currentGoogleProfile.email);
+    expect(updatedIdentity.providerEmail).toBe(googleProfile.email);
     expect(
       await prisma.authSession.count({ where: { userId: user.id } })
     ).toBe(2);
@@ -319,11 +315,11 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
         password: "correct horse battery staple"
       })
       .expect(201);
-    currentGoogleProfile = {
+    const googleProfile = useGoogleProfile({
       subject: `google-link-subject-${Date.now()}`,
       email: linkEmail,
       displayName: "Google Owner"
-    };
+    });
     const start = await request(app.getHttpServer())
       .get("/api/auth/google")
       .expect(302);
@@ -338,7 +334,7 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
       where: {
         provider_providerSubject: {
           provider: AuthProvider.GOOGLE,
-          providerSubject: currentGoogleProfile.subject
+          providerSubject: googleProfile.subject
         }
       }
     });
@@ -356,11 +352,11 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
         password: "correct horse battery staple"
       })
       .expect(201);
-    currentGoogleProfile = {
+    const googleProfile = useGoogleProfile({
       subject: `google-conflict-subject-${Date.now()}`,
       email: conflictEmail,
       displayName: "Conflicting Google User"
-    };
+    });
     const start = await request(app.getHttpServer())
       .get("/api/auth/google")
       .expect(302);
@@ -376,7 +372,7 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
     );
     expect(
       await prisma.authIdentity.count({
-        where: { providerSubject: currentGoogleProfile.subject }
+        where: { providerSubject: googleProfile.subject }
       })
     ).toBe(0);
     expect(

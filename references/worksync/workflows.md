@@ -14,6 +14,9 @@ Run the relevant repository commands for:
 
 Use commands defined by the repository rather than inventing parallel scripts.
 
+Backend lint coverage must include both `src/**/*.ts` and `test/**/*.ts`.
+Typecheck success does not replace linting test helpers and test suites.
+
 ## Feature Quality Gate
 
 Every feature, bug fix, or observable behavior change requires:
