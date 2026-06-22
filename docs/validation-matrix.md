@@ -6,7 +6,7 @@ This matrix defines the expected repository commands for local development and C
 
 ```bash
 corepack enable
-pnpm install
+corepack pnpm install --frozen-lockfile
 cp .env.example .env
 cp app/frontend/.env.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
@@ -16,6 +16,9 @@ pnpm prisma:generate
 pnpm prisma:migrate
 pnpm dev
 ```
+
+Create and migrate `worksync_test` once for a fresh PostgreSQL volume by
+following `docs/project-setup.md`.
 
 ## Required Checks
 
@@ -51,7 +54,8 @@ Git hooks provide local feedback and can be bypassed. CI remains the authoritati
 ## Current Limitations
 
 - Frontend tests remain a placeholder until the frontend test harness is configured.
-- Backend PostgreSQL integration tests skip when `TEST_DATABASE_URL` is unavailable.
+- Required backend PostgreSQL integration and security evidence is incomplete
+  when `TEST_DATABASE_URL` is unavailable or the database-backed suite skips.
 - Docker Compose validates local dependencies only; it is not a production deployment manifest.
 
 `pnpm validate:backend` must run with `TEST_DATABASE_URL` in CI so the
@@ -59,7 +63,7 @@ PostgreSQL integration project passes rather than skips.
 
 ## Next Validation Upgrades
 
-1. Add protected-resource API contract tests with the authentication module.
+1. Add Google OAuth contract, integration, and security tests.
 2. Add Playwright E2E smoke tests for authentication and task flows.
 3. Add security isolation tests for workspace boundaries and RBAC.
 4. Add Docker image builds when runtime Dockerfiles are introduced.
