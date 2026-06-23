@@ -139,6 +139,8 @@ Keep the suite small enough to run reliably in CI. Use traces and screenshots ca
 
 High-value security checks:
 
+- every web-facing feature has applicable baseline negative cases for input
+  bounds, authorization, ownership, leakage, browser boundaries, and abuse
 - lower-privilege role cannot perform owner-only or admin-only actions
 - final workspace owner cannot be demoted or removed unless a safe transfer rule exists
 - user from one workspace cannot read, mutate, search, export, or infer resources from another workspace

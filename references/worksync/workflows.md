@@ -23,10 +23,17 @@ Every feature, bug fix, or observable behavior change requires:
 
 - proportionate automated behavioral evidence mapped to the changed guarantees
 - `coding-standards` validation for code-level maintainability
+- `web-security-baseline` for every web-facing change
 - `frontend-review` and/or `backend-review` for the affected implementation domain
 - specialized review when architecture, security, data, reliability, observability, timeout, or performance concerns are triggered
 
 Existing tests may be extended; a new test file is not required when the current suite already owns the behavior.
+
+The baseline must record applicable controls and explicit non-applicability.
+Material authentication, authorization, workspace-isolation, sensitive-data,
+upload, callback, external-URL, redirect, or abuse risk must route to
+`security-review`. Controls whose failure could expose data, bypass access, or
+execute attacker-controlled content require `security-testing` evidence.
 
 When automated coverage is impractical, record the reason, alternative evidence, unverified behavior, remaining risk, and follow-up owner. Required integration, contract, end-to-end, or security suites that skip leave validation incomplete.
 
