@@ -26,18 +26,17 @@ export class RefreshTokenService {
     sessionId: string,
     expiresAt: Date
   ): Promise<IssuedRefreshToken> {
-    const remainingSeconds = Math.floor(
-      (expiresAt.getTime() - Date.now()) / 1_000
-    );
-    if (remainingSeconds <= 0) {
+    const expiresAtSeconds = Math.floor(expiresAt.getTime() / 1_000);
+    const nowSeconds = Math.floor(Date.now() / 1_000);
+
+    if (expiresAtSeconds <= nowSeconds) {
       throw this.invalidToken();
     }
 
     const refreshToken = await this.jwtService.signAsync(
-      { sid: sessionId },
+      { exp: expiresAtSeconds, sid: sessionId },
       {
         algorithm: "HS256",
-        expiresIn: remainingSeconds,
         jwtid: randomUUID(),
         secret: this.config.get("JWT_REFRESH_SECRET", { infer: true }),
         subject: userId
