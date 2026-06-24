@@ -11,6 +11,10 @@ Run the relevant repository commands for:
 - frontend and backend builds
 - Prisma migration validation
 - Docker image or Compose validation
+- browser-visible route rendering when frontend page-level UI, auth entry
+  points, route guards, or navigation changed
+- local runtime start/stop and service reachability when Docker Compose,
+  environment examples, host/container URLs, or local run modes changed
 
 Use commands defined by the repository rather than inventing parallel scripts.
 
@@ -47,6 +51,10 @@ When automated coverage is impractical, record the reason, alternative evidence,
 - Report skipped suites separately from passed tests.
 - Business API routes use `/api`; `/health`, `/health/live`, `/health/ready`, and `/docs` remain outside that prefix.
 - For GitHub Actions failures, inspect the exact failing step and distinguish setup, primary-command, cache, cleanup, and post-step failures before changing code or dependency policy.
+- Frontend visual evidence for critical pages must verify visible content,
+  loaded styles, and absence of blocking console errors.
+- Local runtime evidence must distinguish Compose/config validation from actual
+  startup, health, dependency reachability, log leakage, and stop/down behavior.
 
 ## Documentation
 
