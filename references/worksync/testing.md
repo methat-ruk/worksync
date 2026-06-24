@@ -111,6 +111,9 @@ Cover important UI behavior:
 
 - loading, empty, error, and success states
 - form validation and submission states
+- button and interactive-control feedback for hover, focus, active, disabled,
+  loading, success, and error states on critical actions
+- duplicate-submit prevention for async form or mutation actions
 - permission-based action visibility
 - task board or task list behavior
 - comment and mention UI
