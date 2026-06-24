@@ -58,14 +58,24 @@ Use for:
 
 - loading, empty, error, and success states
 - form validation and pending states
+- shared frontend/backend password policy parity
+- confirm-password exclusion from API requests
 - permission-based action visibility
 - task board/list interaction
 - comment and mention UI
 - notification surfaces
 
+Frontend test organization:
+
+- colocate unit/component specs with the feature they protect
+- keep cross-page browser journeys under `app/frontend/test/e2e`
+- keep shared test setup under `app/frontend/test`
+- ignore generated `test-results`, `playwright-report`, coverage, and traces;
+  never ignore test source
+
 ### End-to-End Tests
 
-Use Playwright when configured for:
+Use Playwright for:
 
 - sign up, login, logout
 - create workspace
@@ -132,7 +142,7 @@ Use for:
 
 ## CI Expectations
 
-CI should eventually include:
+CI includes:
 
 - typecheck
 - lint and formatting checks
@@ -144,12 +154,12 @@ CI should eventually include:
 - selected security checks
 - build
 
-Long-running or expensive checks may run on schedule or before release, but release readiness must know what did and did not run.
+Authentication browser E2E runs on every CI validation job. Long-running or
+expensive future checks may run on schedule or before release, but release
+readiness must know what did and did not run.
 
 ## Open Decisions
 
-- Exact test runner commands
-- Whether Playwright is required for MVP or introduced after app skeleton
 - Whether TestSprite is used, and review process for generated tests
 - Which dependency, secret, SAST, DAST, and artifact scanners are selected
 - Which checks are required on every PR versus scheduled or release-gated

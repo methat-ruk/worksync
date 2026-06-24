@@ -1,5 +1,6 @@
 import { AuthService } from "../../src/auth/services/auth.service";
 import type { PasswordHasher } from "../../src/auth/services/password-hasher.service";
+import type { PasswordPolicyService } from "../../src/auth/services/password-policy.service";
 import type { SessionService } from "../../src/auth/services/session.service";
 import type { PrismaService } from "../../src/database/prisma.service";
 import type { CorrelationContextService } from "../../src/observability/correlation-context.service";
@@ -42,6 +43,7 @@ describe("AuthService", () => {
       verifyWithDummy: jest.fn().mockResolvedValue(false)
     } as unknown as PasswordHasher;
     const sessions = {} as SessionService;
+    const passwordPolicy = {} as PasswordPolicyService;
     const logger = {
       setContext: jest.fn(),
       warn: jest.fn()
@@ -52,6 +54,7 @@ describe("AuthService", () => {
     const service = new AuthService(
       prisma,
       passwordHasher,
+      passwordPolicy,
       sessions,
       logger,
       correlationContext

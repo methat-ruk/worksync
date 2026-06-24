@@ -19,6 +19,7 @@ import {
 import { GoogleOAuthService } from "./services/google-oauth.service";
 import { GoogleOAuthTransactionService } from "./services/google-oauth-transaction.service";
 import { PasswordHasher } from "./services/password-hasher.service";
+import { PasswordPolicyService } from "./services/password-policy.service";
 import { RefreshTokenService } from "./services/refresh-token.service";
 import { SessionCookieService } from "./services/session-cookie.service";
 import { SessionService } from "./services/session.service";
@@ -40,6 +41,7 @@ import { SessionService } from "./services/session.service";
     AuthGuard,
     AuthOriginGuard,
     PasswordHasher,
+    PasswordPolicyService,
     AccessTokenService,
     RefreshTokenService,
     SessionCookieService,

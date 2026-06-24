@@ -45,7 +45,7 @@ Use `--frozen-lockfile` for reproducible onboarding and CI parity. Run a normal
 macOS or Linux:
 
 ```bash
-cp .env.example .env
+cp .env.local.example .env
 cp app/frontend/.env.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
 ```
@@ -53,7 +53,7 @@ cp app/backend/.env.example app/backend/.env
 Windows PowerShell:
 
 ```powershell
-Copy-Item .env.example .env
+Copy-Item .env.local.example .env
 Copy-Item app/frontend/.env.example app/frontend/.env.local
 Copy-Item app/backend/.env.example app/backend/.env
 ```
@@ -69,7 +69,7 @@ Google OAuth is disabled by default for local development. Follow
 ## 4. Start Local Infrastructure
 
 ```bash
-corepack pnpm docker:up
+corepack pnpm docker:infra:up
 docker compose -f docker/compose.yml ps
 ```
 
@@ -80,10 +80,14 @@ The local Compose topology provides:
 
 | Service | Address | Current role |
 |---|---|---|
-| PostgreSQL | `localhost:55432` | Application and integration-test persistence |
+| PostgreSQL | `localhost:5433` | Application and integration-test persistence |
 | Redis | `localhost:6379` | Available for future cache, queue, and ephemeral state |
 | MinIO API | `localhost:9000` | Available for future S3-compatible storage integration |
 | MinIO Console | `http://localhost:9001` | Local object-storage administration |
+
+If `localhost:5433` is already occupied by another local service, change
+the host port in `docker/compose.yml` and update the matching uncommitted
+localhost database URLs in `.env`, `app/backend/.env`, and any shell exports.
 
 Docker Compose creates the `worksync` database. For a fresh PostgreSQL volume,
 check whether the test database exists:
@@ -120,14 +124,14 @@ Apply the same migrations to the test database:
 macOS or Linux:
 
 ```bash
-DATABASE_URL="postgresql://worksync:worksync@localhost:55432/worksync_test?schema=public" \
+DATABASE_URL="postgresql://worksync:worksync@localhost:5433/worksync_test?schema=public" \
   corepack pnpm --filter @worksync/backend prisma:migrate:deploy
 ```
 
 Windows PowerShell:
 
 ```powershell
-$env:DATABASE_URL = "postgresql://worksync:worksync@localhost:55432/worksync_test?schema=public"
+$env:DATABASE_URL = "postgresql://worksync:worksync@localhost:5433/worksync_test?schema=public"
 corepack pnpm --filter @worksync/backend prisma:migrate:deploy
 Remove-Item Env:DATABASE_URL
 ```
@@ -137,6 +141,10 @@ Remove-Item Env:DATABASE_URL
 ```bash
 corepack pnpm dev
 ```
+
+Pressing `Ctrl+C` is a normal clean shutdown. The root launcher coordinates
+both development processes and does not label a user-requested stop as an
+application failure.
 
 Local endpoints:
 
@@ -164,9 +172,110 @@ projects, build, and artifact validation:
 corepack pnpm validate:backend
 ```
 
+Run frontend typechecking, lint, shared password-policy tests, UI tests, and
+the production build:
+
+```bash
+corepack pnpm validate:frontend
+```
+
+Install Chromium once before local browser E2E tests:
+
+```bash
+corepack pnpm --filter @worksync/frontend exec playwright install chromium
+corepack pnpm --filter @worksync/frontend test:e2e
+```
+
 The PostgreSQL-backed integration and security evidence requires
 `TEST_DATABASE_URL` from `app/backend/.env`. Required database-backed suites
 must not be accepted as complete when skipped.
+
+## Run Modes
+
+WorkSync has two local run modes.
+
+### Hybrid Development Mode
+
+Hybrid mode is the default for day-to-day development:
+
+- Docker runs PostgreSQL, Redis, and MinIO only.
+- Frontend and backend run locally with pnpm.
+- Local app URLs use localhost.
+
+Commands:
+
+```bash
+cp .env.local.example .env
+corepack pnpm install --frozen-lockfile
+docker compose -f docker/compose.yml up -d
+corepack pnpm dev
+```
+
+Expected hybrid addresses:
+
+| Component | URL |
+|---|---|
+| Frontend | `http://localhost:3000` |
+| Backend | `http://localhost:4000` |
+| PostgreSQL | `localhost:5433` |
+| Redis | `localhost:6379` |
+| MinIO API | `http://localhost:9000` |
+
+### Full Docker Mode
+
+The root `Dockerfile` contains independent `frontend` and `backend` targets.
+The existing `docker/compose.yml` remains the local infrastructure definition;
+`docker/compose.app.yml` adds the application containers.
+
+Full Docker mode is useful for fresh-clone onboarding and container topology
+validation:
+
+- Docker runs frontend, backend, PostgreSQL, Redis, and MinIO.
+- Backend dependency URLs use Docker service hostnames: `postgres`, `redis`,
+  and `minio`.
+- Frontend public API and Socket URLs remain `http://localhost:4000` because
+  the user's browser runs on the host machine.
+
+Create a Docker-mode environment file, then build and start:
+
+```bash
+cp .env.docker.example .env
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml up --build -d
+```
+
+Apply committed migrations before serving application traffic:
+
+```bash
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml \
+  run --rm backend \
+  ./node_modules/.bin/prisma migrate deploy
+```
+
+Stop the complete stack:
+
+```bash
+corepack pnpm docker:full:down
+```
+
+Container constraints:
+
+- The example JWT secrets in `.env.docker.example` are local-only. Replace
+  them before using any shared, staging, production-like, or internet-exposed
+  environment.
+- `NEXT_PUBLIC_*` values are compiled into the frontend image; rebuild that
+  target when a public URL or Google-enabled flag changes.
+- Secrets are runtime environment values and must not be Docker build args.
+- Leave `COOKIE_DOMAIN` empty for localhost and single-host deployments.
+- For `app.example.com` and `api.example.com`, use `.example.com`, HTTPS, and
+  `COOKIE_SECURE=true`.
+- `COOKIE_DOMAIN` must not contain a scheme, port, or path.
+- The Google callback must exactly match the external backend callback, such
+  as `https://api.example.com/api/auth/google/callback`.
+- The Compose overlay is local/staging-like: it does not provide TLS, ingress,
+  secret storage, registry promotion, backups, or zero-downtime migrations.
+- The backend image currently favors reproducible workspace installation over
+  minimum image size; production pruning, SBOM generation, and registry
+  provenance remain delivery-pipeline follow-ups.
 
 ## Common Commands
 
@@ -177,9 +286,14 @@ must not be accepted as complete when skipped.
 | `corepack pnpm dev:backend` | Start only NestJS |
 | `corepack pnpm check` | Typecheck, lint, test, and build all workspaces |
 | `corepack pnpm validate:backend` | Run complete backend validation |
+| `corepack pnpm validate:frontend` | Run shared policy and frontend validation |
+| `corepack pnpm --filter @worksync/frontend test:e2e` | Run frontend auth browser tests |
 | `corepack pnpm prisma:migrate:status:test` | Verify migration status against `TEST_DATABASE_URL` |
+| `corepack pnpm docker:infra:up` | Run PostgreSQL, Redis, and MinIO only |
+| `corepack pnpm docker:full:build` | Build application Docker images |
+| `corepack pnpm docker:full:up` | Run infrastructure and application containers |
 | `corepack pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
-| `corepack pnpm docker:down` | Stop local infrastructure |
+| `corepack pnpm docker:infra:down` | Stop local infrastructure |
 | `corepack pnpm --filter @worksync/backend test:integration` | Run PostgreSQL integration tests |
 | `corepack pnpm --filter @worksync/backend test:contract` | Run API and Swagger contract tests |
 | `corepack pnpm --filter @worksync/backend test:security` | Run authentication security tests |

@@ -118,6 +118,17 @@ The authentication foundation exposes:
 - `GET /api/auth/google/callback` to verify Google OpenID Connect identity,
   issue the normal WorkSync session, and redirect to the configured frontend.
 
+Password signup uses one shared policy package on both sides of the API:
+
+- 12–128 characters
+- no leading or trailing whitespace
+- zxcvbn score 3 or higher, which rejects known/common weak passwords
+- no uppercase/lowercase/number/symbol composition requirement
+
+Any signup password policy failure returns `400` with
+`AUTH_PASSWORD_POLICY_VIOLATION`. `confirmPassword` is a frontend-only field and
+must never be included in an API request.
+
 Access tokens use the `Authorization: Bearer <token>` header. Public user
 contracts never include password hashes. Unknown-email and incorrect-password
 login attempts return the same public failure.

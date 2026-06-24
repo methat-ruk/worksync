@@ -32,10 +32,11 @@ plus the root `engines` declaration.
 | React | Active foundation | UI runtime |
 | Tailwind CSS | Installed and configured | Styling |
 | PostCSS / Autoprefixer | Installed and configured | CSS processing |
-| shadcn/ui | Selected, not installed | Planned component system |
+| shadcn/ui + Base UI | Active | Accessible frontend component system |
+| React Hook Form + Zod | Active | Form state and browser validation |
 
-The frontend currently contains the application foundation. Feature UI and a
-real frontend test harness remain future work.
+The frontend includes password and Google authentication entry points, session
+bootstrap, protected routing, and the initial authenticated application shell.
 
 ## Backend and API
 
@@ -58,10 +59,10 @@ real frontend test harness remain future work.
 | HttpOnly refresh cookie | Active | Browser refresh-token transport |
 | Google OAuth / OpenID Connect | Active backend flow | Authorization Code + PKCE identity provider |
 | google-auth-library | Active | Google ID-token signature and claim verification |
+| zxcvbn-ts | Active shared policy | Blocking signup password-strength evaluation |
 
 Google OAuth reuses the existing session issuance and lifecycle boundary rather
-than creating a second token or cookie system. Frontend Google UI remains
-future work.
+than creating a second token or cookie system.
 
 ## Persistence
 
@@ -91,7 +92,8 @@ headers must remain redacted from logs.
 
 | Technology | Status | Purpose |
 |---|---|---|
-| Docker Compose | Active for local development | Local service orchestration |
+| Docker Compose | Active for local development | Hybrid infrastructure and full local container orchestration |
+| Multi-target Dockerfile | Active | Frontend and backend application images |
 | Redis 7 | Service available, application integration pending | Future cache and ephemeral state |
 | BullMQ | Planned, not installed | Future email, reminder, and summary jobs |
 | MinIO | Service available, application integration pending | Local S3-compatible storage |
@@ -111,17 +113,17 @@ Redis is not the authentication-session source of truth.
 | ESLint and typescript-eslint | Active | Static quality checks |
 | Husky | Active | Git hook entrypoints |
 | lint-staged | Active | Staged-file linting |
-| Playwright | Planned, not installed | Future browser E2E coverage |
+| Vitest + Testing Library | Active | Frontend unit and component tests |
+| Playwright | Active | Frontend authentication browser E2E coverage |
 
-The frontend test command is currently a placeholder. Backend PostgreSQL
-integration tests use a real `worksync_test` database.
+Backend PostgreSQL integration tests use a real `worksync_test` database.
 
 ## Delivery
 
 | Technology | Status | Purpose |
 |---|---|---|
 | GitHub Actions | Active | CI validation |
-| Production Dockerfiles | Planned | Runtime image creation |
+| Production image hardening | Planned | Image minimization, SBOM, signing, and registry promotion |
 | Artifact validation script | Active | Backend runtime output verification |
 | Dependency audit | Active in CI | Production dependency vulnerability gate |
 

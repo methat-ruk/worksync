@@ -7,10 +7,10 @@ This matrix defines the expected repository commands for local development and C
 ```bash
 corepack enable
 corepack pnpm install --frozen-lockfile
-cp .env.example .env
+cp .env.local.example .env
 cp app/frontend/.env.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
-pnpm docker:up
+pnpm docker:infra:up
 pnpm prisma:validate
 pnpm prisma:generate
 pnpm prisma:migrate
@@ -37,10 +37,14 @@ following `docs/project-setup.md`.
 | Backend security tests | `pnpm --filter @worksync/backend test:security` | Validate access/refresh controls plus Google state, replay, generic failure, and sensitive-data handling |
 | Backend API tests | `pnpm --filter @worksync/backend test:e2e` | Validate health, readiness, error, validation, correlation, and route-prefix contracts |
 | Build | `pnpm build` | Produce frontend and backend build artifacts |
+| Infrastructure Compose config | `docker compose -f docker/compose.yml config` | Validate the infrastructure-only topology for hybrid development |
+| Full Compose config | `docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config` | Validate the combined infrastructure/application topology with the root env file |
+| Full Compose services | `docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config --services` | Confirm the full topology declares frontend, backend, PostgreSQL, Redis, and MinIO |
+| Container build | `pnpm docker:full:build` | Build frontend and backend image targets |
 | Prisma generate | `pnpm prisma:generate` | Validate Prisma schema and generated client |
 | Prisma validate | `pnpm prisma:validate` | Validate Prisma schema syntax and relation consistency |
 | Dependency audit | `pnpm audit --prod --audit-level moderate` | Fail on moderate-, high-, or critical-severity production dependency findings |
-| Docker services | `pnpm docker:up` | Start local PostgreSQL, Redis, and S3-compatible storage |
+| Docker infrastructure services | `pnpm docker:infra:up` | Start local PostgreSQL, Redis, and S3-compatible storage |
 
 ## Validation Layers
 
@@ -55,17 +59,19 @@ Git hooks provide local feedback and can be bypassed. CI remains the authoritati
 
 ## Current Limitations
 
-- Frontend tests remain a placeholder until the frontend test harness is configured.
+- Frontend validation includes shared password-policy tests, Vitest component
+  tests, production build, and Playwright authentication E2E.
 - Required backend PostgreSQL integration and security evidence is incomplete
   when `TEST_DATABASE_URL` is unavailable or the database-backed suite skips.
-- Docker Compose validates local dependencies only; it is not a production deployment manifest.
+- `docker/compose.yml` is the hybrid-development infrastructure topology.
+- `docker/compose.app.yml` is a local/staging-like application overlay for
+  full Docker mode; it is not a production deployment manifest.
 
 `pnpm validate:backend` must run with `TEST_DATABASE_URL` in CI so the
 PostgreSQL integration project passes rather than skips.
 
 ## Next Validation Upgrades
 
-1. Add frontend Google OAuth callback and Playwright browser coverage.
-2. Add Playwright E2E smoke tests for authentication and task flows.
+1. Extend Playwright coverage as workspace and task flows are implemented.
 3. Add security isolation tests for workspace boundaries and RBAC.
-4. Add Docker image builds when runtime Dockerfiles are introduced.
+4. Add registry publishing, SBOM/provenance, and immutable image promotion.

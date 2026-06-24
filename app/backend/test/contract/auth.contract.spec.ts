@@ -122,6 +122,35 @@ describe("authentication API contract", () => {
     });
   });
 
+  it.each([
+    ["too short", "too short"],
+    ["leading whitespace", " correct horse battery staple"],
+    ["trailing whitespace", "correct horse battery staple "],
+    ["known weak password", "password1234"]
+  ])("rejects signup with %s through the shared password policy", async (
+    _case,
+    password
+  ) => {
+    const response = await request(app.getHttpServer())
+      .post("/api/auth/signup")
+      .send({
+        displayName: "Policy Test",
+        email: `policy-${Date.now()}-${Math.random()}@example.com`,
+        password
+      })
+      .expect(400);
+
+    expect(response.body).toMatchObject({
+      success: false,
+      message: "Password does not meet security requirements",
+      data: {
+        code: "AUTH_PASSWORD_POLICY_VIOLATION",
+        correlationId: expect.any(String)
+      }
+    });
+    expect(JSON.stringify(response.body)).not.toContain(password);
+  });
+
   it("rejects invalid and unknown request fields through the standard envelope", async () => {
     const response = await request(app.getHttpServer())
       .post("/api/auth/signup")
@@ -141,7 +170,6 @@ describe("authentication API contract", () => {
         fields: {
           displayName: expect.any(Array),
           email: expect.any(Array),
-          password: expect.any(Array),
           role: expect.any(Array)
         }
       }

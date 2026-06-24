@@ -5,6 +5,10 @@ const baseConfig = {
     "^.+\\.ts$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.json" }]
   },
   moduleNameMapper: {
+    "^@worksync/auth-policy$":
+      "<rootDir>/../../packages/auth-policy/src/evaluate.ts",
+    "^@worksync/auth-policy/(.*)$":
+      "<rootDir>/../../packages/auth-policy/src/$1.ts",
     "^(\\.{1,2}/.*)\\.js$": "$1"
   },
   collectCoverageFrom: [
