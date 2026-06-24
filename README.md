@@ -20,14 +20,15 @@ Already in place:
 - CI workflow and repository validation commands
 - password authentication with persisted session lifecycle, refresh rotation, and logout controls
 - backend Google OAuth login with PKCE, safe identity linking, and the existing session lifecycle
+- frontend password/Google auth flows, protected routing, and browser E2E coverage
+- multi-target Docker image definitions for frontend and backend
 - product, domain, API, security, testing, deployment, and workflow documentation
 
 Not complete yet:
 
 - workspace membership implementation
 - RBAC and workspace isolation enforcement
-- production Docker images and deployment pipeline
-- frontend test harness and browser E2E coverage
+- production deployment pipeline and registry promotion
 - production observability and incident-response automation
 
 ## Tech Stack
@@ -35,7 +36,7 @@ Not complete yet:
 | Area | Technology |
 |---|---|
 | Frontend | Next.js App Router, React, TypeScript |
-| UI | Tailwind CSS; shadcn/ui selected but not installed |
+| UI | Tailwind CSS and shadcn/ui |
 | Backend | NestJS, TypeScript |
 | Data | PostgreSQL, Prisma |
 | Cache | Redis local service; application integration pending |
@@ -76,10 +77,10 @@ corepack enable
 corepack pnpm install --frozen-lockfile
 ```
 
-Create a local environment file:
+Create local environment files for the recommended hybrid development mode:
 
 ```bash
-cp .env.example .env
+cp .env.local.example .env
 cp app/frontend/.env.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
 ```
@@ -87,7 +88,7 @@ cp app/backend/.env.example app/backend/.env
 On Windows PowerShell:
 
 ```powershell
-Copy-Item .env.example .env
+Copy-Item .env.local.example .env
 Copy-Item app/frontend/.env.example app/frontend/.env.local
 Copy-Item app/backend/.env.example app/backend/.env
 ```
@@ -95,7 +96,7 @@ Copy-Item app/backend/.env.example app/backend/.env
 Start local services and prepare Prisma:
 
 ```bash
-corepack pnpm docker:up
+corepack pnpm docker:infra:up
 corepack pnpm prisma:validate
 corepack pnpm prisma:generate
 corepack pnpm prisma:migrate
@@ -119,6 +120,60 @@ Default local URLs:
 - Backend readiness check: `http://localhost:4000/health/ready`
 - Swagger docs: `http://localhost:4000/docs`
 - Business API base URL: `http://localhost:4000/api`
+
+## Run Modes
+
+WorkSync supports two local run modes.
+
+### Hybrid development mode
+
+Use this mode for normal feature work. Docker runs only infrastructure
+services, while Next.js and NestJS run locally through pnpm for faster feedback
+and easier debugging.
+
+```bash
+cp .env.local.example .env
+corepack pnpm install --frozen-lockfile
+docker compose -f docker/compose.yml up -d
+corepack pnpm dev
+```
+
+Hybrid URLs:
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:4000`
+- PostgreSQL: `localhost:5433`
+- Redis: `localhost:6379`
+- MinIO API: `http://localhost:9000`
+- MinIO Console: `http://localhost:9001`
+
+If `localhost:5433` is already used by another local service, change
+the host port in `docker/compose.yml` and the matching localhost database URLs
+in your uncommitted `.env` files together.
+
+### Full Docker mode
+
+Use this mode to verify the container topology or onboard from a fresh clone.
+Docker runs frontend, backend, PostgreSQL, Redis, and MinIO on the same Compose
+network. The backend uses service hostnames such as `postgres`, `redis`, and
+`minio`; browser-facing frontend variables still use localhost because the
+browser runs on the host machine.
+
+```bash
+cp .env.docker.example .env
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml up --build -d
+```
+
+Full Docker URLs exposed to the host:
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:4000`
+- PostgreSQL: `localhost:5433`
+- Redis: `localhost:6379`
+- MinIO API: `http://localhost:9000`
+
+The example JWT secrets are local-only. Replace them before any shared,
+staging, production-like, or internet-exposed environment.
 
 ## Available Scripts
 
@@ -146,18 +201,33 @@ Default local URLs:
 | `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
 | `pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
 | `pnpm validate:push` | Run typecheck, lint, and backend unit tests through the pre-push hook |
-| `pnpm docker:up` | Start local PostgreSQL, Redis, and MinIO |
-| `pnpm docker:down` | Stop local Docker services |
+| `pnpm docker:infra:config` | Validate the infrastructure-only Compose file |
+| `pnpm docker:infra:up` | Start PostgreSQL, Redis, and MinIO for hybrid development |
+| `pnpm docker:infra:down` | Stop infrastructure-only services |
+| `pnpm docker:full:config` | Validate the combined infrastructure/application Compose topology |
+| `pnpm docker:full:services` | List services in the full Docker topology |
+| `pnpm docker:full:build` | Build frontend and backend Docker targets |
+| `pnpm docker:full:up` | Build and start frontend, backend, PostgreSQL, Redis, and MinIO |
+| `pnpm docker:full:down` | Stop the complete container stack |
+| `pnpm docker:up` | Backward-compatible alias for `pnpm docker:infra:up` |
+| `pnpm docker:app:up` | Backward-compatible alias for `pnpm docker:full:up` |
 
 ## Environment
 
 Use the environment examples as non-secret templates:
 
-- `.env.example` is the root local full-stack template for Docker Compose and root-level orchestration.
+- `.env.example` explains the available run modes and shared defaults.
+- `.env.local.example` is the root template for hybrid development.
+- `.env.docker.example` is the root template for full Docker development.
 - `app/frontend/.env.example` contains browser-safe frontend variables.
 - `app/backend/.env.example` contains backend-only variables such as database, cache, queue, token, storage, email, realtime, observability, and test-service configuration.
 
 Do not commit real `.env` files or secrets.
+
+`COOKIE_DOMAIN` should normally be empty on localhost. Set it only to a shared
+parent domain such as `.example.com` when the frontend and API use sibling
+HTTPS subdomains. It must not contain a scheme, port, or path. Google OAuth
+redirect URIs must exactly match the externally reachable backend callback.
 
 ## Validation
 
@@ -177,6 +247,8 @@ Docker Compose validation should be rerun on machines with Docker installed:
 
 ```bash
 docker compose -f docker/compose.yml config
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config --services
 ```
 
 ## Documentation
@@ -197,8 +269,8 @@ docker compose -f docker/compose.yml config
 
 ## Current Priorities
 
-1. Add the frontend auth client, Google button, and callback handling.
-2. Implement workspace membership, RBAC guards, and workspace isolation.
+1. Implement workspace membership, RBAC guards, and workspace isolation.
+2. Add immutable image publishing and production deployment automation.
 3. Implement projects, tasks, comments, mentions, notifications, and activity logs.
 4. Add the frontend test harness and browser E2E coverage.
 5. Add production Dockerfiles, deployment pipeline, observability, and release evidence.

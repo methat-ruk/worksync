@@ -18,7 +18,7 @@
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "corepack pnpm --parallel --filter @worksync/frontend --filter @worksync/backend dev",
+    "dev": "node scripts/dev.mjs",
     "dev:frontend": "corepack pnpm --filter @worksync/frontend dev",
     "dev:backend": "corepack pnpm --filter @worksync/backend dev",
     "lint:staged": "lint-staged",
@@ -33,8 +33,20 @@
     "validate:backend:artifact": "node scripts/validate-backend-artifact.cjs",
     "smoke:backend:runtime": "corepack pnpm --filter @worksync/backend smoke:runtime",
     "validate:backend": "corepack pnpm prisma:validate && corepack pnpm prisma:generate && corepack pnpm --filter @worksync/backend typecheck && corepack pnpm --filter @worksync/backend lint && corepack pnpm --filter @worksync/backend test && corepack pnpm --filter @worksync/backend build && corepack pnpm validate:backend:artifact",
-    "docker:up": "docker compose -f docker/compose.yml up -d",
-    "docker:down": "docker compose -f docker/compose.yml down",
+    "validate:frontend": "corepack pnpm --filter @worksync/auth-policy test && corepack pnpm --filter @worksync/frontend typecheck && corepack pnpm --filter @worksync/frontend lint && corepack pnpm --filter @worksync/frontend test && corepack pnpm --filter @worksync/frontend build",
+    "docker:infra:config": "docker compose -f docker/compose.yml config",
+    "docker:infra:up": "docker compose -f docker/compose.yml up -d",
+    "docker:infra:down": "docker compose -f docker/compose.yml down",
+    "docker:full:config": "docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config",
+    "docker:full:services": "docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config --services",
+    "docker:full:build": "docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml build",
+    "docker:full:up": "docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml up --build -d",
+    "docker:full:down": "docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml down",
+    "docker:up": "corepack pnpm docker:infra:up",
+    "docker:down": "corepack pnpm docker:infra:down",
+    "docker:app:build": "corepack pnpm docker:full:build",
+    "docker:app:up": "corepack pnpm docker:full:up",
+    "docker:app:down": "corepack pnpm docker:full:down",
     "validate:push": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm --filter @worksync/backend test:unit",
     "check": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm test && corepack pnpm build"
   },
@@ -42,7 +54,8 @@
     "app/backend/src/**/*.ts": "corepack pnpm --dir app/backend exec eslint --fix",
     "app/backend/test/**/*.ts": "corepack pnpm --dir app/backend exec eslint --fix",
     "app/backend/prisma.config.ts": "corepack pnpm --dir app/backend exec eslint --fix",
-    "app/frontend/src/**/*.{ts,tsx}": "corepack pnpm --dir app/frontend exec eslint --fix"
+    "app/frontend/src/**/*.{ts,tsx}": "corepack pnpm --dir app/frontend exec eslint --fix",
+    "packages/auth-policy/src/**/*.ts": "corepack pnpm --dir packages/auth-policy exec eslint --fix"
   },
   "devDependencies": {
     "husky": "^9.1.7",

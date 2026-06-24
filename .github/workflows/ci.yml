@@ -26,6 +26,8 @@ jobs:
           --health-retries 5
     env:
       TEST_DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -58,11 +60,39 @@ jobs:
         run: pnpm validate:backend
 
       - name: Validate frontend
-        run: >-
-          pnpm --filter @worksync/frontend typecheck &&
-          pnpm --filter @worksync/frontend lint &&
-          pnpm --filter @worksync/frontend test &&
-          pnpm --filter @worksync/frontend build
+        run: pnpm validate:frontend
+
+      - name: Install Playwright browser
+        run: pnpm --filter @worksync/frontend exec playwright install --with-deps chromium
+
+      - name: Run frontend end-to-end tests
+        run: pnpm --filter @worksync/frontend test:e2e
+
+      - name: Validate infrastructure container topology
+        run: docker compose -f docker/compose.yml config --quiet
+
+      - name: Validate full container topology
+        env:
+          JWT_ACCESS_SECRET: ci-access-secret-at-least-32-bytes-long
+          JWT_REFRESH_SECRET: ci-refresh-secret-at-least-32-bytes-different
+        run: docker compose -f docker/compose.yml -f docker/compose.app.yml config --quiet
+
+      - name: Validate full container services
+        env:
+          JWT_ACCESS_SECRET: ci-access-secret-at-least-32-bytes-long
+          JWT_REFRESH_SECRET: ci-refresh-secret-at-least-32-bytes-different
+        run: |
+          services="$(docker compose -f docker/compose.yml -f docker/compose.app.yml config --services | sort | tr '\n' ' ')"
+          test "$services" = "backend frontend minio postgres redis "
+
+      - name: Build application images
+        run: |
+          docker build --target backend -t worksync-backend:ci .
+          docker build \
+            --target frontend \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:4000 \
+            --build-arg NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=false \
+            -t worksync-frontend:ci .
 
   security:
     runs-on: ubuntu-latest

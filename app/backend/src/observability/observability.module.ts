@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { Module } from "@nestjs/common";
+import { Module, RequestMethod } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
 import type { SerializerFn } from "pino";
@@ -105,6 +105,12 @@ export function createPinoHttpOptions(
     LoggerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService<Environment, true>) => ({
+        forRoutes: [
+          {
+            path: "{*path}",
+            method: RequestMethod.ALL
+          }
+        ],
         pinoHttp: createPinoHttpOptions(config)
       })
     })

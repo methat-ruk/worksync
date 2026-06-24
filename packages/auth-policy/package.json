@@ -1,0 +1,45 @@
+{
+  "name": "@worksync/auth-policy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "sideEffects": false,
+  "main": "./dist/evaluate.js",
+  "types": "./src/evaluate.ts",
+  "exports": {
+    ".": {
+      "types": "./src/evaluate.ts",
+      "browser": "./src/evaluate.ts",
+      "default": "./dist/evaluate.js"
+    },
+    "./constants": {
+      "types": "./src/constants.ts",
+      "browser": "./src/constants.ts",
+      "default": "./dist/constants.js"
+    },
+    "./evaluate": {
+      "types": "./src/evaluate.ts",
+      "browser": "./src/evaluate.ts",
+      "default": "./dist/evaluate.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@zxcvbn-ts/core": "^3.0.4",
+    "@zxcvbn-ts/language-common": "^3.0.4",
+    "@zxcvbn-ts/language-en": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.21",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.4",
+    "vitest": "^3.2.4"
+  }
+}

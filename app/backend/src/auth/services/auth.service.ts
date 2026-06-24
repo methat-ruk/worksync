@@ -16,6 +16,7 @@ import type {
 import { normalizeEmail } from "../dto/auth.dto";
 import type { PublicUser } from "../types/auth.types";
 import { PasswordHasher } from "./password-hasher.service";
+import { PasswordPolicyService } from "./password-policy.service";
 import {
   SessionService,
   type SessionAuthentication
@@ -51,6 +52,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly passwordHasher: PasswordHasher,
+    private readonly passwordPolicy: PasswordPolicyService,
     private readonly sessions: SessionService,
     private readonly logger: PinoLogger,
     private readonly correlationContext: CorrelationContextService
@@ -63,6 +65,10 @@ export class AuthService {
     userAgent: string | undefined
   ): Promise<SessionAuthentication> {
     const email = normalizeEmail(input.email);
+    this.passwordPolicy.assertValid(input.password, [
+      email,
+      input.displayName.trim()
+    ]);
     const passwordHash = await this.passwordHasher.hash(input.password);
 
     try {

@@ -9,7 +9,11 @@ node_modules/
 .env
 .env.*
 !.env.example
+!.env.local.example
+!.env.docker.example
 !**/.env.example
+!**/.env.local.example
+!**/.env.docker.example
 
 # Build output
 .next/
@@ -17,6 +21,18 @@ dist/
 coverage/
 *.tsbuildinfo
 /app/backend/src/generated/prisma/
+
+# Test output (test source remains tracked)
+test-results/
+playwright-report/
+blob-report/
+
+# Local tooling and operating-system files
+.eslintcache
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
 
 # Logs
 *.log

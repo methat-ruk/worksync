@@ -44,6 +44,11 @@ Use:
 
 Required controls:
 
+- enforce the same blocking signup password policy in the browser and backend
+- keep password-policy rules in the shared `@worksync/auth-policy` package
+- require 12–128 characters, no outer whitespace, and zxcvbn score 3 or higher
+- do not use password composition rules
+- keep confirm-password values frontend-only and ephemeral
 - reject missing, malformed, expired, and revoked tokens
 - persist authoritative session state in PostgreSQL
 - store only refresh-token hashes and deliver refresh tokens through a scoped HttpOnly cookie
@@ -53,6 +58,7 @@ Required controls:
 - enforce an absolute session lifetime rather than extending it on refresh
 - validate browser request origins for cookie-authenticated auth commands
 - avoid storing tokens in logs, telemetry, screenshots, or errors
+- avoid logging raw passwords or password-derived policy details
 - define token lifetimes before production
 
 Google OAuth controls:

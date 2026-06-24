@@ -51,20 +51,64 @@ Required categories:
 - Google OAuth client ID, client secret, exact callback URI, and token-exchange timeout
 - observability settings
 
-See `.env.example` for initial variable names.
+See `.env.example`, `.env.local.example`, and `.env.docker.example` for
+initial variable names and local run-mode examples.
 
 Production authentication configuration must use independent access and
 refresh secrets of at least 32 bytes. Refresh cookies must be secure in
 TLS-backed environments, and the configured cookie domain and CORS origin must
 match the deployed frontend/API topology.
 
+Cookie-domain rules:
+
+- leave `COOKIE_DOMAIN` empty for localhost or a host-only cookie
+- use a shared parent such as `.example.com` only for sibling subdomains
+- never include a scheme, port, or path
+- require `COOKIE_SECURE=true` behind HTTPS
+- configure the exact OAuth callback URL at Google and in
+  `GOOGLE_OAUTH_REDIRECT_URI`
+
+Frontend `NEXT_PUBLIC_*` values are build-time inputs. A URL or public feature
+flag change requires rebuilding the frontend image; backend secrets remain
+runtime-only configuration.
+
 ## Build and Artifact Expectations
 
 - Build frontend and backend from reviewed source.
+- Use the root multi-target `Dockerfile` targets `frontend` and `backend`.
+- Use `docker/compose.app.yml` only as a local/staging-like application overlay.
 - Produce identifiable artifacts.
 - Do not bake secrets into artifacts.
 - Promote the same artifact between environments where possible.
 - Record commit, artifact identity, environment, actor, and time for deployments.
+
+Container commands:
+
+```bash
+docker compose -f docker/compose.yml config
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config --services
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml build
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml up --build -d
+docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml down
+```
+
+Local run-mode boundaries:
+
+- Hybrid mode uses `docker/compose.yml` only. Docker runs PostgreSQL, Redis,
+  and MinIO; frontend and backend run locally with pnpm and localhost URLs.
+- Full Docker mode combines `docker/compose.yml` with
+  `docker/compose.app.yml`. Backend containers use `postgres`, `redis`, and
+  `minio` service hostnames. Frontend `NEXT_PUBLIC_*` API/socket URLs still use
+  host-reachable localhost values because they execute in the user's browser.
+
+The container definition does not yet implement TLS/ingress, registry
+publishing, production secret injection, automated backups, or deployment
+promotion. Those remain release-readiness requirements.
+
+The backend target currently retains the workspace installation to keep Prisma
+and workspace-package resolution deterministic. Production dependency pruning,
+SBOM generation, signing, and image-size optimization remain pipeline work.
 
 ## Migration Order
 

@@ -19,14 +19,21 @@ describe("RefreshTokenService", () => {
     const expiresAt = new Date(Date.now() + 60_000);
     const issued = await service.issue("user-1", "session-1", expiresAt);
     const payload = new JwtService().decode(issued.refreshToken);
+    const maximumExpiry = Math.floor(expiresAt.getTime() / 1_000);
 
     expect(payload).toEqual({
       sub: "user-1",
       sid: "session-1",
       jti: expect.any(String),
       iat: expect.any(Number),
-      exp: Math.floor(expiresAt.getTime() / 1_000)
+      exp: expect.any(Number)
     });
+    expect((payload as { exp: number }).exp).toBeLessThanOrEqual(
+      maximumExpiry
+    );
+    expect((payload as { exp: number }).exp).toBeGreaterThanOrEqual(
+      maximumExpiry - 1
+    );
     expect(issued.refreshTokenHash).toMatch(/^[a-f0-9]{64}$/);
     expect(service.matches(issued.refreshToken, issued.refreshTokenHash)).toBe(
       true

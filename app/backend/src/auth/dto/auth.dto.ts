@@ -7,6 +7,7 @@ import {
   MinLength
 } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { PASSWORD_POLICY } from "@worksync/auth-policy/constants";
 
 function trimString({ value }: { value: unknown }): unknown {
   return typeof value === "string" ? value.trim() : value;
@@ -35,13 +36,13 @@ export class SignUpRequestDto {
 
   @ApiProperty({
     example: "correct horse battery staple",
-    minLength: 12,
-    maxLength: 128,
+    minLength: PASSWORD_POLICY.minLength,
+    maxLength: PASSWORD_POLICY.maxLength,
+    description:
+      "Must meet the shared password policy, including zxcvbn score 3 or higher and no leading or trailing whitespace",
     writeOnly: true
   })
   @IsString()
-  @MinLength(12)
-  @MaxLength(128)
   password!: string;
 }
 
@@ -54,13 +55,13 @@ export class LoginRequestDto {
 
   @ApiProperty({
     example: "correct horse battery staple",
-    minLength: 12,
-    maxLength: 128,
+    minLength: PASSWORD_POLICY.minLength,
+    maxLength: PASSWORD_POLICY.maxLength,
     writeOnly: true
   })
   @IsString()
-  @MinLength(12)
-  @MaxLength(128)
+  @MinLength(PASSWORD_POLICY.minLength)
+  @MaxLength(PASSWORD_POLICY.maxLength)
   password!: string;
 }
 
