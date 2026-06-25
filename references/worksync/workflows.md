@@ -45,6 +45,12 @@ execute attacker-controlled content require `security-testing` evidence.
 
 When automated coverage is impractical, record the reason, alternative evidence, unverified behavior, remaining risk, and follow-up owner. Required integration, contract, end-to-end, or security suites that skip leave validation incomplete.
 
+Performance-sensitive changes must report the baseline or budget, measured
+evidence, skipped measurements, and remaining regression risk. Do not treat
+performance evidence as required for every change; require it when data volume,
+API latency, database access, queue behavior, bundle size, route load, or
+critical user journeys are materially affected.
+
 ## Validation Evidence
 
 - Backend builds must produce `app/backend/dist/main.js`.
