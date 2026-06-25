@@ -1,6 +1,6 @@
 # WorkSync Frontend Profile
 
-This file defines WorkSync-specific frontend implementation choices. Reusable frontend guidance remains in `skills/engineering/frontend-patterns/SKILL.md`.
+This file defines WorkSync-specific frontend implementation choices. Reusable frontend guidance remains in `skills/engineering/implementation/frontend-patterns/SKILL.md`.
 
 ## Framework and Styling
 

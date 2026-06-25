@@ -43,6 +43,8 @@ WorkSync risk is concentrated in:
 
 - authentication and refresh-token lifecycle
 - RBAC and workspace isolation
+- workspace, project, task, comment, notification, and activity-list
+  performance as data volume grows
 - project, task, comment, file, and notification authorization
 - API contract stability between frontend and backend
 - realtime event delivery and room membership
@@ -85,6 +87,8 @@ Prioritize:
 - RBAC guards and workspace ownership checks
 - workspace, project, task, comment, file, notification, and activity-log flows
 - Prisma persistence and transaction behavior
+- bounded list behavior for workspace-scoped reads, including pagination,
+  filtering, sorting, and relation loading on representative data shapes
 - Redis-backed cache or ephemeral state when behavior depends on it
 - BullMQ job enqueueing, processing, retry, and failure behavior
 - Socket.IO authentication and room membership
@@ -100,6 +104,8 @@ Protect:
 - status codes
 - required fields
 - pagination, filtering, and sorting behavior
+- documented limits and performance-sensitive response shapes for list
+  endpoints
 - auth-required and permission-denied behavior
 - Swagger/OpenAPI consistency when contracts change
 
@@ -110,6 +116,9 @@ Contract tests should catch frontend/backend drift before E2E tests become the f
 Cover important UI behavior:
 
 - loading, empty, error, and success states
+- loading lifecycle on critical screens: loading appears when work starts and
+  exits into success, empty, error, timeout, cancellation, or navigation
+- failed API responses must render error feedback rather than indefinite loading
 - form validation and submission states
 - button and interactive-control feedback for hover, focus, active, disabled,
   loading, success, and error states on critical actions
@@ -119,8 +128,23 @@ Cover important UI behavior:
 - comment and mention UI
 - notification surfaces
 - responsive behavior on critical screens
+- request-waterfall, payload, or route-load regressions on critical screens when
+  a performance budget or baseline exists
 
 UI visibility checks do not replace backend authorization tests.
+
+## Performance Evidence
+
+For performance-sensitive WorkSync changes, record:
+
+- the critical journey, endpoint, query, job, or page being evaluated
+- the baseline or performance budget used for comparison
+- representative data volume or workload shape
+- p50, p95, and p99 evidence when practical for API, database, queue, or UI
+  latency
+- whether the path is bounded by pagination, limits, queue deadlines, or timeout
+  budgets
+- skipped measurements, why they were skipped, and the remaining risk
 
 ## End-to-End Tests
 
