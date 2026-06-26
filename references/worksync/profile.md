@@ -1,6 +1,7 @@
 # WorkSync Project Profile
 
-This profile supplies project-specific facts to the reusable engineering skills.
+This profile supplies WorkSync-specific facts for engineering tools, agents, and
+review workflows.
 
 ## Loading Rules
 
@@ -17,7 +18,9 @@ Read this entry point for every task, then load conditionally:
   `architecture.md`, `testing.md`, and `workflows.md`
 - routing and precedence questions -> `composition.md`
 
-Do not treat this profile as reusable engineering guidance. Reusable procedures remain in `skills/`.
+Do not treat this profile as reusable engineering guidance. Reusable procedures,
+local agent skills, and personal workflow tooling stay outside this project
+profile unless they are intentionally committed as project documentation.
 
 ## Project Summary
 

@@ -1,6 +1,7 @@
 # WorkSync Testing Profile
 
-This profile maps reusable testing and security-testing guidance to WorkSync-specific risks, tools, and high-value scenarios.
+This profile maps general testing and security-testing concerns to
+WorkSync-specific risks, tools, and high-value scenarios.
 
 Do not assume a tool is available until its repository command, configuration, or CI job exists.
 
@@ -270,7 +271,7 @@ Generated tests must be treated as proposals:
 
 - inspect for correctness and sensitive data exposure
 - remove brittle implementation coupling
-- align with `test-strategy`
+- align with the repository testing strategy
 - keep only tests that protect meaningful behavior
 
 Do not accept generated tests into the suite without human review.

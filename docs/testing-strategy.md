@@ -89,7 +89,7 @@ Use Playwright for:
 
 ### Security Tests
 
-Use `security-testing` for:
+Use security testing for:
 
 - auth/session abuse tests
 - role escalation attempts
