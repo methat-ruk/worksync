@@ -14,7 +14,7 @@ Map reusable abstractions to this project as follows:
 | Cache Layer | Redis |
 | Queue System | BullMQ |
 | Realtime Transport | Socket.IO |
-| Object Storage | AWS S3 |
+| Object Storage | S3-compatible storage; MinIO locally; AWS S3 production target |
 | API Documentation | Swagger |
 | Container Runtime | Docker |
 | Local Container Orchestration | Docker Compose |

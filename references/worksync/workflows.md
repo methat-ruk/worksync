@@ -29,6 +29,8 @@ resolver failures.
 
 Every feature, bug fix, or observable behavior change requires:
 
+- business and requirement correctness validation before normal-case technical
+  correctness
 - proportionate automated behavioral evidence mapped to the changed guarantees
 - `coding-standards` validation for code-level maintainability
 - `web-security-baseline` for every web-facing change
@@ -50,6 +52,14 @@ evidence, skipped measurements, and remaining regression risk. Do not treat
 performance evidence as required for every change; require it when data volume,
 API latency, database access, queue behavior, bundle size, route load, or
 critical user journeys are materially affected.
+
+AI or LLM behavior must route through `ai-engineering` when model output,
+retrieval, embeddings, tool calls, prompt orchestration, or AI-generated content
+affects user-visible behavior, persistence, tools, or business decisions. Such
+work requires AI behavior evidence such as structured-output validation,
+tool-call tests, RAG source tests, safety tests, or prompt/model regression
+cases. Manual prompt trials alone are not sufficient production-readiness
+evidence for important AI behavior.
 
 ## Validation Evidence
 
@@ -85,6 +95,8 @@ critical user journeys are materially affected.
 ## Completion
 
 - Map material acceptance criteria to validation evidence.
+- Confirm business and requirement correctness before claiming technical
+  correctness.
 - Confirm implementation is maintainable, locally understandable, and proportional to the requirement.
 - Fix review findings and rerun affected checks.
 - Report checks that could not run and the remaining risk.

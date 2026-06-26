@@ -35,7 +35,7 @@ Prefer repository-defined commands over inventing parallel scripts.
 | Cache Layer | Redis |
 | Queue System | BullMQ |
 | Realtime Transport | Socket.IO |
-| File Intake / Object Storage | AWS S3 upload flow |
+| File Intake / Object Storage | S3-compatible upload flow; MinIO locally; AWS S3 production target |
 
 ## Testing Emphasis
 
@@ -145,6 +145,27 @@ For performance-sensitive WorkSync changes, record:
 - whether the path is bounded by pagination, limits, queue deadlines, or timeout
   budgets
 - skipped measurements, why they were skipped, and the remaining risk
+
+## AI and LLM Tests
+
+WorkSync does not currently define a production AI feature. When AI, LLM, RAG,
+embeddings, tool-calling, structured-output, prompt orchestration, or
+AI-generated-content behavior is introduced, cover:
+
+- deterministic input validation before model calls
+- structured-output or schema validation when downstream code depends on model
+  fields
+- invalid, malformed, unsafe, or unsupported model output
+- tool-call argument validation, authorization, duplicate handling, and tool
+  failure behavior
+- RAG no-result, stale source, conflicting source, unauthorized source, and
+  prompt-injection-in-context behavior
+- hallucination or unsupported-claim checks for user-visible answers
+- provider timeout, rate-limit, unavailable, and fallback behavior
+- prompt or model regression cases for important workflows
+
+Manual prompt testing alone is not production-readiness evidence for important
+AI behavior.
 
 ## End-to-End Tests
 
