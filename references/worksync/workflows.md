@@ -32,9 +32,9 @@ Every feature, bug fix, or observable behavior change requires:
 - business and requirement correctness validation before normal-case technical
   correctness
 - proportionate automated behavioral evidence mapped to the changed guarantees
-- `coding-standards` validation for code-level maintainability
-- `web-security-baseline` for every web-facing change
-- `frontend-review` and/or `backend-review` for the affected implementation domain
+- code-level maintainability review
+- web security baseline review for every web-facing change
+- frontend and/or backend domain review for the affected implementation domain
 - specialized review when architecture, security, data, reliability, observability, timeout, or performance concerns are triggered
 
 Existing tests may be extended; a new test file is not required when the current suite already owns the behavior.
@@ -42,8 +42,8 @@ Existing tests may be extended; a new test file is not required when the current
 The baseline must record applicable controls and explicit non-applicability.
 Material authentication, authorization, workspace-isolation, sensitive-data,
 upload, callback, external-URL, redirect, or abuse risk must route to
-`security-review`. Controls whose failure could expose data, bypass access, or
-execute attacker-controlled content require `security-testing` evidence.
+security review. Controls whose failure could expose data, bypass access, or
+execute attacker-controlled content require security testing evidence.
 
 When automated coverage is impractical, record the reason, alternative evidence, unverified behavior, remaining risk, and follow-up owner. Required integration, contract, end-to-end, or security suites that skip leave validation incomplete.
 
@@ -53,7 +53,7 @@ performance evidence as required for every change; require it when data volume,
 API latency, database access, queue behavior, bundle size, route load, or
 critical user journeys are materially affected.
 
-AI or LLM behavior must route through `ai-engineering` when model output,
+AI or LLM behavior requires AI engineering review when model output,
 retrieval, embeddings, tool calls, prompt orchestration, or AI-generated content
 affects user-visible behavior, persistence, tools, or business decisions. Such
 work requires AI behavior evidence such as structured-output validation,
@@ -100,5 +100,5 @@ evidence for important AI behavior.
 - Confirm implementation is maintainable, locally understandable, and proportional to the requirement.
 - Fix review findings and rerun affected checks.
 - Report checks that could not run and the remaining risk.
-- Require delivery-pipeline and infrastructure-readiness evidence for production deployment.
+- Require delivery pipeline and infrastructure readiness evidence for production deployment.
 - Define post-deploy verification and rollback or containment.

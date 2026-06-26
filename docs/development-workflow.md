@@ -6,12 +6,13 @@ This document describes how to plan, implement, review, validate, and complete w
 
 Before engineering work:
 
-1. Read `AGENTS.md`.
-2. Read `skills/engineering/execution-order/SKILL.md`.
-3. Read `references/worksync/profile.md`.
-4. Load only the profile files required by the routed work.
+1. Read `references/worksync/profile.md`.
+2. Load only the profile files required by the work.
+3. Apply any local agent instructions, personal skills, or team playbooks
+   available in your environment.
 
-Do not bypass the routed skill pipeline with ad-hoc reasoning.
+Do not rely on ad-hoc reasoning when the repository profile, team process, or
+local agent workflow defines a clearer route.
 
 ## Approval Workflow
 
@@ -50,7 +51,7 @@ For non-trivial work, identify:
 - tests and validation evidence
 - documentation updates
 
-Use `domain-modeling` when concepts, invariants, ownership, or lifecycle change.
+Use domain modeling review when concepts, invariants, ownership, or lifecycle change.
 
 ## Implementation Rules
 
@@ -96,15 +97,15 @@ If `pnpm install` stalls while recreating `node_modules`:
 
 ## Review Expectations
 
-Use the routed review flow:
+Use the routed review flow available in your environment:
 
-- `scrutinize` for intent and end-to-end claim checking
-- `coding-standards` for implementation hygiene and code-level maintainability
-- `frontend-review` and `backend-review` for independent domain review
-- `domain-modeling` for business invariants and lifecycle changes
-- `architecture-review` for boundary and dependency changes
-- `security-review` and `security-testing` for trust boundaries and evidence
-- `test-strategy` for validation plan and coverage
+- intent and end-to-end claim checking before implementation
+- implementation hygiene and code-level maintainability review
+- frontend and backend domain review when those surfaces change
+- domain modeling review for business invariants and lifecycle changes
+- architecture review for boundary and dependency changes
+- security review and security testing for trust boundaries and evidence
+- test strategy review for validation plan and coverage
 
 Findings should lead. Summaries are secondary.
 
@@ -150,9 +151,9 @@ Work is complete only when:
 
 - requirements and acceptance criteria are satisfied
 - material acceptance criteria and changed guarantees are mapped to validation evidence
-- routed skill exit criteria are satisfied
+- relevant workflow or review exit criteria are satisfied
 - relevant profile constraints are satisfied
-- affected implementation received the applicable `frontend-review` and/or `backend-review`
+- affected implementation received the applicable frontend and/or backend review
 - code is locally understandable, maintainable, and no more complex than the requirement justifies
 - review findings are resolved or explicitly accepted
 - affected checks pass or limitations are reported
