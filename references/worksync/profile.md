@@ -12,6 +12,9 @@ Read this entry point for every task, then load conditionally:
 - infrastructure, environment, release, or deployment work -> `deployment.md`
 - testing, review, communication, issue tracking, or delivery workflow work -> `workflows.md`
 - security testing, browser automation, generated tests, or scanner selection -> `testing.md`
+- AI, LLM, RAG, embeddings, tool-calling, structured-output, prompt
+  orchestration, or AI-generated-content work -> `stack.md`,
+  `architecture.md`, `testing.md`, and `workflows.md`
 - routing and precedence questions -> `composition.md`
 
 Do not treat this profile as reusable engineering guidance. Reusable procedures remain in `skills/`.

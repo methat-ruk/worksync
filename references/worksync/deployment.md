@@ -11,7 +11,7 @@ Client
 -> Redis
 -> BullMQ workers
 -> Socket.IO transport
--> AWS S3
+-> S3-compatible object storage, MinIO locally and AWS S3 as the production target
 -> external providers
 ```
 
@@ -24,7 +24,8 @@ Treat this as the current project topology, not a universal infrastructure model
 - Keep environment configuration and secrets outside built artifacts.
 - Promote immutable artifacts between environments.
 - Coordinate Prisma migration ordering with application deployment.
-- Verify PostgreSQL, Redis, BullMQ workers, Socket.IO delivery, and S3 access after deployment when affected.
+- Verify PostgreSQL, Redis, BullMQ workers, Socket.IO delivery, and
+  S3-compatible storage access after deployment when affected.
 
 ## Production Checks
 

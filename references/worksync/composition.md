@@ -22,7 +22,9 @@ When a reusable skill says:
 - Cache Layer -> Redis
 - Queue System -> BullMQ
 - Realtime Transport -> Socket.IO
-- Object Storage -> AWS S3
+- Object Storage -> S3-compatible storage; MinIO locally; AWS S3 production target
+- AI / LLM Feature -> `ai-engineering`; load WorkSync stack, architecture,
+  testing, and workflow profile files when project-specific constraints matter
 - Issue Tracking System -> the team-configured tracker
 - Browser Automation Tool -> Playwright
 - Exploratory / Generated Test Tool -> TestSprite when configured
