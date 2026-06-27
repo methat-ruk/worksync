@@ -10,6 +10,7 @@ Do not assume a tool is available until its repository command, configuration, o
 | Abstraction | WorkSync Selection |
 |---|---|
 | Browser Automation Tool | Playwright, when configured |
+| Browser Evidence Collector | Playwright and browser-visible smoke checks, when configured |
 | Exploratory / Generated Test Tool | TestSprite, when configured and reviewed before acceptance |
 | API Test Harness | repository-selected HTTP test runner |
 | Component / UI Test Harness | repository-selected frontend test runner |
@@ -20,6 +21,8 @@ Do not assume a tool is available until its repository command, configuration, o
 | Runtime Artifact Scanner | repository-selected container or artifact scanner |
 
 Prefer repository-defined commands over inventing parallel scripts.
+Postman or Newman is not a required WorkSync validation layer unless the
+repository explicitly adds collections, safe environments, and CI commands.
 
 ## Boundary Mapping
 
@@ -109,6 +112,7 @@ Protect:
   endpoints
 - auth-required and permission-denied behavior
 - Swagger/OpenAPI consistency when contracts change
+- generated client or shared package consistency when applicable
 
 Contract tests should catch frontend/backend drift before E2E tests become the first signal.
 
@@ -133,6 +137,9 @@ Cover important UI behavior:
   a performance budget or baseline exists
 
 UI visibility checks do not replace backend authorization tests.
+Browser evidence should verify visible content, loaded styles, intentional
+navigation or redirects, critical interaction feedback, loading exits, and
+blocking console errors for changed page-level behavior.
 
 ## Performance Evidence
 
@@ -183,6 +190,9 @@ Use Playwright when configured for critical journeys:
 - user cannot access another workspace through direct navigation
 
 Keep the suite small enough to run reliably in CI. Use traces and screenshots carefully to avoid sensitive data exposure.
+Use browser traces, screenshots, and videos only when they add evidence or help
+debugging; redact or avoid artifacts that may contain tokens, cookies, private
+URLs, or personal data.
 
 ## Security Tests
 

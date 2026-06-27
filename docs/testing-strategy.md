@@ -51,12 +51,15 @@ Use for:
 - auth and permission behavior
 - pagination/filter/sort behavior
 - Swagger/OpenAPI consistency
+- generated client or shared package drift when applicable
 
 ### Frontend/UI Tests
 
 Use for:
 
 - loading, empty, error, and success states
+- browser-visible rendering, styles, route guards, navigation, and blocking
+  console errors for page-level changes
 - form validation and pending states
 - shared frontend/backend password policy parity
 - confirm-password exclusion from API requests
@@ -137,6 +140,9 @@ Use for:
 - Use deterministic fixtures.
 - Model at least two workspaces for isolation tests.
 - Model at least one user per role.
+- Use allowed and denied actors for authorization-sensitive behavior.
+- Keep parallel tests isolated by transaction, schema, namespace, or disposable
+  infrastructure.
 - Avoid real secrets and real personal data.
 - Redact tokens and private URLs from traces and screenshots.
 
