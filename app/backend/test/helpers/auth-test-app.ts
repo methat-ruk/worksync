@@ -1,7 +1,16 @@
-import type { INestApplication } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  type INestApplication
+} from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 
+import { API_ERROR_CODE } from "../../src/common/errors/api-error-code";
 import { AppModule } from "../../src/app.module";
+import {
+  AuthRateLimiterService,
+  type AuthRateLimitPolicy
+} from "../../src/auth/services/auth-rate-limit.service";
 import { PrismaService } from "../../src/database/prisma.service";
 import {
   Prisma,
@@ -38,6 +47,7 @@ export type AuthTestContext = {
 export type AuthTestOptions = {
   googleProfile?: GoogleIdentityProfile;
   googleFailure?: Error;
+  rateLimitedPolicies?: AuthRateLimitPolicy[];
 };
 
 export async function createAuthTestApp(
@@ -308,6 +318,39 @@ export async function createAuthTestApp(
   const moduleBuilder = Test.createTestingModule({
     imports: [AppModule]
   }).overrideProvider(PrismaService).useValue(prisma);
+  const rateLimitedPolicies = new Set(options.rateLimitedPolicies ?? []);
+  moduleBuilder.overrideProvider(AuthRateLimiterService).useValue({
+    consume: jest.fn(
+      async (policy: AuthRateLimitPolicy) => {
+        if (!rateLimitedPolicies.has(policy)) {
+          return;
+        }
+        throw new HttpException(
+          {
+            message: "Too many authentication attempts. Please try again later.",
+            code: API_ERROR_CODE.RATE_LIMITED,
+            retryAfterSeconds: 60
+          },
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      }
+    ),
+    consumeIp: jest.fn(
+      async (policy: AuthRateLimitPolicy) => {
+        if (!rateLimitedPolicies.has(policy)) {
+          return;
+        }
+        throw new HttpException(
+          {
+            message: "Too many authentication attempts. Please try again later.",
+            code: API_ERROR_CODE.RATE_LIMITED,
+            retryAfterSeconds: 60
+          },
+          HttpStatus.TOO_MANY_REQUESTS
+        );
+      }
+    )
+  });
   if (options.googleProfile || options.googleFailure) {
     moduleBuilder
       .overrideProvider(GoogleOAuthProviderService)

@@ -165,6 +165,31 @@ describe("authentication security controls", () => {
     });
   });
 
+  it("rate-limits auth attempts without exposing identifiers or credentials", async () => {
+    const rateLimitedContext = await createAuthTestApp({
+      rateLimitedPolicies: ["LOGIN_IDENTITY"]
+    });
+    try {
+      const response = await request(rateLimitedContext.app.getHttpServer())
+        .post("/api/auth/login")
+        .send({
+          email: "sensitive-rate-limit@example.com",
+          password: "secret password value"
+        })
+        .expect(429);
+
+      const body = JSON.stringify(response.body);
+      expect(response.body.data.code).toBe("RATE_LIMITED");
+      expect(response.headers["retry-after"]).toBe("60");
+      expect(body).not.toContain("sensitive-rate-limit@example.com");
+      expect(body).not.toContain("secret password value");
+      expect(body).not.toContain("Bearer");
+      expect(body).not.toContain("worksync_refresh_token");
+    } finally {
+      await rateLimitedContext.app.close();
+    }
+  });
+
   it("never stores plaintext credentials", () => {
     const stored = [...context.users.values()].find(
       (user) => user.id === userId

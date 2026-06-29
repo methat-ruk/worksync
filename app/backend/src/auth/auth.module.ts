@@ -10,6 +10,11 @@ import { AuthGuard } from "./guards/auth.guard";
 import { AuthOriginGuard } from "./guards/auth-origin.guard";
 import { AccessTokenService } from "./services/access-token.service";
 import { AuthService } from "./services/auth.service";
+import {
+  AUTH_RATE_LIMIT_STORE,
+  AuthRateLimiterService,
+  RedisAuthRateLimitStore
+} from "./services/auth-rate-limit.service";
 import { GoogleIdentityService } from "./services/google-identity.service";
 import {
   GOOGLE_OAUTH_CLIENT,
@@ -38,6 +43,7 @@ import { SessionService } from "./services/session.service";
   controllers: [AuthController],
   providers: [
     AuthService,
+    AuthRateLimiterService,
     AuthGuard,
     AuthOriginGuard,
     PasswordHasher,
@@ -50,6 +56,10 @@ import { SessionService } from "./services/session.service";
     GoogleOAuthProviderService,
     GoogleIdentityService,
     GoogleOAuthService,
+    {
+      provide: AUTH_RATE_LIMIT_STORE,
+      useClass: RedisAuthRateLimitStore
+    },
     {
       provide: GOOGLE_OAUTH_CLIENT,
       useFactory: () => new OAuth2Client()

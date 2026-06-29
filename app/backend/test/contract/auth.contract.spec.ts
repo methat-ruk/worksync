@@ -220,6 +220,57 @@ describe("authentication API contract", () => {
     expect(origin.body.data.code).toBe("INVALID_REQUEST_ORIGIN");
   });
 
+  it("returns the defined rate-limit contract for sensitive auth endpoints", async () => {
+    const rateLimitedContext = await createAuthTestApp({
+      rateLimitedPolicies: [
+        "LOGIN_IP",
+        "SIGNUP_IP",
+        "REFRESH_IP",
+        "GOOGLE_START_IP",
+        "GOOGLE_CALLBACK"
+      ]
+    });
+    try {
+      const login = await request(rateLimitedContext.app.getHttpServer())
+        .post("/api/auth/login")
+        .send({
+          email: "ada@example.com",
+          password: "correct horse battery staple"
+        })
+        .expect(429);
+      expect(login.headers["retry-after"]).toBe("60");
+      expect(login.body).toMatchObject({
+        success: false,
+        message: "Too many authentication attempts. Please try again later.",
+        data: {
+          code: "RATE_LIMITED",
+          correlationId: expect.any(String)
+        }
+      });
+
+      await request(rateLimitedContext.app.getHttpServer())
+        .post("/api/auth/signup")
+        .send({
+          displayName: "Rate Limited",
+          email: "limited@example.com",
+          password: "correct horse battery staple"
+        })
+        .expect(429);
+      await request(rateLimitedContext.app.getHttpServer())
+        .post("/api/auth/refresh")
+        .expect(429);
+      await request(rateLimitedContext.app.getHttpServer())
+        .get("/api/auth/google")
+        .expect(429);
+      await request(rateLimitedContext.app.getHttpServer())
+        .get("/api/auth/google/callback")
+        .query({ code: "secret-code", state: "state" })
+        .expect(429);
+    } finally {
+      await rateLimitedContext.app.close();
+    }
+  });
+
   it("keeps logout idempotent when the refresh cookie is absent", async () => {
     const response = await request(app.getHttpServer())
       .post("/api/auth/logout")
@@ -322,22 +373,26 @@ describe("authentication API contract", () => {
       responses: {
         "201": expect.any(Object),
         "400": expect.any(Object),
+        "429": expect.any(Object),
         "409": expect.any(Object)
       }
     });
     expect(document.paths["/api/auth/login"]?.post?.responses).toMatchObject({
       "200": expect.any(Object),
       "400": expect.any(Object),
+      "429": expect.any(Object),
       "401": expect.any(Object)
     });
     expect(document.paths["/api/auth/google"]?.get?.responses).toMatchObject({
       "302": expect.any(Object),
+      "429": expect.any(Object),
       "503": expect.any(Object)
     });
     expect(
       document.paths["/api/auth/google/callback"]?.get?.responses
     ).toMatchObject({
       "303": expect.any(Object),
+      "429": expect.any(Object),
       "503": expect.any(Object)
     });
     expect(document.paths["/api/auth/me"]?.get).toMatchObject({
@@ -356,6 +411,7 @@ describe("authentication API contract", () => {
           })
         }),
         "401": expect.any(Object),
+        "429": expect.any(Object),
         "403": expect.any(Object)
       }
     });
@@ -402,6 +458,7 @@ describe("authentication API contract", () => {
         "GOOGLE_OAUTH_NOT_CONFIGURED",
         "INVALID_ACCESS_TOKEN",
         "INVALID_CREDENTIALS",
+        "RATE_LIMITED",
         "VALIDATION_ERROR"
       ])
     });

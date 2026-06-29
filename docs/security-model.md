@@ -57,6 +57,9 @@ Required controls:
 - revoke the affected session family when refresh-token reuse is detected
 - enforce an absolute session lifetime rather than extending it on refresh
 - validate browser request origins for cookie-authenticated auth commands
+- rate-limit sensitive authentication endpoints using safe, hashed limiter keys
+  so login, signup, refresh, and Google OAuth cannot be abused to exhaust CPU,
+  database, Redis, or provider capacity
 - avoid storing tokens in logs, telemetry, screenshots, or errors
 - avoid logging raw passwords or password-derived policy details
 - define token lifetimes before production
@@ -73,6 +76,17 @@ Google OAuth controls:
 - use a bounded timeout for the provider token exchange
 - clear transaction cookies on every callback outcome
 - return only generic frontend callback failures and structured secret-free logs
+- apply rate limits to OAuth start and callback routes without logging state,
+  authorization codes, cookies, provider payloads, or email addresses
+
+MVP deferred account lifecycle:
+
+- email verification
+- forgot/reset password
+- explicit account linking UI/API
+- session/device listing
+- single-session device revocation
+- account deletion
 
 ## Authorization Model
 

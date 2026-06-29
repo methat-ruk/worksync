@@ -39,6 +39,10 @@ export function configureApplication(app: INestApplication): void {
   app.useLogger(logger);
   app.flushLogs();
   app.enableShutdownHooks();
+  app.getHttpAdapter().getInstance().set(
+    "trust proxy",
+    config.get("TRUST_PROXY", { infer: true })
+  );
   app.setGlobalPrefix("api", {
     exclude: [
       { path: "health", method: RequestMethod.GET },

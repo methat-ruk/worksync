@@ -140,12 +140,22 @@ and logout invalidates access tokens for the revoked session immediately.
 Browser auth requests with an `Origin` header must match the configured CORS
 origin.
 
+Sensitive auth endpoints return `429` with `RATE_LIMITED` when rate or quota
+protection rejects a request. Login and signup limits are scoped to safe
+composite keys such as IP plus normalized email; refresh and Google OAuth
+limits are scoped to request/IP and token or transaction fingerprints where
+available. Public responses must not expose limiter keys, emails, tokens,
+cookies, provider payloads, or quota internals.
+
 Google callbacks return only fixed frontend status parameters. Authorization
 codes, access tokens, refresh tokens, provider payloads, and account identifiers
 must never appear in callback redirect URLs.
 
 Explicit account linking, account recovery, email verification, and
-session/device listing remain future lifecycle work.
+session/device listing remain future lifecycle work. MVP auth lifecycle
+explicitly defers email verification, forgot/reset password, explicit account
+linking UI/API, account deletion, session/device listing, and single-device
+revocation.
 
 ## Authorization
 

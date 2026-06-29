@@ -8,8 +8,21 @@ const user = {
   updatedAt: "2026-06-23T00:00:00.000Z"
 };
 
+const authBody = {
+  success: true,
+  message: "Authentication successful",
+  data: {
+    user,
+    accessToken: "test-access-token",
+    tokenType: "Bearer",
+    expiresIn: 900
+  }
+};
+
+const apiUrl = (path: string) => `http://localhost:4000${path}`;
+
 test.beforeEach(async ({ page }) => {
-  await page.route("http://localhost:4000/api/auth/refresh", (route) =>
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
     route.fulfill({
       status: 401,
       contentType: "application/json",
@@ -66,21 +79,12 @@ test("blocks weak signup and never sends confirmPassword", async ({ page }) => {
   let requestBody: Record<string, unknown> | null = null;
   const consoleMessages: string[] = [];
   page.on("console", (message) => consoleMessages.push(message.text()));
-  await page.route("http://localhost:4000/api/auth/signup", async (route) => {
+  await page.route(apiUrl("/api/auth/signup"), async (route) => {
     requestBody = route.request().postDataJSON() as Record<string, unknown>;
     await route.fulfill({
       status: 201,
       contentType: "application/json",
-      body: JSON.stringify({
-        success: true,
-        message: "Account created",
-        data: {
-          user,
-          accessToken: "test-access-token",
-          tokenType: "Bearer",
-          expiresIn: 900
-        }
-      })
+      body: JSON.stringify({ ...authBody, message: "Account created" })
     });
   });
 
@@ -119,4 +123,153 @@ test("blocks weak signup and never sends confirmPassword", async ({ page }) => {
   );
   expect(browserStorage).not.toContain(strongPassword);
   expect(consoleMessages.join("\n")).not.toContain(strongPassword);
+});
+
+test("shows login failure feedback without navigating", async ({ page }) => {
+  await page.route(apiUrl("/api/auth/login"), (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        message: "Invalid email or password",
+        data: { code: "INVALID_CREDENTIALS" }
+      })
+    })
+  );
+
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("ada@example.com");
+  await page.getByLabel("Password", { exact: true }).fill("wrong password");
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  await expect(page.getByText("Invalid email or password.")).toBeVisible();
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+test("shows auth rate-limit feedback on login and signup", async ({ page }) => {
+  const rateLimitedBody = {
+    success: false,
+    message: "Too many authentication attempts. Please try again later.",
+    data: { code: "RATE_LIMITED" }
+  };
+  await page.route(apiUrl("/api/auth/login"), (route) =>
+    route.fulfill({
+      status: 429,
+      contentType: "application/json",
+      body: JSON.stringify(rateLimitedBody)
+    })
+  );
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("ada@example.com");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("correct horse battery staple");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(
+    page.getByText("Too many attempts. Please wait and try again.")
+  ).toBeVisible();
+
+  await page.route(apiUrl("/api/auth/signup"), (route) =>
+    route.fulfill({
+      status: 429,
+      contentType: "application/json",
+      body: JSON.stringify(rateLimitedBody)
+    })
+  );
+  await page.goto("/signup");
+  await page.getByLabel("Name").fill("Ada Lovelace");
+  await page.getByLabel("Email").fill("ada@example.com");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("orbit lantern velvet meadow 47");
+  await page
+    .getByLabel("Confirm password", { exact: true })
+    .fill("orbit lantern velvet meadow 47");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(
+    page.getByText("Too many attempts. Please wait and try again.")
+  ).toBeVisible();
+});
+
+test("exits protected-route loading when refresh fails", async ({ page }) => {
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        message: "Internal server error",
+        data: { code: "INTERNAL_SERVER_ERROR" }
+      })
+    })
+  );
+
+  await page.goto("/app");
+  await expect(page).toHaveURL(/\/login\?next=%2Fapp$/, {
+    timeout: 15_000
+  });
+});
+
+test("keeps the authenticated UI visible when logout fails", async ({ page }) => {
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(apiUrl("/api/auth/logout"), (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        message: "Logout failed"
+      })
+    })
+  );
+
+  await page.goto("/app");
+  await expect(page.getByText("Your WorkSync overview")).toBeVisible();
+  await page.locator("[data-slot='dropdown-menu-trigger']").click();
+  await page
+    .locator("[data-slot='dropdown-menu-item']")
+    .filter({ hasText: "Sign out" })
+    .first()
+    .click();
+
+  await expect(page.getByText("Logout failed")).toBeVisible();
+  await expect(page).toHaveURL(/\/app$/);
+  await expect(page.getByText("Your WorkSync overview")).toBeVisible();
+});
+
+test("logs out successfully and returns to sign in", async ({ page }) => {
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(apiUrl("/api/auth/logout"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, message: "Logged out" })
+    })
+  );
+
+  await page.goto("/app");
+  await page.locator("[data-slot='dropdown-menu-trigger']").click();
+  await page
+    .locator("[data-slot='dropdown-menu-item']")
+    .filter({ hasText: "Sign out" })
+    .first()
+    .click();
+
+  await expect(page).toHaveURL(/\/login$/);
 });
