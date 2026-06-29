@@ -54,6 +54,7 @@ app/
   frontend/        Next.js application
   backend/         NestJS API and Prisma schema
 docs/              product and engineering documentation
+  workflows/       project workflow guides for CI, Docker, database, auth, and API behavior
 docker/            local runtime services
 references/        WorkSync project profile and implementation decisions
 .github/           CI workflow
@@ -262,6 +263,7 @@ docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml c
 - [Deployment](docs/deployment.md)
 - [Validation Matrix](docs/validation-matrix.md)
 - [Development Workflow](docs/development-workflow.md)
+- [Project Workflow Guides](docs/workflows/README.md)
 - [Project Setup](docs/project-setup.md)
 - [Google OAuth Setup](docs/google-oauth-setup.md)
 - [Technology and Dependency Inventory](docs/technology-stack.md)
