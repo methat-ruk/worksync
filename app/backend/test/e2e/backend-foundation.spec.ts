@@ -6,7 +6,6 @@ import {
   Post
 } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import { PrismaHealthIndicator } from "@nestjs/terminus";
 import { IsEmail, IsString } from "class-validator";
 import request = require("supertest");
 
@@ -37,9 +36,7 @@ class FoundationTestController {
 
 describe("backend foundation contracts", () => {
   let app: INestApplication;
-  const pingCheck = jest
-    .fn()
-    .mockResolvedValue({ database: { status: "up" } });
+  const queryRaw = jest.fn().mockResolvedValue([{ "?column?": 1 }]);
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -50,10 +47,8 @@ describe("backend foundation contracts", () => {
       .useValue({
         $connect: jest.fn(),
         $disconnect: jest.fn(),
-        $queryRawUnsafe: jest.fn()
+        $queryRaw: queryRaw
       })
-      .overrideProvider(PrismaHealthIndicator)
-      .useValue({ pingCheck })
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -103,7 +98,7 @@ describe("backend foundation contracts", () => {
   });
 
   it("returns the standard 503 error when PostgreSQL is unavailable", async () => {
-    pingCheck.mockRejectedValueOnce(new Error("connection failed"));
+    queryRaw.mockRejectedValueOnce(new Error("connection failed"));
 
     const response = await request(app.getHttpServer())
       .get("/health/ready")

@@ -1,5 +1,4 @@
 import { Injectable, ServiceUnavailableException } from "@nestjs/common";
-import { PrismaHealthIndicator } from "@nestjs/terminus";
 
 import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import { PrismaService } from "../database/prisma.service";
@@ -10,10 +9,7 @@ import type {
 
 @Injectable()
 export class HealthService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly prismaHealth: PrismaHealthIndicator
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   getLiveness(): HealthResponseDto {
     return {
@@ -27,9 +23,7 @@ export class HealthService {
 
   async getReadiness(): Promise<ReadinessResponseDto> {
     try {
-      await this.prismaHealth.pingCheck("database", this.prisma, {
-        timeout: 1_000
-      });
+      await this.prisma.$queryRaw`SELECT 1`;
       return {
         success: true,
         data: {

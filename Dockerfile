@@ -45,6 +45,7 @@ EXPOSE 3000
 CMD ["node", "app/frontend/server.js"]
 
 FROM source AS backend-builder
+RUN corepack pnpm --filter @worksync/backend prisma:generate
 RUN corepack pnpm --filter @worksync/backend build
 
 FROM node:22-bookworm-slim AS backend

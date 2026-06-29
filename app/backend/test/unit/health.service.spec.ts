@@ -1,28 +1,30 @@
 import { ServiceUnavailableException } from "@nestjs/common";
-import type { PrismaHealthIndicator } from "@nestjs/terminus";
 
 import type { PrismaService } from "../../src/database/prisma.service";
 import { HealthService } from "../../src/health/health.service";
 
 describe("HealthService", () => {
-  const prisma = {} as PrismaService;
+  const prisma = {
+    $queryRaw: jest.fn()
+  } as unknown as PrismaService;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it("reports liveness without checking dependencies", () => {
-    const indicator = { pingCheck: jest.fn() } as unknown as PrismaHealthIndicator;
-    const service = new HealthService(prisma, indicator);
+    const service = new HealthService(prisma);
 
     expect(service.getLiveness()).toEqual({
       success: true,
       data: { status: "ok", service: "worksync-backend" }
     });
-    expect(indicator.pingCheck).not.toHaveBeenCalled();
+    expect(prisma.$queryRaw).not.toHaveBeenCalled();
   });
 
   it("reports readiness when PostgreSQL responds", async () => {
-    const indicator = {
-      pingCheck: jest.fn().mockResolvedValue({ database: { status: "up" } })
-    } as unknown as PrismaHealthIndicator;
-    const service = new HealthService(prisma, indicator);
+    jest.mocked(prisma.$queryRaw).mockResolvedValue([{ "?column?": 1 }]);
+    const service = new HealthService(prisma);
 
     await expect(service.getReadiness()).resolves.toEqual({
       success: true,
@@ -35,10 +37,8 @@ describe("HealthService", () => {
   });
 
   it("returns a service unavailable error when PostgreSQL fails", async () => {
-    const indicator = {
-      pingCheck: jest.fn().mockRejectedValue(new Error("connection failed"))
-    } as unknown as PrismaHealthIndicator;
-    const service = new HealthService(prisma, indicator);
+    jest.mocked(prisma.$queryRaw).mockRejectedValue(new Error("connection failed"));
+    const service = new HealthService(prisma);
 
     await expect(service.getReadiness()).rejects.toBeInstanceOf(
       ServiceUnavailableException

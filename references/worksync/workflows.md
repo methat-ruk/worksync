@@ -25,6 +25,25 @@ Shared workspace packages must remain single sources of truth. Do not duplicate
 rules from `packages/*` into `app/backend` or `app/frontend` to work around
 resolver failures.
 
+## CI Job Ownership
+
+WorkSync CI should keep required evidence authoritative while splitting
+independent guarantees into separately named jobs:
+
+- backend validation: Prisma, backend typecheck, lint, all backend Jest
+  projects, build, and backend artifact shape
+- frontend validation: shared auth policy tests, frontend typecheck, lint,
+  unit/component tests, and production build
+- frontend E2E: Playwright browser coverage for critical frontend auth and
+  navigation behavior
+- container topology and images: Compose topology checks and backend/frontend
+  Docker image builds
+- dependency audit: production dependency vulnerability gate
+
+Do not combine jobs merely for convenience when they do not share required
+services or failure ownership. Do not split checks so far that failures become
+harder to interpret or required evidence becomes optional.
+
 ## Feature Quality Gate
 
 Every feature, bug fix, or observable behavior change requires:
