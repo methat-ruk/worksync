@@ -24,6 +24,8 @@ Treat this as the current project topology, not a universal infrastructure model
 - Keep environment configuration and secrets outside built artifacts.
 - Promote immutable artifacts between environments.
 - Coordinate Prisma migration ordering with application deployment.
+- Generate the Prisma client inside backend build and image pipelines before
+  compiling code that imports `app/backend/src/generated/prisma`.
 - Verify PostgreSQL, Redis, BullMQ workers, Socket.IO delivery, and
   S3-compatible storage access after deployment when affected.
 
