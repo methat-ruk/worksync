@@ -27,6 +27,23 @@ Treat this as the current project topology, not a universal infrastructure model
 - Verify PostgreSQL, Redis, BullMQ workers, Socket.IO delivery, and
   S3-compatible storage access after deployment when affected.
 
+## Local and Test Topology Consistency
+
+WorkSync hybrid development exposes PostgreSQL on `localhost:5433` to avoid
+common local PostgreSQL conflicts. Keep these surfaces aligned when changing
+local ports, service names, or run modes:
+
+- `docker/compose.yml`
+- root and app environment examples
+- backend test setup defaults
+- Prisma test migration and runtime smoke commands
+- CI service mappings and injected environment variables
+- setup and validation documentation
+
+`docker compose config` is useful for local troubleshooting, but it can print
+resolved environment values. Use quiet or service-list checks in CI and avoid
+pasting full config output when real secrets may be present.
+
 ## Production Checks
 
 - TLS and ingress support uploads and long-lived realtime connections.

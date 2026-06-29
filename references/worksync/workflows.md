@@ -66,6 +66,9 @@ evidence for important AI behavior.
 - Backend builds must produce `app/backend/dist/main.js`.
 - Backend production artifacts must not contain `app/backend/dist/test` or a nested `app/backend/dist/src/main.js`.
 - PostgreSQL integration tests require `TEST_DATABASE_URL` and must pass rather than skip in CI.
+- Local PostgreSQL integration defaults must stay aligned with the Compose
+  exposed port documented in `deployment.md`; a connection refusal is a topology
+  or environment failure until proven otherwise.
 - Local backend test setup may load `app/backend/.env` without overriding environment variables already injected by CI.
 - Authentication integration and security suites must fail closed in CI when the PostgreSQL test prerequisite is unavailable.
 - Report skipped suites separately from passed tests.
