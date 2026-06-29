@@ -2,6 +2,11 @@
 
 This document describes how to plan, implement, review, validate, and complete work in this repository.
 
+For workflow-specific operating details, see
+[Project Workflow Guides](workflows/README.md). Keep this document focused on
+the general development process; put CI, Docker, database, auth, and API flow
+details in the workflow-specific docs.
+
 ## Instruction Sources
 
 Before engineering work:
