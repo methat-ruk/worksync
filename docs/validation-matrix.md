@@ -69,6 +69,9 @@ Git hooks provide local feedback and can be bypassed. CI remains the authoritati
 
 `pnpm validate:backend` must run with `TEST_DATABASE_URL` in CI so the
 PostgreSQL integration project passes rather than skips.
+Auth rate-limit validation must run with Redis configuration available when the
+Redis-backed limiter path is in scope. Use `TEST_REDIS_URL` for isolated test
+Redis databases and never log raw limiter keys, emails, cookies, or tokens.
 
 ## Next Validation Upgrades
 

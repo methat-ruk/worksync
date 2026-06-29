@@ -27,9 +27,11 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -45,6 +47,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { BrandMark } from "../auth/components/brand-mark";
+import { authErrorMessage } from "../auth/error-message";
 import { logout, logoutAll, useAuth } from "../auth/auth-store";
 
 const navItems = [
@@ -108,13 +111,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [logoutAllOpen, setLogoutAllOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const user = auth.user!;
 
   async function finishLogout(allDevices: boolean) {
     setBusy(true);
+    setLogoutError(null);
     try {
       await (allDevices ? logoutAll() : logout());
       router.replace("/login");
+    } catch (error: unknown) {
+      setLogoutError(authErrorMessage(error));
     } finally {
       setBusy(false);
       setLogoutAllOpen(false);
@@ -165,32 +172,41 @@ export function AppShell({ children }: { children: ReactNode }) {
               <ChevronsUpDown aria-hidden="true" className="size-3.5 opacity-50" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-60">
-              <DropdownMenuLabel>
-                <span className="block truncate text-foreground">
-                  {user.displayName}
-                </span>
-                <span className="block truncate font-normal">{user.email}</span>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                disabled={busy}
-                onClick={() => void finishLogout(false)}
-              >
-                <LogOut aria-hidden="true" />
-                Sign out
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={busy}
-                variant="destructive"
-                onClick={() => setLogoutAllOpen(true)}
-              >
-                <PanelsTopLeft aria-hidden="true" />
-                Sign out all devices
-              </DropdownMenuItem>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>
+                  <span className="block truncate text-foreground">
+                    {user.displayName}
+                  </span>
+                  <span className="block truncate font-normal">{user.email}</span>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  disabled={busy}
+                  onClick={() => void finishLogout(false)}
+                >
+                  <LogOut aria-hidden="true" />
+                  Sign out
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={busy}
+                  variant="destructive"
+                  onClick={() => setLogoutAllOpen(true)}
+                >
+                  <PanelsTopLeft aria-hidden="true" />
+                  Sign out all devices
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="p-4 md:p-7">{children}</main>
+        <main className="space-y-4 p-4 md:p-7">
+          {logoutError && (
+            <Alert variant="destructive">
+              <AlertDescription>{logoutError}</AlertDescription>
+            </Alert>
+          )}
+          {children}
+        </main>
       </div>
 
       <AlertDialog open={logoutAllOpen} onOpenChange={setLogoutAllOpen}>

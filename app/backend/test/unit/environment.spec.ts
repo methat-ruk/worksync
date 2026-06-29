@@ -7,7 +7,12 @@ const validEnvironment = {
   CORS_ORIGIN: "http://localhost:3000",
   DATABASE_URL:
     "postgresql://worksync:worksync@localhost:55432/worksync?schema=public",
+  REDIS_URL: "redis://localhost:6379/1",
   LOG_LEVEL: "info",
+  AUTH_RATE_LIMIT_ENABLED: "true",
+  AUTH_RATE_LIMIT_KEY_SECRET:
+    "a-secure-rate-limit-secret-with-at-least-32-bytes",
+  TRUST_PROXY: "false",
   JWT_ACCESS_SECRET: "a-secure-access-secret-with-at-least-32-bytes",
   JWT_ACCESS_EXPIRES_IN: "15m",
   JWT_REFRESH_SECRET: "a-secure-refresh-secret-with-at-least-32-bytes",
@@ -26,6 +31,10 @@ describe("validateEnvironment", () => {
     expect(validateEnvironment(validEnvironment)).toEqual({
       ...validEnvironment,
       PORT: 4000,
+      AUTH_RATE_LIMIT_ENABLED: true,
+      AUTH_RATE_LIMIT_KEY_SECRET:
+        "a-secure-rate-limit-secret-with-at-least-32-bytes",
+      TRUST_PROXY: false,
       JWT_ACCESS_EXPIRES_IN: 900,
       JWT_REFRESH_EXPIRES_IN: 2_592_000,
       COOKIE_SECURE: false,
@@ -141,6 +150,38 @@ describe("validateEnvironment", () => {
         GOOGLE_OAUTH_ENABLED: "false"
       })
     ).toThrow("GOOGLE_OAUTH_ENABLED must be true outside development");
+  });
+
+  it("requires auth rate limiting in production and validates its secret", () => {
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: "production",
+        COOKIE_SECURE: "true",
+        AUTH_RATE_LIMIT_ENABLED: "false"
+      })
+    ).toThrow("AUTH_RATE_LIMIT_ENABLED must be true in production");
+
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        AUTH_RATE_LIMIT_KEY_SECRET: "too-short"
+      })
+    ).toThrow("AUTH_RATE_LIMIT_KEY_SECRET must contain at least 32 bytes");
+
+    expect(
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: "development",
+        GOOGLE_OAUTH_ENABLED: "false",
+        GOOGLE_OAUTH_CLIENT_ID: undefined,
+        GOOGLE_OAUTH_CLIENT_SECRET: undefined,
+        GOOGLE_OAUTH_REDIRECT_URI: undefined,
+        GOOGLE_OAUTH_TOKEN_TIMEOUT_MS: undefined,
+        AUTH_RATE_LIMIT_ENABLED: undefined,
+        AUTH_RATE_LIMIT_KEY_SECRET: undefined
+      }).AUTH_RATE_LIMIT_ENABLED
+    ).toBe(false);
   });
 
   it("validates enabled Google OAuth configuration and timeout", () => {

@@ -3,6 +3,7 @@ import { ApiError } from "./api-client";
 const messages: Record<string, string> = {
   INVALID_CREDENTIALS: "Invalid email or password.",
   AUTH_EMAIL_CONFLICT: "An account with this email already exists.",
+  RATE_LIMITED: "Too many attempts. Please wait and try again.",
   AUTH_PASSWORD_POLICY_VIOLATION:
     "Choose a stronger password that meets every requirement."
 };

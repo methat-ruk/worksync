@@ -132,6 +132,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       ...normalized.body,
       ...(Object.keys(data).length > 0 ? { data } : {})
     };
+    if (exception instanceof HttpException) {
+      const exceptionResponse = exception.getResponse();
+      const retryAfterSeconds =
+        typeof exceptionResponse === "object" &&
+        typeof (exceptionResponse as { retryAfterSeconds?: unknown })
+          .retryAfterSeconds === "number"
+          ? (exceptionResponse as { retryAfterSeconds: number })
+              .retryAfterSeconds
+          : undefined;
+      if (retryAfterSeconds !== undefined) {
+        response.setHeader("Retry-After", String(retryAfterSeconds));
+      }
+    }
 
     if (normalized.status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       const trace = exception instanceof Error ? exception.stack : undefined;

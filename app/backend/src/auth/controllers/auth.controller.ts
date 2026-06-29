@@ -24,6 +24,7 @@ import {
   ApiQuery,
   ApiSeeOtherResponse,
   ApiServiceUnavailableResponse,
+  ApiTooManyRequestsResponse,
   ApiTags,
   ApiUnauthorizedResponse
 } from "@nestjs/swagger";
@@ -42,6 +43,7 @@ import { CurrentUser } from "../decorators/current-user.decorator";
 import { GoogleOAuthError } from "../errors/google-oauth.error";
 import { AuthGuard } from "../guards/auth.guard";
 import { AuthOriginGuard } from "../guards/auth-origin.guard";
+import { AuthRateLimiterService } from "../services/auth-rate-limit.service";
 import { AuthService } from "../services/auth.service";
 import { GoogleOAuthService } from "../services/google-oauth.service";
 import { GoogleOAuthTransactionService } from "../services/google-oauth-transaction.service";
@@ -64,6 +66,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly sessions: SessionService,
     private readonly cookies: SessionCookieService,
+    private readonly rateLimiter: AuthRateLimiterService,
     private readonly googleOAuth: GoogleOAuthService,
     private readonly googleTransactions: GoogleOAuthTransactionService
   ) {}
@@ -77,9 +80,15 @@ export class AuthController {
     description: "Google OAuth is disabled or not configured",
     type: ApiErrorResponseDto
   })
-  googleLogin(
+  @ApiTooManyRequestsResponse({
+    description: "Too many Google OAuth start attempts",
+    type: ApiErrorResponseDto
+  })
+  async googleLogin(
+    @Req() request: Request,
     @Res() response: Response
-  ): void {
+  ): Promise<void> {
+    await this.rateLimiter.consumeIp("GOOGLE_START_IP", request);
     const start = this.googleOAuth.begin();
     this.googleTransactions.set(response, start.transaction);
     response.redirect(HttpStatus.FOUND, start.authorizationUrl);
@@ -98,6 +107,10 @@ export class AuthController {
     description: "Google OAuth is disabled or not configured",
     type: ApiErrorResponseDto
   })
+  @ApiTooManyRequestsResponse({
+    description: "Too many Google OAuth callback attempts",
+    type: ApiErrorResponseDto
+  })
   async googleCallback(
     @Query("code") code: string | undefined,
     @Query("state") state: string | undefined,
@@ -106,6 +119,11 @@ export class AuthController {
     @Res() response: Response
   ): Promise<void> {
     this.googleOAuth.ensureEnabled();
+    await this.rateLimiter.consume(
+      "GOOGLE_CALLBACK",
+      request,
+      state ?? "missing-state"
+    );
     const transaction = this.googleTransactions.read(request.headers.cookie);
     this.googleTransactions.clear(response);
 
@@ -174,11 +192,17 @@ export class AuthController {
     description: "The browser request origin is not allowed",
     type: ApiErrorResponseDto
   })
+  @ApiTooManyRequestsResponse({
+    description: "Too many signup attempts",
+    type: ApiErrorResponseDto
+  })
   async signUp(
     @Body() input: SignUpRequestDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response
   ): Promise<AuthResponseDto> {
+    await this.rateLimiter.consume("SIGNUP_IP", request, "ip");
+    await this.rateLimiter.consume("SIGNUP_IDENTITY", request, input.email);
     const authentication = await this.authService.signUp(
       input,
       request.headers["user-agent"]
@@ -215,11 +239,17 @@ export class AuthController {
     description: "The browser request origin is not allowed",
     type: ApiErrorResponseDto
   })
+  @ApiTooManyRequestsResponse({
+    description: "Too many login attempts",
+    type: ApiErrorResponseDto
+  })
   async login(
     @Body() input: LoginRequestDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response
   ): Promise<AuthResponseDto> {
+    await this.rateLimiter.consume("LOGIN_IP", request, "ip");
+    await this.rateLimiter.consume("LOGIN_IDENTITY", request, input.email);
     const authentication = await this.authService.login(
       input,
       request.headers["user-agent"]
@@ -253,11 +283,17 @@ export class AuthController {
     description: "The browser request origin is not allowed",
     type: ApiErrorResponseDto
   })
+  @ApiTooManyRequestsResponse({
+    description: "Too many refresh attempts",
+    type: ApiErrorResponseDto
+  })
   async refresh(
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response
   ): Promise<AuthResponseDto> {
+    await this.rateLimiter.consume("REFRESH_IP", request, "ip");
     const refreshToken = this.requireRefreshToken(request);
+    await this.rateLimiter.consume("REFRESH_TOKEN", request, refreshToken);
     const authentication = await this.sessions.refresh(
       refreshToken,
       request.headers["user-agent"]

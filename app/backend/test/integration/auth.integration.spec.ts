@@ -4,6 +4,7 @@ import { JwtService } from "@nestjs/jwt";
 import request = require("supertest");
 
 import { AppModule } from "../../src/app.module";
+import { AuthRateLimiterService } from "../../src/auth/services/auth-rate-limit.service";
 import { GoogleIdentityService } from "../../src/auth/services/google-identity.service";
 import { GoogleOAuthProviderService } from "../../src/auth/services/google-oauth-provider.service";
 import { SessionService } from "../../src/auth/services/session.service";
@@ -67,6 +68,11 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule]
     })
+      .overrideProvider(AuthRateLimiterService)
+      .useValue({
+        consume: jest.fn(),
+        consumeIp: jest.fn()
+      })
       .overrideProvider(GoogleOAuthProviderService)
       .useValue(googleHarness.provider)
       .compile();

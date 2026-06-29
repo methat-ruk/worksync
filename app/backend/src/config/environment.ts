@@ -18,7 +18,11 @@ export type Environment = {
   FRONTEND_URL: string;
   CORS_ORIGIN: string;
   DATABASE_URL: string;
+  REDIS_URL: string;
   LOG_LEVEL: LogLevel;
+  AUTH_RATE_LIMIT_ENABLED: boolean;
+  AUTH_RATE_LIMIT_KEY_SECRET?: string;
+  TRUST_PROXY: boolean;
   JWT_ACCESS_SECRET: string;
   JWT_ACCESS_EXPIRES_IN: number;
   JWT_REFRESH_SECRET: string;
@@ -235,6 +239,30 @@ export function validateEnvironment(
       "Environment variable COOKIE_SECURE must be true in production"
     );
   }
+  const authRateLimitEnabled =
+    typeof config.AUTH_RATE_LIMIT_ENABLED === "string" &&
+    config.AUTH_RATE_LIMIT_ENABLED.trim() !== ""
+      ? parseBoolean(
+          config.AUTH_RATE_LIMIT_ENABLED.trim(),
+          "AUTH_RATE_LIMIT_ENABLED"
+        )
+      : nodeEnvironment === "development"
+        ? false
+        : parseBoolean(
+            requireValue(config, "AUTH_RATE_LIMIT_ENABLED"),
+            "AUTH_RATE_LIMIT_ENABLED"
+          );
+  if (nodeEnvironment === "production" && !authRateLimitEnabled) {
+    throw new Error(
+      "Environment variable AUTH_RATE_LIMIT_ENABLED must be true in production"
+    );
+  }
+  const authRateLimitKeySecret = authRateLimitEnabled
+    ? parseJwtSecret(
+        requireValue(config, "AUTH_RATE_LIMIT_KEY_SECRET"),
+        "AUTH_RATE_LIMIT_KEY_SECRET"
+      )
+    : undefined;
 
   return {
     NODE_ENV: nodeEnvironment,
@@ -248,7 +276,17 @@ export function validateEnvironment(
       requireValue(config, "DATABASE_URL"),
       "DATABASE_URL"
     ),
+    REDIS_URL: parseUrl(requireValue(config, "REDIS_URL"), "REDIS_URL"),
     LOG_LEVEL: logLevel,
+    AUTH_RATE_LIMIT_ENABLED: authRateLimitEnabled,
+    ...(authRateLimitKeySecret
+      ? { AUTH_RATE_LIMIT_KEY_SECRET: authRateLimitKeySecret }
+      : {}),
+    TRUST_PROXY:
+      typeof config.TRUST_PROXY === "string" &&
+      config.TRUST_PROXY.trim() !== ""
+        ? parseBoolean(config.TRUST_PROXY.trim(), "TRUST_PROXY")
+        : false,
     JWT_ACCESS_SECRET: accessSecret,
     JWT_ACCESS_EXPIRES_IN: parsePositiveDuration(
       requireValue(config, "JWT_ACCESS_EXPIRES_IN"),
