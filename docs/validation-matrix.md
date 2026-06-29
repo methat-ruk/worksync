@@ -53,14 +53,22 @@ following `docs/project-setup.md`.
 | Local targeted validation | Repository scripts selected for the changed surface | Fast feedback while implementing |
 | Pre-commit hook | `pnpm lint:staged` | ESLint on staged backend and frontend TypeScript files |
 | Pre-push hook | `pnpm validate:push` | Typecheck, lint, and backend unit tests |
-| CI | Pull requests and pushes to `main` | Database migrations, complete backend validation, frontend validation, build artifacts, and dependency audit |
+| CI backend job | Pull requests and pushes to `main` | PostgreSQL and Redis-backed backend validation, migrations, build, and artifact checks |
+| CI frontend job | Pull requests and pushes to `main` | Shared auth policy tests, frontend typecheck, lint, tests, and production build |
+| CI frontend E2E job | Pull requests and pushes to `main` | Playwright browser evidence for critical frontend auth and navigation behavior |
+| CI container job | Pull requests and pushes to `main` | Compose topology and backend/frontend Docker image build checks |
+| CI security job | Pull requests and pushes to `main` | Production dependency audit |
 
 Git hooks provide local feedback and can be bypassed. CI remains the authoritative merge gate.
+If branch protection uses required check names, keep it aligned with the split
+CI jobs: `Backend validation`, `Frontend validation`, `Frontend E2E`,
+`Container topology and images`, and `Dependency audit`.
 
 ## Current Limitations
 
 - Frontend validation includes shared password-policy tests, Vitest component
-  tests, production build, and Playwright authentication E2E.
+  tests, and production build. Playwright authentication E2E runs in the
+  separate frontend E2E CI job.
 - Required backend PostgreSQL integration and security evidence is incomplete
   when `TEST_DATABASE_URL` is unavailable or the database-backed suite skips.
 - `docker/compose.yml` is the hybrid-development infrastructure topology.
