@@ -84,6 +84,9 @@ evidence for important AI behavior.
 
 - Backend builds must produce `app/backend/dist/main.js`.
 - Backend production artifacts must not contain `app/backend/dist/test` or a nested `app/backend/dist/src/main.js`.
+- Backend Docker image builds must run Prisma client generation inside the image
+  build before `@worksync/backend build`; do not rely on untracked local
+  `app/backend/src/generated/prisma` files.
 - PostgreSQL integration tests require `TEST_DATABASE_URL` and must pass rather than skip in CI.
 - Local PostgreSQL integration defaults must stay aligned with the Compose
   exposed port documented in `deployment.md`; a connection refusal is a topology
