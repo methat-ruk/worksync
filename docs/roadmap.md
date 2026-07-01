@@ -1,119 +1,74 @@
 # WorkSync Roadmap
 
-This roadmap defines the initial product build sequence. It is intentionally milestone-based rather than date-based until implementation velocity is known.
+This roadmap is the dashboard for product progress. Milestone details live in
+separate files so this page stays easy to scan.
+
+Last updated: 2026-07-01
+
+## Current Snapshot
+
+WorkSync is past the basic foundation phase and currently sits between
+Milestone 0 and Milestone 1.
+
+Done:
+
+- application foundation
+- authentication foundation
+- session lifecycle and refresh rotation
+- Google OAuth login
+- frontend auth flows and protected routing
+- auth rate limiting
+- Docker hybrid and full run modes
+- backend/frontend validation commands and CI structure
+- project setup, workflow, API, security, deployment, and roadmap docs
+
+Still missing before the collaboration MVP works:
+
+- workspace creation and membership APIs
+- RBAC guards and workspace isolation enforcement
+- IDOR/BOLA and cross-tenant security tests
+- project/task APIs and frontend workflows
+- comments, mentions, notifications, realtime, files, jobs, and production
+  readiness
+
+## Milestone Status
+
+| Milestone | Status | Summary | Details |
+|---|---|---|---|
+| 0 Foundation | Done | App skeleton, auth foundation, CI, Docker, validation, and docs are in place. | [Milestone 0](roadmap/milestone-0-foundation.md) |
+| 1 Identity and Workspace | Partial | Auth is done for MVP foundation; workspace/RBAC is not implemented yet. | [Milestone 1](roadmap/milestone-1-identity-workspace.md) |
+| 2 Projects and Tasks | Partial foundation only | Prisma models exist; APIs, UI, authorization, and tests are not implemented. | [Milestone 2](roadmap/milestone-2-projects-tasks.md) |
+| 3 Comments, Mentions, and Notifications | Partial foundation only | Comment model exists; mentions, notifications, and realtime are not implemented. | [Milestone 3](roadmap/milestone-3-comments-notifications.md) |
+| 4 File Uploads and Background Jobs | Planned | MinIO and Redis local services exist; storage and job features are not implemented. | [Milestone 4](roadmap/milestone-4-files-jobs.md) |
+| 5 Production Readiness | Partial | CI, Docker, artifact checks, and docs exist; deployment target and production ops are not ready. | [Milestone 5](roadmap/milestone-5-production-readiness.md) |
+
+## Current Priorities
+
+1. Implement workspace creation, membership, RBAC guards, and workspace
+   isolation.
+2. Add IDOR/BOLA, cross-owner, and cross-tenant integration/security tests for
+   workspace-scoped access.
+3. Build the first complete workspace-to-project-to-task workflow across
+   backend API, frontend UI, contracts, and tests.
+4. Add activity log decisions before task/comment workflows become complex.
+5. Prepare production deployment and observability only after core
+   workspace-scoped workflows exist.
 
 ## Guiding Principles
 
-- Protect workspace isolation and authorization from the first milestone.
+- Protect workspace isolation and authorization from the first workspace feature.
 - Prefer a small complete workflow over many partial features.
-- Keep frontend, backend, data, and tests moving together.
-- Treat realtime, jobs, storage, and release readiness as production concerns, not polish.
+- Keep frontend, backend, data, documentation, and tests moving together.
+- Treat realtime, jobs, storage, and release readiness as production concerns,
+  not polish.
+- Do not start Workspace/RBAC-adjacent product work without IDOR/BOLA,
+  ownership, and tenant-isolation evidence.
 
 ## MVP Goal
 
-A user can create a workspace, manage members, create a project, create and update tasks, comment on work, receive relevant notifications, and trust that access is scoped to the correct workspace.
-
-## Milestone 0 - Foundation
-
-Deliver:
-
-- repository app skeleton
-- local development setup
-- `.env.example`
-- database schema baseline
-- authentication strategy
-- shared validation and response conventions
-- first CI checks
-
-Exit criteria:
-
-- frontend and backend start locally
-- database migration applies cleanly
-- typecheck, lint, test, and build commands are documented
-
-## Milestone 1 - Identity and Workspace
-
-Deliver:
-
-- sign up, login, logout
-- access token and refresh token flow
-- workspace creation
-- membership model
-- OWNER, ADMIN, MEMBER, VIEWER roles
-- workspace isolation enforcement
-
-Exit criteria:
-
-- direct API calls cannot access another workspace
-- role matrix has backend integration coverage
-- critical auth and workspace flows have contract tests
-
-## Milestone 2 - Projects and Tasks
-
-Deliver:
-
-- project CRUD
-- task CRUD
-- task status lifecycle
-- assignment and due dates
-- task list and board views
-- activity log for task changes
-
-Exit criteria:
-
-- task lifecycle invariants are documented
-- task APIs follow response and error conventions
-- frontend covers loading, empty, error, and success states
-
-## Milestone 3 - Comments, Mentions, and Notifications
-
-Deliver:
-
-- comments on tasks
-- mention parsing
-- notification creation
-- notification read/unread state
-- realtime notification delivery
-
-Exit criteria:
-
-- mention and notification rules are tested
-- realtime events do not cross workspace boundaries
-- background jobs are idempotent where applicable
-
-## Milestone 4 - File Uploads and Background Jobs
-
-Deliver:
-
-- file metadata model
-- upload flow
-- file access controls
-- email jobs
-- reminder jobs
-- daily summary jobs
-
-Exit criteria:
-
-- file upload security tests exist
-- jobs validate payloads and handle retries
-- storage access is scoped to authorized users
-
-## Milestone 5 - Production Readiness
-
-Deliver:
-
-- deployment pipeline
-- infrastructure readiness review
-- observability for critical journeys
-- release smoke tests
-- backup and restore evidence
-- security testing baseline
-
-Exit criteria:
-
-- release readiness can make a ready / not-ready decision from evidence
-- rollback, containment, or forward-fix paths are documented
-- post-deploy verification covers login, task, notification, queue, data, and storage paths
+A user can create a workspace, manage members, create a project, create and
+update tasks, comment on work, receive relevant notifications, and trust that
+access is scoped to the correct workspace.
 
 ## Out of Scope for MVP
 
@@ -124,11 +79,43 @@ Exit criteria:
 - mobile application
 - offline mode
 - complex portfolio planning
+- explicit account-linking UI/API
+- email verification
+- forgot/reset password
+- account deletion
+- session/device listing
 
 ## Open Questions
 
-- Invitation flow: email invite only, link invite, or both?
+- Invitation flow: email invite only, link invite, direct member add, or a
+  staged combination?
 - Task workflow: fixed status model or configurable statuses?
+- Project/task permission matrix: can MEMBER create projects, or only tasks?
+- Viewer behavior: read-only only, or can viewers comment?
 - File upload: direct-to-storage upload or backend proxy?
+- File policy: allowed types, maximum size, preview rules, and malware scanning
+  hook?
 - Notification channels: in-app only for MVP, or email as well?
 - Activity log retention period?
+- Pagination model: cursor or page/pageSize for MVP lists?
+
+## Roadmap Detail Policy
+
+This page should answer "where are we, what is next, and where do I read more?"
+
+Keep here:
+
+- current snapshot
+- milestone status table
+- current priorities
+- major open decisions
+
+Put milestone details in `docs/roadmap/milestone-*.md`.
+
+Keep outside the roadmap:
+
+- per-file implementation tasks
+- individual test case lists
+- sprint-level assignments
+- long validation logs
+- detailed API schemas already owned by API documentation or Swagger
