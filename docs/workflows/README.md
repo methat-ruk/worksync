@@ -17,6 +17,7 @@ playbooks.
 | [Database and Prisma Workflow](database-prisma-workflow.md) | Prisma schema, migrations, generated client, or database tests change |
 | [Auth Workflow](auth-workflow.md) | Authentication, sessions, OAuth, cookies, tokens, or auth abuse controls change |
 | [Frontend and Backend API Workflow](frontend-backend-api-workflow.md) | Frontend API calls, response contracts, route guards, or auth UI behavior change |
+| [PR Review Automation Workflow](pr-review-automation.md) | PR changed-surface classification, advisory evidence summaries, or evidence gates change |
 
 ## How to Use These Docs
 

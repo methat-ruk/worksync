@@ -14,6 +14,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  pr-review-evidence:
+    name: PR review evidence
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+
+      - name: Self-test PR evidence checker
+        run: node scripts/pr-review-evidence-self-test.cjs
+
+      - name: Check PR evidence
+        run: node scripts/pr-review-evidence.cjs
+
   backend:
     name: Backend validation
     runs-on: ubuntu-latest
