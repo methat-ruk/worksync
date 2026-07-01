@@ -48,6 +48,8 @@
     "docker:app:up": "corepack pnpm docker:full:up",
     "docker:app:down": "corepack pnpm docker:full:down",
     "validate:push": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm --filter @worksync/backend test:unit",
+    "pr:review:evidence": "node scripts/pr-review-evidence.cjs",
+    "pr:review:evidence:self-test": "node scripts/pr-review-evidence-self-test.cjs",
     "check": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm test && corepack pnpm build"
   },
   "lint-staged": {
