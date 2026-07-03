@@ -152,7 +152,7 @@ export function SignupForm() {
           </Field>
         </FieldGroup>
         <Button
-          className="h-10 w-full hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20"
+          className="h-10 w-full bg-blue-600 text-white hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
           disabled={form.formState.isSubmitting}
           type="submit"
         >

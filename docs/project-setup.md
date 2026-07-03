@@ -136,7 +136,32 @@ corepack pnpm --filter @worksync/backend prisma:migrate:deploy
 Remove-Item Env:DATABASE_URL
 ```
 
-## 6. Start the Applications
+## 6. Seed a Local Login User
+
+Seed the test database with a deterministic password-login user:
+
+```bash
+corepack pnpm seed:auth-user:test
+```
+
+Seed the development database used by `http://localhost:3000` and
+`http://localhost:4000`:
+
+```bash
+corepack pnpm seed:auth-user
+```
+
+The default seed login is:
+
+| Field | Value |
+|---|---|
+| Email | `demo@worksync.local` |
+| Password | `WorkSync demo passphrase 2026!` |
+
+Run `corepack pnpm prisma:migrate` before seeding the development database.
+The test seed requires `worksync_test` to have the committed migrations applied.
+
+## 7. Start the Applications
 
 ```bash
 corepack pnpm dev
@@ -157,7 +182,7 @@ Local endpoints:
 | Swagger | `http://localhost:4000/docs` |
 | Business API | `http://localhost:4000/api` |
 
-## 7. Validate the Checkout
+## 8. Validate the Checkout
 
 Run the complete repository checks:
 

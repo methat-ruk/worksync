@@ -229,6 +229,8 @@ export class AuthRateLimiterService {
     const retryAfterSeconds = Math.ceil(rule.windowMs / 1000);
     this.logger.warn(
       {
+        logType: "business_event",
+        event: "auth_request_rate_limited",
         reasonCode: "AUTH_RATE_LIMITED",
         policy,
         correlationId: this.correlationContext.getCorrelationId()

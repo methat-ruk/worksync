@@ -124,6 +124,8 @@ export class AuthService {
       const correlationId = this.correlationContext.getCorrelationId();
       this.logger.warn(
         {
+          logType: "business_event",
+          event: "password_login_failed",
           reasonCode,
           ...(correlationId ? { correlationId } : {})
         },

@@ -43,7 +43,7 @@ function LandingContent() {
           <Link
             className={cn(
               buttonVariants({ variant: "ghost" }),
-              "h-9 px-3 leading-none hover:-translate-y-0.5 hover:bg-background hover:shadow-md hover:shadow-primary/15"
+              "h-9 bg-blue-50/80 px-3 leading-none text-blue-700 hover:-translate-y-0.5 hover:bg-blue-100 hover:text-blue-800 hover:shadow-md hover:shadow-blue-600/10 dark:bg-blue-500/20 dark:text-blue-50 dark:hover:bg-blue-500/25 dark:hover:text-white"
             )}
             href="/login"
           >
@@ -86,7 +86,7 @@ function LandingContent() {
             <Link
               className={cn(
                 buttonVariants({ size: "lg", variant: "outline" }),
-                "h-11 px-5 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-background hover:shadow-lg hover:shadow-primary/15"
+                "h-11 border-blue-200/80 bg-blue-50/80 px-5 text-blue-700 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800 hover:shadow-lg hover:shadow-blue-600/10 dark:border-blue-300/35 dark:bg-blue-500/20 dark:text-blue-50 dark:hover:border-blue-300/50 dark:hover:bg-blue-500/25 dark:hover:text-white"
               )}
               href="/login"
             >

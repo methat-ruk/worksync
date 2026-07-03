@@ -80,6 +80,8 @@ describe("AuthService", () => {
     );
     expect(logger.warn).toHaveBeenCalledWith(
       {
+        logType: "business_event",
+        event: "password_login_failed",
         reasonCode,
         correlationId: "request-123"
       },

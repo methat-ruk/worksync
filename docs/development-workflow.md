@@ -100,6 +100,20 @@ If `pnpm install` stalls while recreating `node_modules`:
 3. Rerun `pnpm install --frozen-lockfile`.
 4. Do not delete the lockfile or dependency declarations as a workaround.
 
+### Backend Logs
+
+- Development backend logs use `pino-pretty` when `NODE_ENV=development`.
+- Production should keep JSON logs so aggregation systems such as ELK, Grafana
+  Loki, or cloud log pipelines can parse structured fields.
+- HTTP access logs intentionally include only diagnostic fields such as method,
+  URL path, status code, response time, request ID, correlation ID, and user ID
+  when available.
+- Request headers, response headers, cookies, bearer tokens, passwords,
+  password hashes, redirect locations, and provider callback query material must
+  not appear in normal access logs.
+- Business logs should use stable reason codes and correlation IDs. Do not use
+  HTTP access logs as a substitute for domain or security audit events.
+
 ## Review Expectations
 
 Use the routed review flow available in your environment:
