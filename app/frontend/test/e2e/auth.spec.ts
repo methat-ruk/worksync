@@ -233,7 +233,7 @@ test("keeps the authenticated UI visible when logout fails", async ({ page }) =>
   );
 
   await page.goto("/app");
-  await expect(page.getByText("Your WorkSync overview")).toBeVisible();
+  await expect(page.getByText("Workspace foundation overview")).toBeVisible();
   await page.locator("[data-slot='dropdown-menu-trigger']").click();
   await page
     .locator("[data-slot='dropdown-menu-item']")
@@ -243,7 +243,7 @@ test("keeps the authenticated UI visible when logout fails", async ({ page }) =>
 
   await expect(page.getByText("Logout failed")).toBeVisible();
   await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByText("Your WorkSync overview")).toBeVisible();
+  await expect(page.getByText("Workspace foundation overview")).toBeVisible();
 });
 
 test("logs out successfully and returns to sign in", async ({ page }) => {
