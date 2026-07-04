@@ -160,6 +160,10 @@ The default seed login is:
 
 Run `corepack pnpm prisma:migrate` before seeding the development database.
 The test seed requires `worksync_test` to have the committed migrations applied.
+The seed command refuses `NODE_ENV=production` and non-local database hosts by
+default because it creates or updates a password hash. For an intentional shared
+development target, set a custom `WORKSYNC_SEED_PASSWORD` and explicitly pass
+`--allow-non-local` through the backend seed script.
 
 ## 7. Start the Applications
 

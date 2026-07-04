@@ -228,6 +228,10 @@ Use the environment examples as non-secret templates:
 
 Do not commit real `.env` files or secrets.
 
+Auth seed commands are local-first safety tools. They refuse `NODE_ENV=production`
+and refuse non-local database hosts unless explicitly overridden with a custom
+`WORKSYNC_SEED_PASSWORD`.
+
 `COOKIE_DOMAIN` should normally be empty on localhost. Set it only to a shared
 parent domain such as `.example.com` when the frontend and API use sibling
 HTTPS subdomains. It must not contain a scheme, port, or path. Google OAuth

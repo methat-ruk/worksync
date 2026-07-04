@@ -9,9 +9,17 @@ import { PasswordPolicyService } from "../src/auth/services/password-policy.serv
 const DEFAULT_EMAIL = "demo@worksync.local";
 const DEFAULT_DISPLAY_NAME = "WorkSync Demo User";
 const DEFAULT_PASSWORD = "WorkSync demo passphrase 2026!";
+const LOCAL_SEED_HOSTS = new Set([
+  "localhost",
+  "127.0.0.1",
+  "::1",
+  "postgres",
+  "worksync-postgres"
+]);
 
 type SeedOptions = {
   useTestDatabase: boolean;
+  allowNonLocal: boolean;
   email: string;
   displayName: string;
   password: string;
@@ -29,6 +37,7 @@ function valueAfterPrefix(argument: string, prefix: string): string | undefined 
 
 function parseOptions(argv: string[]): SeedOptions {
   let useTestDatabase = false;
+  let allowNonLocal = process.env.WORKSYNC_ALLOW_NON_LOCAL_SEED === "true";
   let email = DEFAULT_EMAIL;
   let displayName = DEFAULT_DISPLAY_NAME;
   let password = DEFAULT_PASSWORD;
@@ -36,6 +45,11 @@ function parseOptions(argv: string[]): SeedOptions {
   for (const argument of argv) {
     if (argument === "--test") {
       useTestDatabase = true;
+      continue;
+    }
+
+    if (argument === "--allow-non-local") {
+      allowNonLocal = true;
       continue;
     }
 
@@ -55,7 +69,7 @@ function parseOptions(argv: string[]): SeedOptions {
   }
 
   password = process.env.WORKSYNC_SEED_PASSWORD ?? password;
-  return { useTestDatabase, email, displayName, password };
+  return { useTestDatabase, allowNonLocal, email, displayName, password };
 }
 
 function connectionString(options: SeedOptions): string {
@@ -74,15 +88,42 @@ function connectionString(options: SeedOptions): string {
   return databaseUrl;
 }
 
+function assertSafeSeedTarget(connectionStringValue: string, options: SeedOptions): void {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Refusing to seed auth users when NODE_ENV=production");
+  }
+
+  const databaseUrl = new URL(connectionStringValue);
+  const hostname = databaseUrl.hostname.toLowerCase();
+  const isLocalTarget = LOCAL_SEED_HOSTS.has(hostname);
+  if (isLocalTarget) {
+    return;
+  }
+
+  if (!options.allowNonLocal) {
+    throw new Error(
+      "Refusing to seed a non-local database. Use --allow-non-local or WORKSYNC_ALLOW_NON_LOCAL_SEED=true only for an intentional shared development target."
+    );
+  }
+
+  if (options.password === DEFAULT_PASSWORD) {
+    throw new Error(
+      "WORKSYNC_SEED_PASSWORD is required when seeding a non-local database"
+    );
+  }
+}
+
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const email = normalizeEmail(options.email);
   const displayName = options.displayName.trim();
   const passwordPolicy = new PasswordPolicyService();
   passwordPolicy.assertValid(options.password, [email, displayName]);
+  const targetConnectionString = connectionString(options);
+  assertSafeSeedTarget(targetConnectionString, options);
 
   const client = new Client({
-    connectionString: connectionString(options),
+    connectionString: targetConnectionString,
     connectionTimeoutMillis: 5_000
   });
   const passwordHash = await new PasswordHasher().hash(options.password);

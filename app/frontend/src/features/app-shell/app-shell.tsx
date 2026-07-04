@@ -319,59 +319,59 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-72 rounded-2xl border bg-card p-2.5 shadow-xl shadow-slate-950/12"
+              className="w-64 rounded-2xl border bg-card p-2 shadow-xl shadow-slate-950/12"
               sideOffset={8}
             >
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="rounded-xl p-0">
-                  <div className="flex items-center gap-2.5">
-                    <Avatar className="size-9 border bg-blue-50 dark:border-blue-300/20 dark:bg-blue-500/15" size="default">
-                      <AvatarFallback className="bg-blue-50 text-xs font-semibold text-primary dark:bg-blue-500/15 dark:text-blue-100">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="size-8 border bg-blue-50 dark:border-blue-300/20 dark:bg-blue-500/15" size="default">
+                      <AvatarFallback className="bg-blue-50 text-[11px] font-semibold text-primary dark:bg-blue-500/15 dark:text-blue-100">
                         {initials(user.displayName)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-foreground">
+                      <span className="block truncate text-[13px] font-semibold text-foreground">
                         {user.displayName}
                       </span>
-                      <span className="block truncate text-xs font-normal text-muted-foreground">
+                      <span className="block truncate text-[11px] font-normal text-muted-foreground">
                         {user.email}
                       </span>
-                      <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                      <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
                         <span className="size-1.5 rounded-full bg-emerald-500" />
                         Active session
                       </span>
                     </span>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="my-2" />
+                <DropdownMenuSeparator className="my-1.5" />
                 {pendingMenuItems.map((item) => (
                   <DropdownMenuItem
-                    className="h-auto cursor-not-allowed rounded-xl px-2 py-2 opacity-55"
+                    className="h-auto cursor-not-allowed rounded-xl px-2 py-1.5 opacity-55"
                     disabled
                     key={item.label}
                   >
                     <item.icon
                       aria-hidden="true"
-                      className="mr-2.5 size-4 text-muted-foreground"
+                      className="mr-2 size-3.5 text-muted-foreground"
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-foreground">
+                      <span className="block text-[13px] font-semibold text-foreground">
                         {item.label}
                       </span>
-                      <span className="mt-0.5 block truncate text-[11px] font-normal text-muted-foreground">
+                      <span className="block truncate text-[10px] font-normal text-muted-foreground">
                         {item.description}
                       </span>
                     </span>
                     <ChevronRight
                       aria-hidden="true"
-                      className="size-4 text-muted-foreground"
+                      className="size-3.5 text-muted-foreground"
                     />
                   </DropdownMenuItem>
                 ))}
-                <DropdownMenuSeparator className="my-2" />
-                <div className="px-2 py-2">
-                  <div className="mb-1.5 text-[11px] font-semibold text-muted-foreground">
+                <DropdownMenuSeparator className="my-1.5" />
+                <div className="px-2 py-1.5">
+                  <div className="mb-1 text-[10px] font-semibold text-muted-foreground">
                     Theme
                   </div>
                   <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1">
@@ -393,37 +393,37 @@ export function AppShell({ children }: { children: ReactNode }) {
                     ))}
                   </div>
                 </div>
-                <DropdownMenuSeparator className="my-2" />
+                <DropdownMenuSeparator className="my-1.5" />
                 <DropdownMenuItem
-                  className="h-auto cursor-pointer rounded-xl px-2 py-2"
+                  className="h-auto cursor-pointer rounded-xl px-2 py-1.5"
                   disabled={busy}
                   onClick={() => void finishLogout(false)}
                 >
                   <LogOut
                     aria-hidden="true"
-                    className="mr-2.5 size-4 text-muted-foreground"
+                    className="mr-2 size-3.5 text-muted-foreground"
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-foreground">
+                    <span className="block text-[13px] font-semibold text-foreground">
                       Sign out
                     </span>
-                    <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                    <span className="block text-[10px] font-normal text-muted-foreground">
                       Sign out of this device
                     </span>
                   </span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="h-auto cursor-pointer rounded-xl px-2 py-2"
+                  className="h-auto cursor-pointer rounded-xl px-2 py-1.5"
                   disabled={busy}
                   variant="destructive"
                   onClick={() => setLogoutAllOpen(true)}
                 >
-                  <PanelsTopLeft aria-hidden="true" className="mr-2.5 size-4" />
+                  <PanelsTopLeft aria-hidden="true" className="mr-2 size-3.5" />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold">
+                    <span className="block text-[13px] font-semibold">
                       Sign out all devices
                     </span>
-                    <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                    <span className="block text-[10px] font-normal text-muted-foreground">
                       Sign out from all devices and browsers
                     </span>
                   </span>
