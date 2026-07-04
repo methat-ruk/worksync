@@ -99,6 +99,8 @@ export class GoogleOAuthService {
     const correlationId = this.correlationContext.getCorrelationId();
     this.logger.warn(
       {
+        logType: "business_event",
+        event: "google_oauth_login_failed",
         reasonCode,
         ...(correlationId ? { correlationId } : {})
       },

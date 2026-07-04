@@ -1,11 +1,17 @@
 import {
+  type ArgumentsHost,
   BadRequestException,
   HttpException,
   HttpStatus,
+  type LoggerService,
   NotFoundException
 } from "@nestjs/common";
 
-import { normalizeException } from "../../src/common/errors/global-exception.filter";
+import {
+  GlobalExceptionFilter,
+  normalizeException
+} from "../../src/common/errors/global-exception.filter";
+import type { CorrelationContextService } from "../../src/observability/correlation-context.service";
 
 describe("normalizeException", () => {
   it("normalizes DTO validation failures", () => {
@@ -90,5 +96,47 @@ describe("normalizeException", () => {
         data: { code: "INTERNAL_SERVER_ERROR" }
       }
     });
+  });
+
+  it("logs unexpected request errors as safe structured error events", () => {
+    const logger = { error: jest.fn() } as unknown as LoggerService;
+    const response = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+    const host = {
+      switchToHttp: () => ({
+        getRequest: () => ({
+          method: "GET",
+          originalUrl: "/api/failure?token=sensitive-token"
+        }),
+        getResponse: () => response
+      })
+    } as unknown as ArgumentsHost;
+    const filter = new GlobalExceptionFilter(logger, {
+      getCorrelationId: () => "request-123"
+    } as CorrelationContextService);
+
+    filter.catch(new Error("database password leaked"), host);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      {
+        logType: "error",
+        event: "unhandled_request_error",
+        reasonCode: "INTERNAL_SERVER_ERROR",
+        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        method: "GET",
+        url: "/api/failure",
+        errorType: "Error",
+        correlationId: "request-123"
+      },
+      "Unhandled request error"
+    );
+    const logged = JSON.stringify((logger.error as jest.Mock).mock.calls);
+    expect(logged).not.toContain("database password leaked");
+    expect(logged).not.toContain("sensitive-token");
+    expect(response.status).toHaveBeenCalledWith(
+      HttpStatus.INTERNAL_SERVER_ERROR
+    );
   });
 });

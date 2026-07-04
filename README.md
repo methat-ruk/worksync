@@ -101,6 +101,7 @@ corepack pnpm docker:infra:up
 corepack pnpm prisma:validate
 corepack pnpm prisma:generate
 corepack pnpm prisma:migrate
+corepack pnpm seed:auth-user
 ```
 
 Start the applications:
@@ -198,6 +199,8 @@ staging, production-like, or internet-exposed environment.
 | `pnpm prisma:generate` | Generate Prisma Client |
 | `pnpm prisma:migrate` | Apply local Prisma migrations |
 | `pnpm prisma:migrate:status:test` | Verify committed migrations against `TEST_DATABASE_URL` |
+| `pnpm seed:auth-user` | Upsert the local development password-login seed user |
+| `pnpm seed:auth-user:test` | Upsert the password-login seed user in `TEST_DATABASE_URL` |
 | `pnpm validate:backend` | Run complete backend validation including artifact checks |
 | `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
 | `pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
@@ -224,6 +227,10 @@ Use the environment examples as non-secret templates:
 - `app/backend/.env.example` contains backend-only variables such as database, cache, queue, token, storage, email, realtime, observability, and test-service configuration.
 
 Do not commit real `.env` files or secrets.
+
+Auth seed commands are local-first safety tools. They refuse `NODE_ENV=production`
+and refuse non-local database hosts unless explicitly overridden with a custom
+`WORKSYNC_SEED_PASSWORD`.
 
 `COOKIE_DOMAIN` should normally be empty on localhost. Set it only to a shared
 parent domain such as `.example.com` when the frontend and API use sibling

@@ -7,7 +7,7 @@ import {
   type ExceptionFilter,
   type LoggerService
 } from "@nestjs/common";
-import type { Response } from "express";
+import type { Request, Response } from "express";
 
 import { Prisma } from "../../generated/prisma/client";
 import { CorrelationContextService } from "../../observability/correlation-context.service";
@@ -18,6 +18,23 @@ type NormalizedError = {
   status: number;
   body: ApiErrorResponseDto;
 };
+
+function errorType(exception: unknown): string {
+  return exception instanceof Error ? exception.name : typeof exception;
+}
+
+function safeRequestPath(request: Request): string | undefined {
+  const rawUrl = request.originalUrl ?? request.url;
+  if (!rawUrl) {
+    return undefined;
+  }
+
+  try {
+    return new URL(rawUrl, "http://worksync.local").pathname;
+  } catch {
+    return rawUrl.split("?")[0];
+  }
+}
 
 function validationFields(messages: string[]): Record<string, string[]> {
   return messages.reduce<Record<string, string[]>>((fields, message) => {
@@ -121,7 +138,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
+    const http = host.switchToHttp();
+    const request = http.getRequest<Request>();
+    const response = http.getResponse<Response>();
     const normalized = normalizeException(exception);
     const correlationId = this.correlationContext.getCorrelationId();
     const data = {
@@ -147,11 +166,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     }
 
     if (normalized.status >= HttpStatus.INTERNAL_SERVER_ERROR) {
-      const trace = exception instanceof Error ? exception.stack : undefined;
       this.logger.error(
-        `Unhandled request error correlationId=${correlationId ?? "unknown"}`,
-        trace,
-        GlobalExceptionFilter.name
+        {
+          logType: "error",
+          event: "unhandled_request_error",
+          reasonCode: API_ERROR_CODE.INTERNAL_SERVER_ERROR,
+          statusCode: normalized.status,
+          method: request.method,
+          url: safeRequestPath(request),
+          errorType: errorType(exception),
+          ...(correlationId ? { correlationId } : {})
+        },
+        "Unhandled request error"
       );
     }
 

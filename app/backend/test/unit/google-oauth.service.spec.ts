@@ -63,6 +63,8 @@ describe("GoogleOAuthService", () => {
 
     expect(logger.warn).toHaveBeenCalledWith(
       {
+        logType: "business_event",
+        event: "google_oauth_login_failed",
         reasonCode: "ID_TOKEN_INVALID",
         correlationId: "correlation-id"
       },

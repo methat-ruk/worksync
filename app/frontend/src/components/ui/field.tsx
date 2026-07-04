@@ -164,7 +164,7 @@ function FieldSeparator({
         <>
           <Separator className="flex-1" />
           <span
-            className="shrink-0 bg-background px-1.5 text-muted-foreground"
+            className="shrink-0 px-1.5 text-muted-foreground"
             data-slot="field-separator-content"
           >
             {children}

@@ -139,4 +139,13 @@ body {
   .bg-app-canvas {
     background: #f6f7f9;
   }
+
+  .dark .bg-landing-canvas,
+  .dark .bg-auth-shell,
+  .dark .bg-auth-marketing-panel,
+  .dark .bg-app-canvas {
+    background:
+      radial-gradient(circle at 78% 20%, oklch(0.55 0.21 259 / 0.12), transparent 30%),
+      #0f172a;
+  }
 }

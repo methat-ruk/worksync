@@ -5,12 +5,18 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { useAuth } from "./auth-store";
+import { bootstrapAuth, useAuth } from "./auth-store";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (auth.status === "loading") {
+      void bootstrapAuth();
+    }
+  }, [auth.status]);
 
   useEffect(() => {
     if (auth.status === "unauthenticated") {

@@ -4,10 +4,7 @@ import { Module, RequestMethod } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { LoggerModule } from "nestjs-pino";
 import type { SerializerFn } from "pino";
-import {
-  stdSerializers,
-  type Options as PinoHttpOptions
-} from "pino-http";
+import type { Options as PinoHttpOptions } from "pino-http";
 
 import type { Environment } from "../config/environment";
 import {
@@ -27,11 +24,76 @@ type WorkSyncPinoHttpOptions = PinoHttpOptions<
   };
 };
 
+type RequestWithDiagnostics = IncomingMessage & {
+  id?: unknown;
+  originalUrl?: string;
+  user?: {
+    id?: unknown;
+  };
+};
+
+function sanitizeUrl(rawUrl: string | undefined): string | undefined {
+  if (!rawUrl) {
+    return undefined;
+  }
+
+  try {
+    return new URL(rawUrl, "http://worksync.local").pathname;
+  } catch {
+    return rawUrl.split("?")[0];
+  }
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() !== ""
+    ? value
+    : undefined;
+}
+
+function serializeRequest(request: RequestWithDiagnostics): object {
+  return {
+    id: stringValue(request.id),
+    method: request.method,
+    url: sanitizeUrl(request.originalUrl ?? request.url),
+    ...(stringValue(request.user?.id)
+      ? { userId: stringValue(request.user?.id) }
+      : {})
+  };
+}
+
+function serializeResponse(response: ServerResponse): object {
+  return {
+    statusCode: response.statusCode
+  };
+}
+
+function httpLogType(
+  response: ServerResponse,
+  error?: Error
+): "http_access" | "http_error" {
+  return response.statusCode >= 500 || error ? "http_error" : "http_access";
+}
+
 export function createPinoHttpOptions(
   config: ConfigService<Environment, true>
 ): WorkSyncPinoHttpOptions {
+  const isDevelopment = config.get("NODE_ENV", { infer: true }) === "development";
+
   return {
     level: config.get("LOG_LEVEL", { infer: true }),
+    ...(isDevelopment
+      ? {
+          transport: {
+            target: "pino-pretty",
+            options: {
+              colorize: true,
+              ignore: "pid,hostname",
+              singleLine: true,
+              translateTime: "SYS:standard"
+            }
+          }
+        }
+      : {}),
     genReqId(request: IncomingMessage, response: ServerResponse) {
       const correlationId = resolveCorrelationId(
         request.headers[CORRELATION_ID_HEADER]
@@ -39,8 +101,14 @@ export function createPinoHttpOptions(
       response.setHeader(CORRELATION_ID_HEADER, correlationId);
       return correlationId;
     },
-    customProps(request: IncomingMessage & { id?: unknown }) {
-      return { correlationId: request.id };
+    customProps(request: RequestWithDiagnostics) {
+      return {
+        requestId: request.id,
+        correlationId: request.id,
+        ...(stringValue(request.user?.id)
+          ? { userId: stringValue(request.user?.id) }
+          : {})
+      };
     },
     customLogLevel(
       request: IncomingMessage,
@@ -62,22 +130,30 @@ export function createPinoHttpOptions(
       }
       return "info" as const;
     },
+    customSuccessMessage() {
+      return "http request completed";
+    },
+    customErrorMessage() {
+      return "http request failed";
+    },
+    customSuccessObject(_request, response, value) {
+      return {
+        ...value,
+        event: "http_request_completed",
+        logType: httpLogType(response)
+      };
+    },
+    customErrorObject(_request, response, error, value) {
+      return {
+        ...value,
+        event: "http_request_failed",
+        logType: httpLogType(response, error)
+      };
+    },
     quietReqLogger: true,
     serializers: {
-      req(request: IncomingMessage & {
-        originalUrl?: string;
-        query?: Record<string, unknown>;
-      }) {
-        const serialized = stdSerializers.req(request);
-        if (
-          typeof serialized.url === "string" &&
-          serialized.url.startsWith("/api/auth/google/callback")
-        ) {
-          serialized.url = "/api/auth/google/callback";
-          serialized.query = {};
-        }
-        return serialized;
-      }
+      req: serializeRequest,
+      res: serializeResponse
     },
     redact: {
       paths: [
