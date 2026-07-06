@@ -5,6 +5,7 @@ import { ConfigurationModule } from "./config/configuration.module";
 import { PrismaModule } from "./database/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { ObservabilityModule } from "./observability/observability.module";
+import { WorkspacesModule } from "./workspaces/workspaces.module";
 
 @Module({
   imports: [
@@ -12,7 +13,8 @@ import { ObservabilityModule } from "./observability/observability.module";
     ObservabilityModule,
     PrismaModule,
     HealthModule,
-    AuthModule
+    AuthModule,
+    WorkspacesModule
   ]
 })
 export class AppModule {}

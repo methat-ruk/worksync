@@ -69,6 +69,6 @@ import { SessionService } from "./services/session.service";
       useValue: globalThis.fetch.bind(globalThis)
     }
   ],
-  exports: [AuthGuard]
+  exports: [AuthGuard, AccessTokenService, SessionService]
 })
 export class AuthModule {}
