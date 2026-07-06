@@ -1,8 +1,8 @@
 # WorkSync Frontend Profile
 
-This file defines WorkSync-specific frontend implementation choices. Reusable
-frontend guidance may live in local agent skills or team playbooks, but this
-project profile must remain understandable without that personal tooling.
+This file defines WorkSync-specific frontend implementation choices. Generic
+frontend guidance belongs in shared engineering documentation or team playbooks;
+this project profile should stay focused on WorkSync facts and conventions.
 
 ## Framework and Styling
 

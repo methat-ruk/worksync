@@ -5,7 +5,7 @@
 Apply instructions in this order:
 
 1. system and safety constraints
-2. configured engineering workflow or local agent instructions
+2. configured developer workflow or local environment instructions
 3. WorkSync project profile
 4. task-specific requirements
 
@@ -13,7 +13,8 @@ The project profile specializes generic terms but does not weaken security, vali
 
 ## Abstraction Mapping
 
-When a reusable skill says:
+When reusable engineering guidance uses generic terms, map them to WorkSync as
+follows:
 
 - Web Framework -> Next.js App Router
 - Backend Framework -> NestJS
@@ -31,9 +32,8 @@ When a reusable skill says:
 
 ## Routing
 
-Use the configured engineering workflow for the current agent or developer
-environment, then load only WorkSync profile files relevant to the work.
+Use the configured developer workflow for the current environment, then load
+only WorkSync profile files relevant to the work.
 
-Project facts belong in this profile. Reusable procedures and personal agent
-skills should not be required by this profile unless they are committed as
-shared project assets.
+Project facts belong in this profile. Reusable procedures should not be required
+by this profile unless they are committed as shared project documentation.
