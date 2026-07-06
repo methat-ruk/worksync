@@ -28,6 +28,11 @@ weakening workspace isolation, storage safety, or job reliability.
 - worker runtime and deployment topology
 - retry, idempotency, and poison-message handling
 
+Feature plan order:
+
+1. [File Upload Foundation](feature-plans/planned/file-upload-foundation.md)
+2. [Background Jobs Foundation](feature-plans/planned/background-jobs-foundation.md)
+
 ## Exit Criteria
 
 - file upload security tests exist: Not done
