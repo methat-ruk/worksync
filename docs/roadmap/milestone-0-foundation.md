@@ -47,3 +47,4 @@ foundation needed to safely build product features.
 - [Project Workflow Guides](../workflows/README.md)
 - [Validation Matrix](../validation-matrix.md)
 - [Deployment](../deployment.md)
+- [Runtime and Validation Foundation](feature-plans/completed/runtime-validation-foundation.md)

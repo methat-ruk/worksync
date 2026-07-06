@@ -25,6 +25,11 @@ trust realtime or async delivery does not cross workspace boundaries.
 - workspace-scoped realtime authorization
 - notification and mention tests
 
+Feature plan order:
+
+1. [Comments and Mentions Foundation](feature-plans/planned/comments-mentions-foundation.md)
+2. [Notifications Foundation](feature-plans/planned/notifications-foundation.md)
+
 ## Exit Criteria
 
 - mention and notification rules are tested: Not done

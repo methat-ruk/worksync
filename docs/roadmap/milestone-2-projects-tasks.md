@@ -27,6 +27,11 @@ track status, and see task activity inside the correct workspace boundary.
 - frontend project/task workflows
 - API contract, integration, and security tests
 
+Feature plan order:
+
+1. [Project Foundation](feature-plans/planned/project-foundation.md)
+2. [Task Foundation](feature-plans/planned/task-foundation.md)
+
 ## Exit Criteria
 
 - task lifecycle invariants are documented: Partial

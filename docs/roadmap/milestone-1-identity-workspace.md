@@ -62,6 +62,12 @@ Still required:
   actions
 - frontend workspace bootstrap and workspace selection UX
 
+Feature plan order:
+
+1. [Workspace Foundation](feature-plans/planned/workspace-foundation.md)
+2. [Workspace Membership and RBAC](feature-plans/planned/workspace-membership-rbac.md)
+3. [Workspace Frontend Bootstrap](feature-plans/planned/workspace-frontend-bootstrap.md)
+
 ## Exit Criteria
 
 - direct API calls cannot access another workspace: Not done
@@ -75,3 +81,7 @@ Still required:
 - [Security Model](../security-model.md)
 - [Auth Workflow](../workflows/auth-workflow.md)
 - [Google OAuth Setup](../google-oauth-setup.md)
+- [Auth Foundation](feature-plans/completed/auth-foundation.md)
+- [Auth Session Lifecycle](feature-plans/completed/auth-session-lifecycle.md)
+- [Google OAuth Login](feature-plans/completed/auth-google-oauth.md)
+- [Frontend Auth and App Shell](feature-plans/completed/frontend-auth-app-shell.md)

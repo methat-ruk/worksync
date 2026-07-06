@@ -30,6 +30,10 @@ evidence rather than best-effort manual confidence.
 - post-deploy verification against a real environment
 - release rollback or containment rehearsal
 
+Feature plan order:
+
+1. [Production Deployment Foundation](feature-plans/planned/production-deployment-foundation.md)
+
 ## Exit Criteria
 
 - release readiness can make a ready / not-ready decision from evidence:

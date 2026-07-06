@@ -1,9 +1,10 @@
 # WorkSync Roadmap
 
 This roadmap is the dashboard for product progress. Milestone details live in
-separate files so this page stays easy to scan.
+separate files so this page stays easy to scan. PR-sized feature slices live in
+[Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-07-01
+Last updated: 2026-07-06
 
 ## Current Snapshot
 
@@ -44,18 +45,23 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. Implement workspace creation, membership, RBAC guards, and workspace
-   isolation.
-2. Add IDOR/BOLA, cross-owner, and cross-tenant integration/security tests for
-   workspace-scoped access.
-3. Build the first complete workspace-to-project-to-task workflow across
-   backend API, frontend UI, contracts, and tests.
-4. Add activity log decisions before task/comment workflows become complex.
-5. Prepare production deployment and observability only after core
-   workspace-scoped workflows exist.
+1. [Workspace Foundation](roadmap/feature-plans/planned/workspace-foundation.md)
+   - create/read/list workspaces with owner membership and tenant-isolation
+   evidence.
+2. [Workspace Membership and RBAC](roadmap/feature-plans/planned/workspace-membership-rbac.md)
+   - finalize role matrix, membership APIs, and reusable authorization.
+3. [Workspace Frontend Bootstrap](roadmap/feature-plans/planned/workspace-frontend-bootstrap.md)
+   - replace the static app shell with real workspace data.
+4. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
+   and [Task Foundation](roadmap/feature-plans/planned/task-foundation.md) -
+   build the first workspace-to-project-to-task workflow.
+5. Add activity, comments, notifications, files, jobs, and production readiness
+   only after workspace-scoped authorization evidence exists.
 
 ## Guiding Principles
 
+- Use milestones for capability sequence and feature plans for PR-sized
+  execution slices.
 - Protect workspace isolation and authorization from the first workspace feature.
 - Prefer a small complete workflow over many partial features.
 - Keep frontend, backend, data, documentation, and tests moving together.
@@ -111,6 +117,8 @@ Keep here:
 - major open decisions
 
 Put milestone details in `docs/roadmap/milestone-*.md`.
+
+Put PR-sized execution slices in `docs/roadmap/feature-plans/`.
 
 Keep outside the roadmap:
 
