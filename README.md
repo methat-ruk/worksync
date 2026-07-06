@@ -78,6 +78,19 @@ corepack enable
 corepack pnpm install --frozen-lockfile
 ```
 
+Install the local Playwright browser once if you will run frontend E2E tests or
+browser-visible checks:
+
+```bash
+corepack pnpm playwright:install
+```
+
+On Linux, containers, or CI-like hosts missing system libraries, use:
+
+```bash
+corepack pnpm playwright:install:with-deps
+```
+
 Create local environment files for the recommended hybrid development mode:
 
 ```bash
@@ -204,6 +217,9 @@ staging, production-like, or internet-exposed environment.
 | `pnpm validate:backend` | Run complete backend validation including artifact checks |
 | `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
 | `pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
+| `pnpm playwright:install` | Install local Chromium for frontend E2E and browser-visible checks |
+| `pnpm playwright:install:with-deps` | Install Chromium plus OS dependencies on Linux, containers, or CI-like hosts |
+| `pnpm test:e2e:frontend` | Run frontend browser E2E tests |
 | `pnpm validate:push` | Run typecheck, lint, and backend unit tests through the pre-push hook |
 | `pnpm docker:infra:config` | Validate the infrastructure-only Compose file |
 | `pnpm docker:infra:up` | Start PostgreSQL, Redis, and MinIO for hybrid development |
@@ -281,5 +297,5 @@ docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml c
 1. Implement workspace membership, RBAC guards, and workspace isolation.
 2. Add immutable image publishing and production deployment automation.
 3. Implement projects, tasks, comments, mentions, notifications, and activity logs.
-4. Add the frontend test harness and browser E2E coverage.
+4. Extend browser E2E coverage for workspace and collaboration flows.
 5. Add production Dockerfiles, deployment pipeline, observability, and release evidence.

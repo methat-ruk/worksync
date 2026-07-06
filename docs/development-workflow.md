@@ -13,11 +13,11 @@ Before engineering work:
 
 1. Read `references/worksync/profile.md`.
 2. Load only the profile files required by the work.
-3. Apply any local agent instructions, personal skills, or team playbooks
-   available in your environment.
+3. Apply any team playbooks or repository-specific instructions available in
+   your environment.
 
-Do not rely on ad-hoc reasoning when the repository profile, team process, or
-local agent workflow defines a clearer route.
+Do not rely on ad-hoc reasoning when the repository profile or team process
+defines a clearer route.
 
 ## Approval Workflow
 
@@ -143,6 +143,11 @@ Run relevant checks for the changed surface:
 - migration validation
 - build
 - Docker or Compose validation when affected
+
+Frontend browser E2E tests and browser-visible verification require the local
+Playwright Chromium browser. Install it once with `corepack pnpm
+playwright:install`; use `corepack pnpm playwright:install:with-deps` on Linux,
+containers, or CI-like hosts when system dependencies are missing.
 
 If a check cannot run, report why and what remains unverified.
 

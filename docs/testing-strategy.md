@@ -90,6 +90,11 @@ Use Playwright for:
 - restricted action fails for lower-privilege role
 - cross-workspace direct navigation fails
 
+Local Playwright runs require the frontend Chromium browser. Install it once
+with `corepack pnpm playwright:install`; use `corepack pnpm
+playwright:install:with-deps` on Linux, containers, or CI-like hosts when
+system dependencies are missing.
+
 ### Security Tests
 
 Use security testing for:
