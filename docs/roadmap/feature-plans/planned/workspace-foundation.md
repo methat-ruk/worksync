@@ -20,6 +20,35 @@ without weakening tenant isolation.
 - Swagger/API contract documentation
 - backend integration, contract, and security tests
 
+## API Contract Decisions
+
+- `POST /api/workspaces` accepts `{ name: string }` only.
+- Workspace names are trimmed, required after trimming, and limited to 100
+  characters.
+- Unknown request fields are rejected by the existing validation pipeline.
+- The backend generates the workspace slug from `name`; clients do not submit a
+  slug in this slice.
+- Slug generation first handles unique conflicts with the base slug, then `-2`
+  through `-5`, rather than exposing database errors.
+- If deterministic slug candidates are already taken, the backend uses bounded
+  random suffix attempts so common workspace names do not globally stop at five
+  creations.
+- If all bounded slug attempts conflict, the create request returns `409` with
+  `RESOURCE_CONFLICT`.
+- `GET /api/workspaces` uses page pagination with `page` and `pageSize`;
+  default `page` is 1, default `pageSize` is 20, and maximum `pageSize` is 100.
+- Pagination query values must be integers: `page` must be at least 1 and
+  `pageSize` must be between 1 and 100. Invalid or unknown query fields return
+  `400` with `VALIDATION_ERROR`.
+- Workspace list responses include `items`, `page`, `pageSize`, and `total`.
+- Workspace list ordering is `updatedAt` descending with `id` as a stable
+  tie-breaker.
+- `GET /api/workspaces/:id` returns the same public workspace DTO for visible
+  workspaces and `404` with `RESOURCE_NOT_FOUND` for missing or non-visible
+  workspaces.
+- Public workspace DTOs expose only `id`, `name`, `slug`, `createdAt`,
+  `updatedAt`, and the caller's `membershipRole`.
+
 ## Out of Scope
 
 - invitations
@@ -42,15 +71,37 @@ without weakening tenant isolation.
 Every workspace read must be scoped through authenticated membership. Frontend
 route guards or hidden buttons are not authorization evidence.
 
+Direct reads for workspaces outside the authenticated user's memberships must
+return `404` rather than reveal cross-workspace existence.
+
 ## Required Evidence
 
 - create workspace success
 - creator becomes `OWNER`
 - list returns only workspaces where the user is a member
 - direct cross-user workspace read is rejected
+- list pagination default, maximum page size, and stable ordering are covered
+- invalid, empty, overlong, and unknown-field create requests are rejected
+- deterministic slug collisions fall back to an entropy suffix
+- slug collisions do not leak raw database errors
+- fully exhausted slug retries return a safe `409` conflict
+- invalid pagination and unknown query fields return validation errors
 - response/error envelope follows project convention
 - Swagger documents success and error contracts
 - typecheck, lint, relevant backend tests, and build
+
+## Validation Gate
+
+Before running database-backed validation, confirm:
+
+- `app/backend/.env` exists and defines `TEST_DATABASE_URL`
+- local PostgreSQL infrastructure is running
+- the `worksync_test` database exists
+- committed migrations are applied to `worksync_test`
+
+If any prerequisite is missing, stop and fix the local setup before running the
+affected integration, contract, or security tests. Skipped database-backed
+integration or security suites are incomplete evidence for this plan.
 
 ## Done Criteria
 

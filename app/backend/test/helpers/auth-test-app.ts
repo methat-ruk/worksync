@@ -17,7 +17,10 @@ import {
   type AuthIdentity,
   type AuthProvider,
   type AuthSession,
-  type User
+  type User,
+  type Workspace,
+  type WorkspaceMember,
+  type WorkspaceRole
 } from "../../src/generated/prisma/client";
 import { GoogleOAuthProviderService } from "../../src/auth/services/google-oauth-provider.service";
 import type { GoogleIdentityProfile } from "../../src/auth/types/google-oauth.types";
@@ -26,6 +29,8 @@ import { configureApplication } from "../../src/main";
 import { createGoogleOAuthTestHarness } from "./google-oauth-test-harness";
 
 type StoredUser = User;
+type StoredWorkspace = Workspace;
+type StoredWorkspaceMember = WorkspaceMember;
 
 function publicUser(user: StoredUser): PublicUser {
   return {
@@ -42,6 +47,8 @@ export type AuthTestContext = {
   identities: Map<string, AuthIdentity>;
   users: Map<string, StoredUser>;
   sessions: Map<string, AuthSession>;
+  workspaces: Map<string, StoredWorkspace>;
+  workspaceMembers: Map<string, StoredWorkspaceMember>;
 };
 
 export type AuthTestOptions = {
@@ -56,7 +63,33 @@ export async function createAuthTestApp(
   const identities = new Map<string, AuthIdentity>();
   const users = new Map<string, StoredUser>();
   const sessions = new Map<string, AuthSession>();
+  const workspaces = new Map<string, StoredWorkspace>();
+  const workspaceMembers = new Map<string, StoredWorkspaceMember>();
   let sequence = 0;
+
+  function workspaceVisibleTo(
+    workspace: StoredWorkspace,
+    userId: string
+  ): boolean {
+    return [...workspaceMembers.values()].some(
+      (member) =>
+        member.workspaceId === workspace.id && member.userId === userId
+    );
+  }
+
+  function selectedWorkspace(
+    workspace: StoredWorkspace,
+    userId: string | undefined
+  ): StoredWorkspace & { members: Array<{ role: WorkspaceRole }> } {
+    const members = [...workspaceMembers.values()]
+      .filter(
+        (member) =>
+          member.workspaceId === workspace.id &&
+          (!userId || member.userId === userId)
+      )
+      .map((member) => ({ role: member.role }));
+    return { ...workspace, members };
+  }
 
   const prisma = {
     $connect: jest.fn(),
@@ -252,6 +285,141 @@ export async function createAuthTestApp(
         }
       )
     },
+    workspace: {
+      create: jest.fn(
+        ({
+          data,
+          select
+        }: {
+          data: {
+            name: string;
+            slug: string;
+            members: {
+              create: {
+                userId: string;
+                role: WorkspaceRole;
+              };
+            };
+          };
+          select?: {
+            members?: {
+              where?: { userId?: string };
+            };
+          };
+        }) => {
+          if (
+            [...workspaces.values()].some(
+              (workspace) => workspace.slug === data.slug
+            )
+          ) {
+            throw new Prisma.PrismaClientKnownRequestError(
+              "Unique constraint failed",
+              {
+                code: "P2002",
+                clientVersion: "7.8.0",
+                meta: { target: ["slug"] }
+              }
+            );
+          }
+
+          const now = new Date("2026-07-06T10:00:00.000Z");
+          const workspace: StoredWorkspace = {
+            id: `workspace-${++sequence}`,
+            name: data.name,
+            slug: data.slug,
+            createdAt: now,
+            updatedAt: now
+          };
+          const member: StoredWorkspaceMember = {
+            id: `workspace-member-${++sequence}`,
+            workspaceId: workspace.id,
+            userId: data.members.create.userId,
+            role: data.members.create.role,
+            createdAt: now
+          };
+          workspaces.set(workspace.id, workspace);
+          workspaceMembers.set(member.id, member);
+          return selectedWorkspace(
+            workspace,
+            select?.members?.where?.userId ?? data.members.create.userId
+          );
+        }
+      ),
+      count: jest.fn(
+        ({
+          where
+        }: {
+          where?: {
+            members?: { some?: { userId?: string } };
+          };
+        }) => {
+          const userId = where?.members?.some?.userId;
+          return [...workspaces.values()].filter((workspace) =>
+            userId ? workspaceVisibleTo(workspace, userId) : true
+          ).length;
+        }
+      ),
+      findMany: jest.fn(
+        ({
+          where,
+          skip = 0,
+          take,
+          select
+        }: {
+          where?: {
+            members?: { some?: { userId?: string } };
+          };
+          skip?: number;
+          take?: number;
+          select?: {
+            members?: {
+              where?: { userId?: string };
+            };
+          };
+        }) => {
+          const userId = where?.members?.some?.userId;
+          return [...workspaces.values()]
+            .filter((workspace) =>
+              userId ? workspaceVisibleTo(workspace, userId) : true
+            )
+            .sort((left, right) => {
+              const updatedAtDelta =
+                right.updatedAt.getTime() - left.updatedAt.getTime();
+              return updatedAtDelta || left.id.localeCompare(right.id);
+            })
+            .slice(skip, take ? skip + take : undefined)
+            .map((workspace) =>
+              selectedWorkspace(workspace, select?.members?.where?.userId)
+            );
+        }
+      ),
+      findFirst: jest.fn(
+        ({
+          where,
+          select
+        }: {
+          where?: {
+            id?: string;
+            members?: { some?: { userId?: string } };
+          };
+          select?: {
+            members?: {
+              where?: { userId?: string };
+            };
+          };
+        }) => {
+          const userId = where?.members?.some?.userId;
+          const workspace = [...workspaces.values()].find(
+            (candidate) =>
+              (!where?.id || candidate.id === where.id) &&
+              (!userId || workspaceVisibleTo(candidate, userId))
+          );
+          return workspace
+            ? selectedWorkspace(workspace, select?.members?.where?.userId)
+            : null;
+        }
+      )
+    },
     user: {
       create: jest.fn(
         ({
@@ -362,5 +530,5 @@ export async function createAuthTestApp(
   configureApplication(app);
   await app.init();
 
-  return { app, identities, users, sessions };
+  return { app, identities, users, sessions, workspaces, workspaceMembers };
 }
