@@ -1,288 +1,32 @@
 # WorkSync API Design
 
-This document defines API conventions for WorkSync. Swagger/OpenAPI should reflect these rules as implementation is added.
+This document is the entry point for WorkSync API contracts. Keep it short and
+move detailed contract rules into the topic files under `docs/api-design/`.
 
-## API Style
+Swagger/OpenAPI should reflect these rules as implementation is added.
 
-- Use REST.
-- Prefer JSON request and response bodies.
-- Use resource-oriented routes.
-- Prefix application routes with `/api`.
-- Keep response shapes predictable.
-- Enforce authentication and authorization on the backend.
+## Reading Map
 
-Operational routes such as `/health`, `/health/live`, `/health/ready`, and
-Swagger at `/docs` remain outside the application API prefix.
-
-## HTTP Methods
-
-| Method | Use |
+| Topic | File |
 |---|---|
-| GET | read resources |
-| POST | create resources or execute non-idempotent commands |
-| PATCH | partially update resources or transition state |
-| DELETE | remove or archive resources |
-
-Use `PUT` only if a complete replacement contract is intentionally designed.
-
-## Response Envelope
-
-Use this envelope unless an existing contract explicitly requires otherwise:
-
-```ts
-{
-  success: boolean;
-  message?: string;
-  data?: unknown;
-}
-```
-
-For list endpoints:
-
-```ts
-{
-  success: true;
-  data: {
-    items: unknown[];
-    page?: number;
-    pageSize?: number;
-    total?: number;
-    nextCursor?: string;
-  }
-}
-```
-
-## Error Shape
-
-Errors should be useful without leaking internals:
-
-```ts
-{
-  success: false;
-  message: string;
-  data?: {
-    code?: string;
-    fields?: Record<string, string[]>;
-    correlationId?: string;
-  }
-}
-```
-
-Do not expose stack traces, raw database errors, secrets, tokens, provider payloads, or internal infrastructure details.
-
-Public error codes must be registered in the shared backend error-code registry
-before use. Runtime normalization and Swagger documentation use the shared API
-error DTO so feature modules do not define competing error envelopes.
-
-Every HTTP response includes `x-correlation-id`. A valid incoming
-`x-correlation-id` is preserved; otherwise the backend generates one. Error
-responses include the same identifier in `data.correlationId` when request
-context is available.
-
-## Operational Endpoints
-
-- `GET /health` remains the compatibility liveness endpoint.
-- `GET /health/live` reports process liveness without checking dependencies.
-- `GET /health/ready` verifies PostgreSQL connectivity and returns `503` with
-  code `SERVICE_NOT_READY` when the backend cannot serve database-backed work.
-
-## Status Codes
-
-| Status | Meaning |
-|---|---|
-| 200 | successful read or update |
-| 201 | successful create |
-| 204 | successful delete with no body, only when no envelope is needed |
-| 400 | invalid request |
-| 401 | missing or invalid authentication |
-| 403 | authenticated but not authorized |
-| 404 | resource does not exist or is not visible to caller |
-| 409 | state conflict or invalid transition |
-| 422 | semantically invalid input when validation distinguishes it from malformed input |
-| 429 | rate limit exceeded |
-| 500 | unexpected server failure |
-
-Use 404 instead of 403 when revealing resource existence would leak cross-workspace information.
-
-## Authentication
-
-The authentication foundation exposes:
-
-- `POST /api/auth/signup` to create a password-authenticated user, persisted session, access token, and refresh cookie.
-- `POST /api/auth/login` to authenticate and create a new persisted session.
-- `POST /api/auth/refresh` to rotate the refresh cookie and issue a new access token.
-- `POST /api/auth/logout` to revoke the current refresh-token session.
-- `POST /api/auth/logout-all` to revoke every session for the authenticated user.
-- `GET /api/auth/me` to return the authenticated public user.
-- `GET /api/auth/google` to start Google Authorization Code + PKCE login.
-- `GET /api/auth/google/callback` to verify Google OpenID Connect identity,
-  issue the normal WorkSync session, and redirect to the configured frontend.
-
-Password signup uses one shared policy package on both sides of the API:
-
-- 12–128 characters
-- no leading or trailing whitespace
-- zxcvbn score 3 or higher, which rejects known/common weak passwords
-- no uppercase/lowercase/number/symbol composition requirement
-
-Any signup password policy failure returns `400` with
-`AUTH_PASSWORD_POLICY_VIOLATION`. `confirmPassword` is a frontend-only field and
-must never be included in an API request.
-
-Access tokens use the `Authorization: Bearer <token>` header. Public user
-contracts never include password hashes. Unknown-email and incorrect-password
-login attempts return the same public failure.
-
-Refresh tokens are one-time-use JWTs stored only in a scoped HttpOnly cookie.
-Their hashes and session lifecycle state are persisted in PostgreSQL. Rotation
-retains the original absolute session expiry, token reuse revokes that session,
-and logout invalidates access tokens for the revoked session immediately.
-Browser auth requests with an `Origin` header must match the configured CORS
-origin.
-
-Sensitive auth endpoints return `429` with `RATE_LIMITED` when rate or quota
-protection rejects a request. Login and signup limits are scoped to safe
-composite keys such as IP plus normalized email; refresh and Google OAuth
-limits are scoped to request/IP and token or transaction fingerprints where
-available. Public responses must not expose limiter keys, emails, tokens,
-cookies, provider payloads, or quota internals.
-
-Google callbacks return only fixed frontend status parameters. Authorization
-codes, access tokens, refresh tokens, provider payloads, and account identifiers
-must never appear in callback redirect URLs.
-
-Explicit account linking, account recovery, email verification, and
-session/device listing remain future lifecycle work. MVP auth lifecycle
-explicitly defers email verification, forgot/reset password, explicit account
-linking UI/API, account deletion, session/device listing, and single-device
-revocation.
-
-## Workspace Management
-
-Workspace foundation endpoints require a valid access token and return only
-workspaces where the authenticated user has membership.
-
-- `POST /api/workspaces` creates a workspace from `{ "name": string }`.
-  Names are trimmed, required after trimming, and limited to 100 characters.
-  Clients do not submit slugs; the backend generates a unique slug and creates
-  the creator's `OWNER` membership in the same transaction.
-  Slug generation first tries the base slug and `-2` through `-5`; if those
-  deterministic candidates are already taken, the backend falls back to bounded
-  random suffix attempts.
-- `GET /api/workspaces` lists the caller's workspaces with `page` and
-  `pageSize`. The default page is `1`, default page size is `20`, and maximum
-  page size is `100`. Unknown query fields, non-integer pagination values, and
-  out-of-range pagination values return `400` with `VALIDATION_ERROR`.
-- `GET /api/workspaces/:id` returns the same public workspace DTO for a visible
-  workspace and returns `404` with `RESOURCE_NOT_FOUND` when the workspace does
-  not exist or is not visible to the caller.
-
-Public workspace responses expose `id`, `name`, `slug`, `createdAt`,
-`updatedAt`, and the caller's `membershipRole`. They must not expose Prisma
-relations or other members by default.
-
-Workspace list responses include `items`, `page`, `pageSize`, and `total`.
-Ordering is `updatedAt` descending with `id` as a stable tie-breaker.
-
-If all bounded slug generation attempts conflict, the create request returns
-`409` with `RESOURCE_CONFLICT`. Raw database constraint details must not appear
-in public responses.
-
-## Authorization
-
-Every protected endpoint must enforce:
-
-- workspace membership
-- role authority
-- resource ownership or workspace boundary
-- action-specific rules
-
-Frontend visibility does not authorize backend actions.
-
-## Workspace Boundary
-
-Workspace is the tenant boundary.
-
-All routes that operate on workspace-scoped resources must derive or validate workspace scope from trusted backend state, not only from client-provided identifiers.
-
-High-risk endpoints:
-
-- list/search/count
-- exports
-- file access
-- realtime subscription setup
-- background-job-triggering endpoints
-
-## Pagination, Filtering, and Sorting
-
-List endpoints should define:
-
-- pagination model: page/pageSize or cursor
-- maximum page size
-- allowed filters
-- allowed sort fields
-- stable default sort
-- workspace scoping behavior
-
-Reject unknown filters or unsafe sort fields.
-
-## State Transitions
-
-Use explicit transition semantics for lifecycle changes such as task status or membership role changes.
-
-Prefer command-shaped PATCH payloads when a transition has rules:
-
-```json
-{
-  "status": "IN_PROGRESS"
-}
-```
-
-Return `409` when the transition is invalid for the current state.
-
-## Realtime Events
-
-API mutations that emit realtime updates must:
-
-- persist the authoritative state first
-- emit only to authorized workspace members
-- avoid exposing sensitive payloads
-- keep event payloads compatible with API contracts
-
-Common event names:
-
-- `task.created`
-- `task.updated`
-- `comment.created`
-- `notification.created`
-
-## Swagger/OpenAPI
-
-Swagger must document:
-
-- auth requirements
-- request body schemas
-- response envelope
-- error responses
-- pagination/filter/sort options
-- role or workspace access notes where useful
-
-Swagger updates are required when API contracts change.
-
-## Contract Testing
-
-API contract tests should cover:
-
-- response envelope
-- error shape
-- auth-required behavior
-- permission-denied behavior
-- workspace isolation behavior
-- pagination/filter/sort contract
-- Swagger/OpenAPI consistency
-
-## Open Decisions
-
-- Cursor pagination or page/pageSize for MVP?
-- Whether DELETE means hard delete or archive for each resource?
-- API versioning policy before public release?
+| API style, methods, envelopes, status codes, pagination, transitions, Swagger, and contract tests | [Conventions](api-design/conventions.md) |
+| Public error shape, correlation IDs, and operational endpoints | [Errors and Operational Endpoints](api-design/errors-and-operational.md) |
+| Password auth, sessions, refresh/logout, Google OAuth, and auth limits | [Authentication](api-design/authentication.md) |
+| Workspace create/read/list contracts and workspace DTO shape | [Workspace Management](api-design/workspaces.md) |
+| Server-side authorization, workspace boundary rules, and realtime event safety | [Authorization and Boundaries](api-design/authorization-boundaries.md) |
+
+## Ownership Rules
+
+- API contracts must stay smaller than internal persistence models.
+- Feature modules must use the shared response envelope and API error DTO unless
+  a contract explicitly says otherwise.
+- Public error codes must be registered in the backend error-code registry
+  before use.
+- Swagger updates are required when API contracts change.
+- Contract tests should protect response shape, error shape, auth behavior,
+  workspace isolation, pagination, and Swagger/OpenAPI consistency.
+
+## Current Open Decisions
+
+Current API-wide open decisions live in
+[Conventions](api-design/conventions.md#open-decisions).
