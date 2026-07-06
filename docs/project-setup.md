@@ -208,11 +208,18 @@ the production build:
 corepack pnpm validate:frontend
 ```
 
-Install Chromium once before local browser E2E tests:
+Install Chromium once before local browser E2E tests or browser-visible
+verification:
 
 ```bash
-corepack pnpm --filter @worksync/frontend exec playwright install chromium
-corepack pnpm --filter @worksync/frontend test:e2e
+corepack pnpm playwright:install
+corepack pnpm test:e2e:frontend
+```
+
+On Linux, containers, or CI-like hosts missing system libraries:
+
+```bash
+corepack pnpm playwright:install:with-deps
 ```
 
 The PostgreSQL-backed integration and security evidence requires
@@ -316,7 +323,9 @@ Container constraints:
 | `corepack pnpm check` | Typecheck, lint, test, and build all workspaces |
 | `corepack pnpm validate:backend` | Run complete backend validation |
 | `corepack pnpm validate:frontend` | Run shared policy and frontend validation |
-| `corepack pnpm --filter @worksync/frontend test:e2e` | Run frontend auth browser tests |
+| `corepack pnpm playwright:install` | Install local Chromium for frontend browser checks |
+| `corepack pnpm playwright:install:with-deps` | Install Chromium plus OS dependencies on Linux, containers, or CI-like hosts |
+| `corepack pnpm test:e2e:frontend` | Run frontend browser E2E tests |
 | `corepack pnpm prisma:migrate:status:test` | Verify migration status against `TEST_DATABASE_URL` |
 | `corepack pnpm docker:infra:up` | Run PostgreSQL, Redis, and MinIO only |
 | `corepack pnpm docker:full:build` | Build application Docker images |
