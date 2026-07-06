@@ -160,7 +160,7 @@ describe("workspace API contract", () => {
     });
   });
 
-  it("returns a safe conflict when slug retries are exhausted", async () => {
+  it("uses an entropy fallback when deterministic slug candidates are exhausted", async () => {
     const token = await signUp(app, "workspace-conflict@example.com");
     for (let attempt = 1; attempt <= 5; attempt += 1) {
       await request(app.getHttpServer())
@@ -174,14 +174,16 @@ describe("workspace API contract", () => {
       .post("/api/workspaces")
       .set("authorization", `Bearer ${token}`)
       .send({ name: "Repeated Workspace" })
-      .expect(409);
+      .expect(201);
 
     expect(response.body).toMatchObject({
-      success: false,
-      message: "Workspace slug is already in use",
+      success: true,
       data: {
-        code: "RESOURCE_CONFLICT",
-        correlationId: expect.any(String)
+        workspace: {
+          name: "Repeated Workspace",
+          slug: expect.stringMatching(/^repeated-workspace-[a-f0-9]{8}$/),
+          membershipRole: "OWNER"
+        }
       }
     });
     expect(JSON.stringify(response.body)).not.toContain("P2002");

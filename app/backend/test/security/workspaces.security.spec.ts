@@ -106,7 +106,7 @@ describe("workspace security controls", () => {
     );
   });
 
-  it("does not expose internal unique-constraint details on slug conflicts", async () => {
+  it("does not expose internal unique-constraint details during slug fallback", async () => {
     const token = await signUp(app, "workspace-slug-security@example.com");
     for (let attempt = 1; attempt <= 5; attempt += 1) {
       await request(app.getHttpServer())
@@ -120,10 +120,12 @@ describe("workspace security controls", () => {
       .post("/api/workspaces")
       .set("authorization", `Bearer ${token}`)
       .send({ name: "Sensitive Collision" })
-      .expect(409);
+      .expect(201);
     const body = JSON.stringify(response.body);
 
-    expect(response.body.data.code).toBe("RESOURCE_CONFLICT");
+    expect(response.body.data.workspace.slug).toEqual(
+      expect.stringMatching(/^sensitive-collision-[a-f0-9]{8}$/)
+    );
     expect(body).not.toContain("P2002");
     expect(body).not.toContain("Unique constraint");
     expect(body).not.toContain("Workspace_slug_key");

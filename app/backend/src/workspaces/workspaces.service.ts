@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException
 } from "@nestjs/common";
+import { randomBytes } from "node:crypto";
 
 import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import { PrismaService } from "../database/prisma.service";
@@ -29,6 +30,11 @@ type WorkspaceRecord = Prisma.WorkspaceGetPayload<{
   select: typeof WORKSPACE_SELECT;
 }>;
 
+const SLUG_BASE_MAX_LENGTH = 80;
+const SLUG_RANDOM_SUFFIX_BYTES = 4;
+const RANDOM_SLUG_ATTEMPTS = 10;
+const DETERMINISTIC_SLUG_SUFFIXES = [2, 3, 4, 5] as const;
+
 function baseSlug(name: string): string {
   const slug = name
     .trim()
@@ -37,15 +43,33 @@ function baseSlug(name: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80)
+    .slice(0, SLUG_BASE_MAX_LENGTH)
     .replace(/-+$/g, "");
 
   return slug || "workspace";
 }
 
-function slugCandidates(name: string): string[] {
-  const base = baseSlug(name);
-  return [base, ...[2, 3, 4, 5].map((suffix) => `${base}-${suffix}`)];
+function appendSlugSuffix(base: string, suffix: string): string {
+  const maxBaseLength = SLUG_BASE_MAX_LENGTH - suffix.length - 1;
+  const boundedBase =
+    base.slice(0, maxBaseLength).replace(/-+$/g, "") || "workspace";
+  return `${boundedBase}-${suffix}`;
+}
+
+function deterministicSlugCandidates(base: string): string[] {
+  return [
+    base,
+    ...DETERMINISTIC_SLUG_SUFFIXES.map((suffix) =>
+      appendSlugSuffix(base, String(suffix))
+    )
+  ];
+}
+
+function randomSlugCandidate(base: string): string {
+  return appendSlugSuffix(
+    base,
+    randomBytes(SLUG_RANDOM_SUFFIX_BYTES).toString("hex")
+  );
 }
 
 function isUniqueConstraint(error: unknown): boolean {
@@ -83,32 +107,27 @@ export class WorkspacesService {
     input: CreateWorkspaceRequestDto
   ): Promise<PublicWorkspaceDto> {
     const name = input.name.trim();
+    const base = baseSlug(name);
 
-    for (const slug of slugCandidates(name)) {
+    for (const slug of deterministicSlugCandidates(base)) {
       try {
-        const workspace = await this.prisma.$transaction((transaction) =>
-          transaction.workspace.create({
-            data: {
-              name,
-              slug,
-              members: {
-                create: {
-                  userId,
-                  role: WorkspaceRole.OWNER
-                }
-              }
-            },
-            select: {
-              ...WORKSPACE_SELECT,
-              members: {
-                where: { userId },
-                select: { role: true },
-                take: 1
-              }
-            }
-          })
+        return await this.createWithSlug(userId, name, slug);
+      } catch (error: unknown) {
+        if (isUniqueConstraint(error)) {
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    for (let attempt = 0; attempt < RANDOM_SLUG_ATTEMPTS; attempt += 1) {
+      try {
+        return await this.createWithSlug(
+          userId,
+          name,
+          randomSlugCandidate(base)
         );
-        return toPublicWorkspace(workspace);
       } catch (error: unknown) {
         if (isUniqueConstraint(error)) {
           continue;
@@ -184,6 +203,36 @@ export class WorkspacesService {
       });
     }
 
+    return toPublicWorkspace(workspace);
+  }
+
+  private async createWithSlug(
+    userId: string,
+    name: string,
+    slug: string
+  ): Promise<PublicWorkspaceDto> {
+    const workspace = await this.prisma.$transaction((transaction) =>
+      transaction.workspace.create({
+        data: {
+          name,
+          slug,
+          members: {
+            create: {
+              userId,
+              role: WorkspaceRole.OWNER
+            }
+          }
+        },
+        select: {
+          ...WORKSPACE_SELECT,
+          members: {
+            where: { userId },
+            select: { role: true },
+            take: 1
+          }
+        }
+      })
+    );
     return toPublicWorkspace(workspace);
   }
 }

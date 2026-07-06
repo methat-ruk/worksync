@@ -28,9 +28,12 @@ without weakening tenant isolation.
 - Unknown request fields are rejected by the existing validation pipeline.
 - The backend generates the workspace slug from `name`; clients do not submit a
   slug in this slice.
-- Slug generation handles unique conflicts with up to five attempts using the
-  base slug, then `-2` through `-5`, rather than exposing database errors.
-- If all slug attempts conflict, the create request returns `409` with
+- Slug generation first handles unique conflicts with the base slug, then `-2`
+  through `-5`, rather than exposing database errors.
+- If deterministic slug candidates are already taken, the backend uses bounded
+  random suffix attempts so common workspace names do not globally stop at five
+  creations.
+- If all bounded slug attempts conflict, the create request returns `409` with
   `RESOURCE_CONFLICT`.
 - `GET /api/workspaces` uses page pagination with `page` and `pageSize`;
   default `page` is 1, default `pageSize` is 20, and maximum `pageSize` is 100.
@@ -79,8 +82,9 @@ return `404` rather than reveal cross-workspace existence.
 - direct cross-user workspace read is rejected
 - list pagination default, maximum page size, and stable ordering are covered
 - invalid, empty, overlong, and unknown-field create requests are rejected
+- deterministic slug collisions fall back to an entropy suffix
 - slug collisions do not leak raw database errors
-- exhausted slug retries return a safe `409` conflict
+- fully exhausted slug retries return a safe `409` conflict
 - invalid pagination and unknown query fields return validation errors
 - response/error envelope follows project convention
 - Swagger documents success and error contracts
