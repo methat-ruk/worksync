@@ -251,6 +251,7 @@ describe("workspace API contract", () => {
       .send({ name: "Invalid Membership Contract Team" })
       .expect(201);
     const workspaceId = created.body.data.workspace.id as string;
+    await signUp(app, "workspace-invalid-role-member@example.com");
 
     const invalidAdd = await request(app.getHttpServer())
       .post(`/api/workspaces/${workspaceId}/members`)
@@ -270,6 +271,26 @@ describe("workspace API contract", () => {
         fields: {
           email: expect.any(Array),
           extra: expect.any(Array)
+        }
+      }
+    });
+
+    const invalidRole = await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${accessToken}`)
+      .send({
+        email: "workspace-invalid-role-member@example.com",
+        role: "OWNER"
+      })
+      .expect(400);
+
+    expect(invalidRole.body).toMatchObject({
+      success: false,
+      message: "Validation failed",
+      data: {
+        code: "VALIDATION_ERROR",
+        fields: {
+          role: expect.any(Array)
         }
       }
     });
@@ -434,6 +455,22 @@ describe("workspace API contract", () => {
     expect(document.components?.schemas).toHaveProperty(
       "AddWorkspaceMemberRequestDto"
     );
+    const schemas = document.components?.schemas;
+    expect(schemas).toBeDefined();
+    expect(schemas?.AddWorkspaceMemberRequestDto).toMatchObject({
+      properties: {
+        role: {
+          enum: ["ADMIN", "MEMBER", "VIEWER"]
+        }
+      }
+    });
+    expect(schemas?.UpdateWorkspaceMemberRequestDto).toMatchObject({
+      properties: {
+        role: {
+          enum: ["ADMIN", "MEMBER", "VIEWER"]
+        }
+      }
+    });
     expect(document.components?.schemas).toHaveProperty(
       "WorkspaceMemberListResponseDto"
     );

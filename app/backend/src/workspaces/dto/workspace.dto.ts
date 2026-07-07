@@ -14,6 +14,14 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 import { WorkspaceRole } from "../../generated/prisma/client";
 
+export const MANAGEABLE_WORKSPACE_ROLES = [
+  WorkspaceRole.ADMIN,
+  WorkspaceRole.MEMBER,
+  WorkspaceRole.VIEWER
+] as const;
+
+export type ManageableWorkspaceRole = (typeof MANAGEABLE_WORKSPACE_ROLES)[number];
+
 function trimString({ value }: { value: unknown }): unknown {
   return typeof value === "string" ? value.trim() : value;
 }
@@ -139,15 +147,21 @@ export class AddWorkspaceMemberRequestDto {
   @MaxLength(320)
   email!: string;
 
-  @ApiProperty({ enum: WorkspaceRole, example: WorkspaceRole.MEMBER })
-  @IsEnum(WorkspaceRole)
-  role!: WorkspaceRole;
+  @ApiProperty({
+    enum: MANAGEABLE_WORKSPACE_ROLES,
+    example: WorkspaceRole.MEMBER
+  })
+  @IsEnum(MANAGEABLE_WORKSPACE_ROLES)
+  role!: ManageableWorkspaceRole;
 }
 
 export class UpdateWorkspaceMemberRequestDto {
-  @ApiProperty({ enum: WorkspaceRole, example: WorkspaceRole.MEMBER })
-  @IsEnum(WorkspaceRole)
-  role!: WorkspaceRole;
+  @ApiProperty({
+    enum: MANAGEABLE_WORKSPACE_ROLES,
+    example: WorkspaceRole.MEMBER
+  })
+  @IsEnum(MANAGEABLE_WORKSPACE_ROLES)
+  role!: ManageableWorkspaceRole;
 }
 
 export class PublicWorkspaceMemberDto {
