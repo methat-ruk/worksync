@@ -91,6 +91,24 @@ export async function createAuthTestApp(
     return { ...workspace, members };
   }
 
+  function selectedWorkspaceMember(
+    member: StoredWorkspaceMember
+  ): StoredWorkspaceMember & {
+    user: { email: string; displayName: string };
+  } {
+    const user = users.get(member.userId);
+    if (!user) {
+      throw new Error("Workspace member user not found");
+    }
+    return {
+      ...member,
+      user: {
+        email: user.email,
+        displayName: user.displayName
+      }
+    };
+  }
+
   const prisma = {
     $connect: jest.fn(),
     $disconnect: jest.fn(),
@@ -419,6 +437,126 @@ export async function createAuthTestApp(
             : null;
         }
       )
+    },
+    workspaceMember: {
+      count: jest.fn(
+        ({
+          where
+        }: {
+          where?: {
+            workspaceId?: string;
+          };
+        }) =>
+          [...workspaceMembers.values()].filter(
+            (member) =>
+              !where?.workspaceId || member.workspaceId === where.workspaceId
+          ).length
+      ),
+      findMany: jest.fn(
+        ({
+          where,
+          skip = 0,
+          take
+        }: {
+          where?: {
+            workspaceId?: string;
+          };
+          skip?: number;
+          take?: number;
+        }) =>
+          [...workspaceMembers.values()]
+            .filter(
+              (member) =>
+                !where?.workspaceId || member.workspaceId === where.workspaceId
+            )
+            .sort((left, right) => {
+              const createdAtDelta =
+                left.createdAt.getTime() - right.createdAt.getTime();
+              return createdAtDelta || left.id.localeCompare(right.id);
+            })
+            .slice(skip, take ? skip + take : undefined)
+            .map(selectedWorkspaceMember)
+      ),
+      findFirst: jest.fn(
+        ({
+          where
+        }: {
+          where?: {
+            id?: string;
+            workspaceId?: string;
+            userId?: string;
+          };
+        }) =>
+          [...workspaceMembers.values()].find(
+            (member) =>
+              (!where?.id || member.id === where.id) &&
+              (!where?.workspaceId ||
+                member.workspaceId === where.workspaceId) &&
+              (!where?.userId || member.userId === where.userId)
+          ) ?? null
+      ),
+      create: jest.fn(
+        ({
+          data
+        }: {
+          data: {
+            workspaceId: string;
+            userId: string;
+            role: WorkspaceRole;
+          };
+        }) => {
+          const duplicate = [...workspaceMembers.values()].some(
+            (member) =>
+              member.workspaceId === data.workspaceId &&
+              member.userId === data.userId
+          );
+          if (duplicate) {
+            throw new Prisma.PrismaClientKnownRequestError(
+              "Unique constraint failed",
+              {
+                code: "P2002",
+                clientVersion: "7.8.0",
+                meta: { target: ["workspaceId", "userId"] }
+              }
+            );
+          }
+          const now = new Date("2026-07-06T10:00:00.000Z");
+          const member: StoredWorkspaceMember = {
+            id: `workspace-member-${++sequence}`,
+            workspaceId: data.workspaceId,
+            userId: data.userId,
+            role: data.role,
+            createdAt: now
+          };
+          workspaceMembers.set(member.id, member);
+          return selectedWorkspaceMember(member);
+        }
+      ),
+      update: jest.fn(
+        ({
+          where,
+          data
+        }: {
+          where: { id: string };
+          data: { role: WorkspaceRole };
+        }) => {
+          const member = workspaceMembers.get(where.id);
+          if (!member) {
+            throw new Error("Workspace member not found");
+          }
+          const updated = { ...member, role: data.role };
+          workspaceMembers.set(updated.id, updated);
+          return selectedWorkspaceMember(updated);
+        }
+      ),
+      delete: jest.fn(({ where }: { where: { id: string } }) => {
+        const member = workspaceMembers.get(where.id);
+        if (!member) {
+          throw new Error("Workspace member not found");
+        }
+        workspaceMembers.delete(where.id);
+        return member;
+      })
     },
     user: {
       create: jest.fn(

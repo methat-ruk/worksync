@@ -1,6 +1,6 @@
 # Feature Plan: Workspace Foundation
 
-Status: Next
+Status: Done
 
 Intended PR: `feat/workspace-foundation`
 

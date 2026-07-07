@@ -148,4 +148,80 @@ describeWithDatabase("workspace PostgreSQL integration", () => {
       created.body.data.workspace.slug
     );
   });
+
+  it("manages workspace memberships with persisted role changes", async () => {
+    const owner = await signUp(`${emailPrefix}-membership-owner@example.com`);
+    const member = await signUp(`${emailPrefix}-membership-member@example.com`);
+    const created = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${owner.accessToken}`)
+      .send({ name: `Integration Workspace ${runId} Members` })
+      .expect(201);
+    const workspaceId = created.body.data.workspace.id as string;
+
+    const added = await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        email: `${emailPrefix}-membership-member@example.com`,
+        role: "MEMBER"
+      })
+      .expect(201);
+    const memberId = added.body.data.member.id as string;
+
+    await expect(
+      prisma.workspaceMember.findUniqueOrThrow({
+        where: { workspaceId_userId: { workspaceId, userId: member.userId } }
+      })
+    ).resolves.toMatchObject({ role: "MEMBER" });
+
+    const list = await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${owner.accessToken}`)
+      .expect(200);
+    expect(list.body.data).toMatchObject({
+      page: 1,
+      pageSize: 20,
+      total: 2
+    });
+    expect(list.body.data.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          email: `${emailPrefix}-membership-member@example.com`,
+          role: "MEMBER"
+        })
+      ])
+    );
+
+    await request(app.getHttpServer())
+      .patch(`/api/workspaces/${workspaceId}/members/${memberId}`)
+      .set("authorization", `Bearer ${owner.accessToken}`)
+      .send({ role: "VIEWER" })
+      .expect(200);
+    await expect(
+      prisma.workspaceMember.findUniqueOrThrow({
+        where: { workspaceId_userId: { workspaceId, userId: member.userId } }
+      })
+    ).resolves.toMatchObject({ role: "VIEWER" });
+
+    await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}`)
+      .set("authorization", `Bearer ${member.accessToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .delete(`/api/workspaces/${workspaceId}/members/${memberId}`)
+      .set("authorization", `Bearer ${owner.accessToken}`)
+      .expect(200);
+    await expect(
+      prisma.workspaceMember.findUnique({
+        where: { workspaceId_userId: { workspaceId, userId: member.userId } }
+      })
+    ).resolves.toBeNull();
+
+    await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}`)
+      .set("authorization", `Bearer ${member.accessToken}`)
+      .expect(404);
+  });
 });
