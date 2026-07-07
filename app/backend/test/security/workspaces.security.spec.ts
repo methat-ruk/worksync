@@ -47,6 +47,20 @@ describe("workspace security controls", () => {
     await request(app.getHttpServer())
       .get("/api/workspaces/workspace-id")
       .expect(401);
+    await request(app.getHttpServer())
+      .get("/api/workspaces/workspace-id/members")
+      .expect(401);
+    await request(app.getHttpServer())
+      .post("/api/workspaces/workspace-id/members")
+      .send({ email: "member@example.com", role: "MEMBER" })
+      .expect(401);
+    await request(app.getHttpServer())
+      .patch("/api/workspaces/workspace-id/members/member-id")
+      .send({ role: "VIEWER" })
+      .expect(401);
+    await request(app.getHttpServer())
+      .delete("/api/workspaces/workspace-id/members/member-id")
+      .expect(401);
   });
 
   it("does not expose cross-user workspaces through direct id reads", async () => {
@@ -104,6 +118,147 @@ describe("workspace security controls", () => {
         expect.objectContaining({ name: "Outsider Workspace" })
       ])
     );
+  });
+
+  it("hides workspace membership endpoints from outsiders", async () => {
+    await signUp(app, "workspace-hidden-member@example.com");
+    const created = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ name: "Hidden Membership Workspace" })
+      .expect(201);
+    const workspaceId = created.body.data.workspace.id as string;
+
+    const list = await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${outsiderToken}`)
+      .expect(404);
+    expect(JSON.stringify(list.body)).not.toContain(workspaceId);
+
+    const add = await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${outsiderToken}`)
+      .send({ email: "workspace-hidden-member@example.com", role: "MEMBER" })
+      .expect(404);
+    expect(JSON.stringify(add.body)).not.toContain(
+      "workspace-hidden-member@example.com"
+    );
+  });
+
+  it("denies member and viewer access to member management", async () => {
+    const memberToken = await signUp(app, "workspace-member-role@example.com");
+    const viewerToken = await signUp(app, "workspace-viewer-role@example.com");
+    await signUp(app, "workspace-managed-target@example.com");
+    const created = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ name: "Lower Role Workspace" })
+      .expect(201);
+    const workspaceId = created.body.data.workspace.id as string;
+
+    await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ email: "workspace-member-role@example.com", role: "MEMBER" })
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ email: "workspace-viewer-role@example.com", role: "VIEWER" })
+      .expect(201);
+
+    for (const token of [memberToken, viewerToken]) {
+      await request(app.getHttpServer())
+        .get(`/api/workspaces/${workspaceId}/members`)
+        .set("authorization", `Bearer ${token}`)
+        .expect(403);
+      const response = await request(app.getHttpServer())
+        .post(`/api/workspaces/${workspaceId}/members`)
+        .set("authorization", `Bearer ${token}`)
+        .send({ email: "workspace-managed-target@example.com", role: "MEMBER" })
+        .expect(403);
+      expect(response.body).toMatchObject({
+        success: false,
+        message: "Not authorized for this workspace action",
+        data: { code: "AUTHORIZATION_DENIED" }
+      });
+    }
+  });
+
+  it("keeps admin member management below owner and admin authority", async () => {
+    const adminToken = await signUp(app, "workspace-admin-role@example.com");
+    await signUp(app, "workspace-admin-target@example.com");
+    const created = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ name: "Admin Boundary Workspace" })
+      .expect(201);
+    const workspaceId = created.body.data.workspace.id as string;
+    const admin = await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ email: "workspace-admin-role@example.com", role: "ADMIN" })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${adminToken}`)
+      .send({ email: "workspace-admin-target@example.com", role: "ADMIN" })
+      .expect(403);
+    await request(app.getHttpServer())
+      .patch(
+        `/api/workspaces/${workspaceId}/members/${
+          admin.body.data.member.id as string
+        }`
+      )
+      .set("authorization", `Bearer ${adminToken}`)
+      .send({ role: "MEMBER" })
+      .expect(403);
+  });
+
+  it("prevents self-removal and cross-workspace member targeting", async () => {
+    await signUp(app, "workspace-other-target@example.com");
+    const first = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ name: "Self Protection Workspace" })
+      .expect(201);
+    const second = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ name: "Other Member Workspace" })
+      .expect(201);
+    const firstWorkspaceId = first.body.data.workspace.id as string;
+    const secondWorkspaceId = second.body.data.workspace.id as string;
+
+    const owners = await request(app.getHttpServer())
+      .get(`/api/workspaces/${firstWorkspaceId}/members`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .expect(200);
+    const ownerMember = owners.body.data.items.find(
+      (member: { role: string }) => member.role === "OWNER"
+    );
+
+    await request(app.getHttpServer())
+      .delete(`/api/workspaces/${firstWorkspaceId}/members/${ownerMember.id}`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .expect(403);
+
+    const otherMember = await request(app.getHttpServer())
+      .post(`/api/workspaces/${secondWorkspaceId}/members`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ email: "workspace-other-target@example.com", role: "MEMBER" })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .patch(
+        `/api/workspaces/${firstWorkspaceId}/members/${
+          otherMember.body.data.member.id as string
+        }`
+      )
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ role: "VIEWER" })
+      .expect(404);
   });
 
   it("does not expose internal unique-constraint details during slug fallback", async () => {

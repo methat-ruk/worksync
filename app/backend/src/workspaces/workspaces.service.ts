@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException
 } from "@nestjs/common";
@@ -9,11 +10,22 @@ import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import { PrismaService } from "../database/prisma.service";
 import { Prisma, WorkspaceRole } from "../generated/prisma/client";
 import type {
+  AddWorkspaceMemberRequestDto,
   CreateWorkspaceRequestDto,
+  ListWorkspaceMembersQueryDto,
   ListWorkspacesQueryDto,
+  PublicWorkspaceMemberDto,
   PublicWorkspaceDto,
+  UpdateWorkspaceMemberRequestDto,
+  WorkspaceMemberListDataDto,
   WorkspaceListDataDto
 } from "./dto/workspace.dto";
+import {
+  canAddWorkspaceMember,
+  canListWorkspaceMembers,
+  canRemoveWorkspaceMember,
+  canUpdateWorkspaceMember
+} from "./workspace-rbac.policy";
 
 const WORKSPACE_SELECT = {
   id: true,
@@ -29,6 +41,29 @@ const WORKSPACE_SELECT = {
 type WorkspaceRecord = Prisma.WorkspaceGetPayload<{
   select: typeof WORKSPACE_SELECT;
 }>;
+
+const WORKSPACE_MEMBER_SELECT = {
+  id: true,
+  userId: true,
+  role: true,
+  createdAt: true,
+  user: {
+    select: {
+      email: true,
+      displayName: true
+    }
+  }
+} satisfies Prisma.WorkspaceMemberSelect;
+
+type WorkspaceMemberRecord = Prisma.WorkspaceMemberGetPayload<{
+  select: typeof WORKSPACE_MEMBER_SELECT;
+}>;
+
+type WorkspaceActorMembership = {
+  id: string;
+  userId: string;
+  role: WorkspaceRole;
+};
 
 const SLUG_BASE_MAX_LENGTH = 80;
 const SLUG_RANDOM_SUFFIX_BYTES = 4;
@@ -96,6 +131,33 @@ function toPublicWorkspace(workspace: WorkspaceRecord): PublicWorkspaceDto {
     updatedAt: workspace.updatedAt,
     membershipRole
   };
+}
+
+function toPublicWorkspaceMember(
+  member: WorkspaceMemberRecord
+): PublicWorkspaceMemberDto {
+  return {
+    id: member.id,
+    userId: member.userId,
+    email: member.user.email,
+    displayName: member.user.displayName,
+    role: member.role,
+    createdAt: member.createdAt
+  };
+}
+
+function notFound(message: string): NotFoundException {
+  return new NotFoundException({
+    message,
+    code: API_ERROR_CODE.RESOURCE_NOT_FOUND
+  });
+}
+
+function forbidden(): ForbiddenException {
+  return new ForbiddenException({
+    message: "Not authorized for this workspace action",
+    code: API_ERROR_CODE.AUTHORIZATION_DENIED
+  });
 }
 
 @Injectable()
@@ -206,6 +268,160 @@ export class WorkspacesService {
     return toPublicWorkspace(workspace);
   }
 
+  async listMembers(
+    userId: string,
+    workspaceId: string,
+    query: ListWorkspaceMembersQueryDto
+  ): Promise<WorkspaceMemberListDataDto> {
+    const page = query.page;
+    const pageSize = query.pageSize;
+    const skip = (page - 1) * pageSize;
+
+    const { items, total } = await this.prisma.$transaction(
+      async (transaction) => {
+        const actor = await this.requireWorkspaceMembership(
+          transaction,
+          userId,
+          workspaceId
+        );
+        if (!canListWorkspaceMembers(actor.role)) {
+          throw forbidden();
+        }
+
+        const totalCount = await transaction.workspaceMember.count({
+          where: { workspaceId }
+        });
+        const members = await transaction.workspaceMember.findMany({
+          where: { workspaceId },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          skip,
+          take: pageSize,
+          select: WORKSPACE_MEMBER_SELECT
+        });
+
+        return {
+          total: totalCount,
+          items: members.map(toPublicWorkspaceMember)
+        };
+      }
+    );
+
+    return { items, page, pageSize, total };
+  }
+
+  async addMember(
+    userId: string,
+    workspaceId: string,
+    input: AddWorkspaceMemberRequestDto
+  ): Promise<PublicWorkspaceMemberDto> {
+    return this.prisma.$transaction(async (transaction) => {
+      const actor = await this.requireWorkspaceMembership(
+        transaction,
+        userId,
+        workspaceId
+      );
+      if (!canAddWorkspaceMember(actor.role, input.role)) {
+        throw forbidden();
+      }
+
+      const targetUser = await transaction.user.findUnique({
+        where: { email: input.email },
+        select: { id: true }
+      });
+      if (!targetUser) {
+        throw notFound("User is not available to add");
+      }
+
+      try {
+        const member = await transaction.workspaceMember.create({
+          data: {
+            workspaceId,
+            userId: targetUser.id,
+            role: input.role
+          },
+          select: WORKSPACE_MEMBER_SELECT
+        });
+        return toPublicWorkspaceMember(member);
+      } catch (error: unknown) {
+        if (isUniqueConstraint(error)) {
+          throw new ConflictException({
+            message: "Workspace membership already exists",
+            code: API_ERROR_CODE.RESOURCE_CONFLICT
+          });
+        }
+
+        throw error;
+      }
+    });
+  }
+
+  async updateMember(
+    userId: string,
+    workspaceId: string,
+    memberId: string,
+    input: UpdateWorkspaceMemberRequestDto
+  ): Promise<PublicWorkspaceMemberDto> {
+    return this.prisma.$transaction(async (transaction) => {
+      const actor = await this.requireWorkspaceMembership(
+        transaction,
+        userId,
+        workspaceId
+      );
+      const target = await this.findWorkspaceMember(
+        transaction,
+        workspaceId,
+        memberId
+      );
+      if (
+        !canUpdateWorkspaceMember(
+          actor.role,
+          target.role,
+          input.role,
+          target.userId === userId
+        )
+      ) {
+        throw forbidden();
+      }
+
+      const member = await transaction.workspaceMember.update({
+        where: { id: target.id },
+        data: { role: input.role },
+        select: WORKSPACE_MEMBER_SELECT
+      });
+      return toPublicWorkspaceMember(member);
+    });
+  }
+
+  async removeMember(
+    userId: string,
+    workspaceId: string,
+    memberId: string
+  ): Promise<void> {
+    await this.prisma.$transaction(async (transaction) => {
+      const actor = await this.requireWorkspaceMembership(
+        transaction,
+        userId,
+        workspaceId
+      );
+      const target = await this.findWorkspaceMember(
+        transaction,
+        workspaceId,
+        memberId
+      );
+      if (
+        !canRemoveWorkspaceMember(
+          actor.role,
+          target.role,
+          target.userId === userId
+        )
+      ) {
+        throw forbidden();
+      }
+
+      await transaction.workspaceMember.delete({ where: { id: target.id } });
+    });
+  }
+
   private async createWithSlug(
     userId: string,
     name: string,
@@ -234,5 +450,35 @@ export class WorkspacesService {
       })
     );
     return toPublicWorkspace(workspace);
+  }
+
+  private async requireWorkspaceMembership(
+    transaction: Prisma.TransactionClient,
+    userId: string,
+    workspaceId: string
+  ): Promise<WorkspaceActorMembership> {
+    const membership = await transaction.workspaceMember.findFirst({
+      where: { workspaceId, userId },
+      select: { id: true, userId: true, role: true }
+    });
+    if (!membership) {
+      throw notFound("Workspace not found");
+    }
+    return membership;
+  }
+
+  private async findWorkspaceMember(
+    transaction: Prisma.TransactionClient,
+    workspaceId: string,
+    memberId: string
+  ): Promise<WorkspaceActorMembership> {
+    const member = await transaction.workspaceMember.findFirst({
+      where: { id: memberId, workspaceId },
+      select: { id: true, userId: true, role: true }
+    });
+    if (!member) {
+      throw notFound("Workspace member not found");
+    }
+    return member;
   }
 }

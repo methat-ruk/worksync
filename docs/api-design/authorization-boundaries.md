@@ -22,6 +22,11 @@ All routes that operate on workspace-scoped resources must derive or validate
 workspace scope from trusted backend state, not only from client-provided
 identifiers.
 
+Missing caller membership should use the same public not-found shape as missing
+workspace resources when revealing existence would expose tenant information.
+Role-authority failures after membership is proven should return a stable
+forbidden error.
+
 High-risk endpoints:
 
 - list/search/count

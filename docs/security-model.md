@@ -124,14 +124,29 @@ Controls:
 
 Use 404 instead of 403 where existence leakage is a risk.
 
-## Role Matrix Draft
+## Workspace-Level Role Matrix
 
 | Capability | OWNER | ADMIN | MEMBER | VIEWER |
 |---|---:|---:|---:|---:|
 | View workspace | yes | yes | yes | yes |
 | Update workspace metadata | yes | yes | no | no |
-| Manage members | yes | yes, except owner-only actions | no | no |
-| Change owner role | yes | no | no | no |
+| List members | yes | yes | no | no |
+| Add MEMBER or VIEWER | yes | yes | no | no |
+| Add ADMIN | yes | no | no | no |
+| Update MEMBER or VIEWER role | yes | yes | no | no |
+| Update ADMIN role | yes | no | no | no |
+| Remove MEMBER or VIEWER | yes | yes | no | no |
+| Remove ADMIN | yes | no | no | no |
+| Create, remove, demote, or transfer OWNER | no | no | no | no |
+
+Owner transfer is intentionally outside the current member-management contract.
+Callers cannot remove or demote themselves, and owner removal or demotion is
+rejected until a safe transfer rule exists.
+
+## Product Role Matrix Draft
+
+| Capability | OWNER | ADMIN | MEMBER | VIEWER |
+|---|---:|---:|---:|---:|
 | Create project | yes | yes | maybe | no |
 | Update project | yes | yes | maybe | no |
 | Create task | yes | yes | yes | no |

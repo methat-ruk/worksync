@@ -48,10 +48,15 @@ This document captures business meaning and invariants. It is not a database sch
 ## Role Invariants
 
 - OWNER can manage workspace-level destructive or administrative actions.
-- ADMIN can manage workspace work and members except owner-only actions.
+- OWNER can manage ADMIN, MEMBER, and VIEWER memberships, but cannot create,
+  remove, demote, or transfer OWNER through the current member-management slice.
+- ADMIN can manage workspace work and MEMBER or VIEWER memberships except
+  owner-only and admin-only actions.
 - MEMBER can perform ordinary work actions allowed by product rules.
 - VIEWER can read permitted resources but cannot mutate them.
 - The final OWNER cannot be demoted or removed unless a safe ownership transfer rule exists.
+- Users cannot remove themselves or demote their own membership through member
+  management.
 
 ## Task Lifecycle
 
@@ -83,9 +88,11 @@ ACTIVE -> ROLE_CHANGED
 
 Open questions:
 
-- Are invitations email-only, link-based, or both?
+- Are invitations email-only, link-based, or both? The current backend member
+  management slice adds only existing users directly.
 - Can removed members be restored or only re-invited?
-- Can a workspace have multiple OWNER members?
+- Can a workspace have multiple OWNER members? The current backend member
+  management slice does not create or transfer OWNER memberships.
 
 ## Comment and Mention Rules
 

@@ -1,6 +1,6 @@
 # Feature Plan: Workspace Foundation
 
-Status: Next
+Status: Done
 
 Intended PR: `feat/workspace-foundation`
 
@@ -117,5 +117,5 @@ integration or security suites are incomplete evidence for this plan.
 
 ## Follow-up
 
-- workspace membership and RBAC
 - workspace frontend bootstrap
+- project foundation

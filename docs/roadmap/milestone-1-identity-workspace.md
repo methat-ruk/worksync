@@ -42,38 +42,43 @@ Deferred account lifecycle work:
 
 ## Workspace and RBAC
 
-Status: Planned / not implemented
+Status: Partial
 
-Foundation already present:
+Delivered:
 
 - Prisma `Workspace`, `WorkspaceMember`, and `WorkspaceRole` models
 - role enum: `OWNER`, `ADMIN`, `MEMBER`, `VIEWER`
 - API/security documentation for workspace boundaries and role expectations
+- workspace creation API
+- current user's workspace list/read API
+- owner membership creation when a workspace is created
+- workspace isolation enforcement for foundation workspace reads
+- workspace foundation contract, integration, and security tests
+- workspace membership list/add existing user/update role/remove APIs
+- workspace-level OWNER/ADMIN RBAC policy boundary
+- workspace membership contract, integration, and security tests
 
 Still required:
 
-- workspace creation API
-- workspace membership APIs
-- invitation or member-add flow
-- RBAC guards/policies
-- workspace isolation enforcement in every workspace-scoped query
-- IDOR/BOLA and cross-tenant security tests
+- workspace isolation enforcement for every future workspace-scoped query
 - role matrix finalization for project, task, comment, file, and activity
   actions
 - frontend workspace bootstrap and workspace selection UX
 
 Feature plan order:
 
-1. [Workspace Foundation](feature-plans/planned/workspace-foundation.md)
-2. [Workspace Membership and RBAC](feature-plans/planned/workspace-membership-rbac.md)
+1. [Workspace Foundation](feature-plans/completed/workspace-foundation.md)
+2. [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
 3. [Workspace Frontend Bootstrap](feature-plans/planned/workspace-frontend-bootstrap.md)
 
 ## Exit Criteria
 
-- direct API calls cannot access another workspace: Not done
-- role matrix has backend integration coverage: Not done
-- critical auth and workspace flows have contract tests: Auth done; workspace
-  not done
+- direct API calls cannot access another workspace: Done for workspace
+  foundation and workspace membership management
+- role matrix has backend integration coverage: Done for workspace-level
+  membership; not done for project/task/comment/file actions
+- critical auth and workspace flows have contract tests: Auth and workspace
+  foundation and membership management done; frontend bootstrap still pending
 
 ## Related Docs
 
@@ -85,3 +90,5 @@ Feature plan order:
 - [Auth Session Lifecycle](feature-plans/completed/auth-session-lifecycle.md)
 - [Google OAuth Login](feature-plans/completed/auth-google-oauth.md)
 - [Frontend Auth and App Shell](feature-plans/completed/frontend-auth-app-shell.md)
+- [Workspace Foundation](feature-plans/completed/workspace-foundation.md)
+- [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)

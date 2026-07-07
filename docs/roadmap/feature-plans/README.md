@@ -22,12 +22,10 @@ Prioritize planned work by:
 
 For the current roadmap, this means:
 
-1. workspace foundation
-2. workspace membership and RBAC
-3. workspace frontend bootstrap
-4. project foundation
-5. task foundation
-6. comments, notifications, files, jobs, and production readiness
+1. workspace frontend bootstrap
+2. project foundation
+3. task foundation
+4. comments, notifications, files, jobs, and production readiness
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -36,16 +34,14 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Workspace Foundation](planned/workspace-foundation.md) | 1 | Next |
-| 2 | [Workspace Membership and RBAC](planned/workspace-membership-rbac.md) | 1 | Planned |
-| 3 | [Workspace Frontend Bootstrap](planned/workspace-frontend-bootstrap.md) | 1 | Planned |
-| 4 | [Project Foundation](planned/project-foundation.md) | 2 | Planned |
-| 5 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
-| 6 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 7 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 8 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 9 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 10 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
+| 1 | [Workspace Frontend Bootstrap](planned/workspace-frontend-bootstrap.md) | 1 | Next |
+| 2 | [Project Foundation](planned/project-foundation.md) | 2 | Planned |
+| 3 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
+| 4 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 5 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 6 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 7 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 8 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
 
 ## Completed Feature Summaries
 
@@ -60,6 +56,8 @@ reconstructing every historical implementation detail.
 | [Auth Session Lifecycle](completed/auth-session-lifecycle.md) | Done |
 | [Google OAuth Login](completed/auth-google-oauth.md) | Done |
 | [Frontend Auth and App Shell](completed/frontend-auth-app-shell.md) | Done |
+| [Workspace Foundation](completed/workspace-foundation.md) | Done |
+| [Workspace Membership and RBAC](completed/workspace-membership-rbac.md) | Done |
 
 ## Feature Plan Template
 
