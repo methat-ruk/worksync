@@ -1,6 +1,6 @@
 # Feature Plan: Workspace Membership and RBAC
 
-Status: In Progress
+Status: Done
 
 Intended PR: `feat/workspace-membership-rbac`
 

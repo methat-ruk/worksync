@@ -117,5 +117,5 @@ integration or security suites are incomplete evidence for this plan.
 
 ## Follow-up
 
-- workspace membership and RBAC
 - workspace frontend bootstrap
+- project foundation
