@@ -20,8 +20,8 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { signUp } from "../auth-store";
-import { authErrorMessage } from "../error-message";
-import { evaluatePassword, PASSWORD_POLICY } from "../password-policy";
+import { authErrorMessage } from "../model/auth-error-message";
+import { evaluatePassword, PASSWORD_POLICY } from "../model/password-policy";
 import { AuthError } from "./auth-error";
 import { GoogleButton } from "./google-button";
 import { PasswordInput } from "./password-input";

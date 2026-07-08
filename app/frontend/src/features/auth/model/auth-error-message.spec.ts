@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { ApiError } from "./api-client";
-import { authErrorMessage } from "./error-message";
+import { ApiError } from "../api/auth-api";
+import { authErrorMessage } from "./auth-error-message";
 
 describe("authErrorMessage", () => {
   it("maps rate-limit errors to stable user feedback", () => {

@@ -48,13 +48,13 @@ import {
 import { cn } from "@/lib/utils";
 
 import { BrandMark } from "../auth/components/brand-mark";
-import { authErrorMessage } from "../auth/error-message";
+import { authErrorMessage } from "../auth/model/auth-error-message";
 import { logout, logoutAll, useAuth } from "../auth/auth-store";
 import { useTheme } from "../theme/theme-provider";
 
 const navItems = [
   { label: "Home", icon: Home, active: true },
-  { label: "Workspaces", icon: Users, status: "Planned" },
+  { label: "Workspaces", icon: Users, status: "Active" },
   { label: "Projects", icon: FolderKanban, status: "Soon" },
   { label: "Tasks", icon: CheckSquare2, status: "Soon" },
   { label: "Notifications", icon: Bell, status: "Soon" }
@@ -89,6 +89,13 @@ const themeOptions = [
   { value: "dark", label: "Dark", icon: Moon }
 ] as const;
 
+function navStatusClass(status?: string): string {
+  if (status === "Active") {
+    return "border-primary/35 bg-primary/20 text-white";
+  }
+  return "border-white/10 bg-white/[0.06] text-white/[0.6]";
+}
+
 function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -120,7 +127,10 @@ function Sidebar() {
             <item.icon aria-hidden="true" className="size-4" />
             <span>{item.label}</span>
             {item.status && (
-              <Badge className="ml-auto rounded-full border border-white/10 bg-white/[0.06] px-2 py-0 text-[10px] text-white/[0.52]">
+              <Badge
+                className={`ml-auto rounded-full px-2 py-0 text-[10px] ${navStatusClass(item.status)}`}
+                variant="outline"
+              >
                 {item.status}
               </Badge>
             )}
@@ -136,7 +146,7 @@ function Sidebar() {
         </div>
         <p className="mt-1 text-xs leading-5 text-white/45">
           Password, Google OAuth, refresh rotation, and rate limits are ready.
-          Workspace features arrive next.
+          Workspace selection is now connected to real membership data.
         </p>
       </div>
     </div>
@@ -264,7 +274,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="text-sm font-semibold">Home</p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Workspace foundation overview
+              Workspace home
             </p>
           </div>
           <Button

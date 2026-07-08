@@ -57,19 +57,26 @@ Delivered:
 - workspace membership list/add existing user/update role/remove APIs
 - workspace-level OWNER/ADMIN RBAC policy boundary
 - workspace membership contract, integration, and security tests
+- frontend workspace bootstrap, current user's workspace list, empty state,
+  create workspace flow, local workspace selection, and browser E2E coverage
 
 Still required:
 
 - workspace isolation enforcement for every future workspace-scoped query
 - role matrix finalization for project, task, comment, file, and activity
   actions
-- frontend workspace bootstrap and workspace selection UX
+
+Follow-up technical debt:
+
+- Move frontend authenticated HTTP request/error handling out of the auth
+  feature into a shared API client before additional workspace-scoped clients
+  such as projects and tasks reuse the same request/refresh/error boundary.
 
 Feature plan order:
 
 1. [Workspace Foundation](feature-plans/completed/workspace-foundation.md)
 2. [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
-3. [Workspace Frontend Bootstrap](feature-plans/planned/workspace-frontend-bootstrap.md)
+3. [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
 
 ## Exit Criteria
 
@@ -78,7 +85,8 @@ Feature plan order:
 - role matrix has backend integration coverage: Done for workspace-level
   membership; not done for project/task/comment/file actions
 - critical auth and workspace flows have contract tests: Auth and workspace
-  foundation and membership management done; frontend bootstrap still pending
+  foundation, workspace foundation, membership management, and frontend
+  bootstrap done
 
 ## Related Docs
 
@@ -92,3 +100,4 @@ Feature plan order:
 - [Frontend Auth and App Shell](feature-plans/completed/frontend-auth-app-shell.md)
 - [Workspace Foundation](feature-plans/completed/workspace-foundation.md)
 - [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
+- [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)

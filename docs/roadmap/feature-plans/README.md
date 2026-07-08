@@ -22,10 +22,9 @@ Prioritize planned work by:
 
 For the current roadmap, this means:
 
-1. workspace frontend bootstrap
-2. project foundation
-3. task foundation
-4. comments, notifications, files, jobs, and production readiness
+1. project foundation
+2. task foundation
+3. comments, notifications, files, jobs, and production readiness
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -34,14 +33,13 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Workspace Frontend Bootstrap](planned/workspace-frontend-bootstrap.md) | 1 | Next |
-| 2 | [Project Foundation](planned/project-foundation.md) | 2 | Planned |
-| 3 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
-| 4 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 5 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 6 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 7 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 8 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
+| 1 | [Project Foundation](planned/project-foundation.md) | 2 | Next |
+| 2 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
+| 3 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 4 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 5 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 6 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 7 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
 
 ## Completed Feature Summaries
 
@@ -58,6 +56,7 @@ reconstructing every historical implementation detail.
 | [Frontend Auth and App Shell](completed/frontend-auth-app-shell.md) | Done |
 | [Workspace Foundation](completed/workspace-foundation.md) | Done |
 | [Workspace Membership and RBAC](completed/workspace-membership-rbac.md) | Done |
+| [Workspace Frontend Bootstrap](completed/workspace-frontend-bootstrap.md) | Done |
 
 ## Feature Plan Template
 
