@@ -19,6 +19,15 @@ const authBody = {
   }
 };
 
+const workspace = {
+  id: "workspace-1",
+  name: "Product Team",
+  slug: "product-team",
+  createdAt: "2026-07-08T08:00:00.000Z",
+  updatedAt: "2026-07-08T08:00:00.000Z",
+  membershipRole: "OWNER"
+};
+
 const apiUrl = (path: string) => `http://localhost:4000${path}`;
 
 test.beforeEach(async ({ page }) => {
@@ -212,6 +221,134 @@ test("exits protected-route loading when refresh fails", async ({ page }) => {
   });
 });
 
+test("shows real workspace data for authenticated users", async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: [workspace],
+          page: 1,
+          pageSize: 20,
+          total: 1
+        }
+      })
+    })
+  );
+
+  await page.goto("/app");
+
+  await expect(page.getByText("Workspace bootstrap")).toBeVisible();
+  await expect(page.getByText("Product Team").first()).toBeVisible();
+  await expect(page.getByText("OWNER").first()).toBeVisible();
+  await expect(page.getByText("/product-team").first()).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
+  expect(consoleErrors).toEqual([]);
+});
+
+test("creates the first workspace from the app empty state", async ({ page }) => {
+  let createRequestBody: Record<string, unknown> | null = null;
+  let createAuthorization: string | null = null;
+
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, async (route) => {
+    const request = route.request();
+    if (request.method() === "POST") {
+      createRequestBody = request.postDataJSON() as Record<string, unknown>;
+      createAuthorization = request.headers().authorization ?? null;
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          message: "Workspace created",
+          data: { workspace }
+        })
+      });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: [],
+          page: 1,
+          pageSize: 20,
+          total: 0
+        }
+      })
+    });
+  });
+
+  await page.goto("/app");
+  await expect(page.getByText("Create your first workspace")).toBeVisible();
+  await page.getByLabel("Workspace name").fill(" Product Team ");
+  await page.getByRole("button", { name: "Create workspace" }).click();
+
+  await expect(page.getByText("Product Team is ready.")).toBeVisible();
+  await expect(page.getByText("Product Team").first()).toBeVisible();
+  expect(createRequestBody).toEqual({ name: "Product Team" });
+  expect(createAuthorization).toBe("Bearer test-access-token");
+});
+
+test("shows workspace loading failure feedback without blanking the app", async ({
+  page
+}) => {
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        message: "Workspace service unavailable",
+        data: { code: "INTERNAL_SERVER_ERROR" }
+      })
+    })
+  );
+
+  await page.goto("/app");
+
+  await expect(page.getByText("We could not load your workspaces.")).toBeVisible();
+  await expect(page.getByText("Workspace service unavailable")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+  await expect(page).toHaveURL(/\/app$/);
+});
+
 test("keeps the authenticated UI visible when logout fails", async ({ page }) => {
   await page.unroute(apiUrl("/api/auth/refresh"));
   await page.route(apiUrl("/api/auth/refresh"), (route) =>
@@ -231,9 +368,24 @@ test("keeps the authenticated UI visible when logout fails", async ({ page }) =>
       })
     })
   );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: [workspace],
+          page: 1,
+          pageSize: 20,
+          total: 1
+        }
+      })
+    })
+  );
 
   await page.goto("/app");
-  await expect(page.getByText("Workspace foundation overview")).toBeVisible();
+  await expect(page.getByText("Product Team").first()).toBeVisible();
   await page.locator("[data-slot='dropdown-menu-trigger']").click();
   await page
     .locator("[data-slot='dropdown-menu-item']")
@@ -243,7 +395,7 @@ test("keeps the authenticated UI visible when logout fails", async ({ page }) =>
 
   await expect(page.getByText("Logout failed")).toBeVisible();
   await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByText("Workspace foundation overview")).toBeVisible();
+  await expect(page.getByText("Product Team").first()).toBeVisible();
 });
 
 test("logs out successfully and returns to sign in", async ({ page }) => {
@@ -260,6 +412,21 @@ test("logs out successfully and returns to sign in", async ({ page }) => {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({ success: true, message: "Logged out" })
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: [workspace],
+          page: 1,
+          pageSize: 20,
+          total: 1
+        }
+      })
     })
   );
 

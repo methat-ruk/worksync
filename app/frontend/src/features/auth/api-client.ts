@@ -31,7 +31,7 @@ export class ApiError extends Error {
 let accessToken: string | null = null;
 let refreshPromise: Promise<AuthData | null> | null = null;
 
-async function parseError(response: Response): Promise<ApiError> {
+export async function parseApiError(response: Response): Promise<ApiError> {
   const parsed = apiErrorSchema.safeParse(await response.json().catch(() => null));
   return new ApiError(
     response.status,
@@ -41,7 +41,7 @@ async function parseError(response: Response): Promise<ApiError> {
   );
 }
 
-async function request(
+export async function apiRequest(
   path: string,
   init: RequestInit = {},
   options: { authenticated?: boolean; retryAfterRefresh?: boolean } = {}
@@ -67,7 +67,7 @@ async function request(
   ) {
     const refreshed = await refreshSession();
     if (refreshed) {
-      return request(path, init, {
+      return apiRequest(path, init, {
         authenticated: true,
         retryAfterRefresh: false
       });
@@ -80,12 +80,12 @@ async function authCommand(
   path: string,
   input: LoginInput | SignUpInput
 ): Promise<AuthData> {
-  const response = await request(path, {
+  const response = await apiRequest(path, {
     method: "POST",
     body: JSON.stringify(input)
   });
   if (!response.ok) {
-    throw await parseError(response);
+    throw await parseApiError(response);
   }
   const parsed = authResponseSchema.parse(await response.json());
   accessToken = parsed.data.accessToken;
@@ -106,7 +106,7 @@ export async function refreshSession(): Promise<AuthData | null> {
   }
 
   refreshPromise = (async () => {
-    const response = await request(
+    const response = await apiRequest(
       "/api/auth/refresh",
       { method: "POST" },
       { retryAfterRefresh: false }
@@ -116,7 +116,7 @@ export async function refreshSession(): Promise<AuthData | null> {
       return null;
     }
     if (!response.ok) {
-      throw await parseError(response);
+      throw await parseApiError(response);
     }
     const parsed = authResponseSchema.parse(await response.json());
     accessToken = parsed.data.accessToken;
@@ -129,34 +129,34 @@ export async function refreshSession(): Promise<AuthData | null> {
 }
 
 export async function currentUser() {
-  const response = await request(
+  const response = await apiRequest(
     "/api/auth/me",
     {},
     { authenticated: true }
   );
   if (!response.ok) {
-    throw await parseError(response);
+    throw await parseApiError(response);
   }
   return currentUserResponseSchema.parse(await response.json()).data.user;
 }
 
 export async function logout(): Promise<void> {
-  const response = await request("/api/auth/logout", { method: "POST" });
+  const response = await apiRequest("/api/auth/logout", { method: "POST" });
   if (!response.ok) {
-    throw await parseError(response);
+    throw await parseApiError(response);
   }
   messageResponseSchema.parse(await response.json());
   accessToken = null;
 }
 
 export async function logoutAll(): Promise<void> {
-  const response = await request(
+  const response = await apiRequest(
     "/api/auth/logout-all",
     { method: "POST" },
     { authenticated: true }
   );
   if (!response.ok) {
-    throw await parseError(response);
+    throw await parseApiError(response);
   }
   messageResponseSchema.parse(await response.json());
   accessToken = null;

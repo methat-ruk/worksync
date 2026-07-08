@@ -54,7 +54,7 @@ import { useTheme } from "../theme/theme-provider";
 
 const navItems = [
   { label: "Home", icon: Home, active: true },
-  { label: "Workspaces", icon: Users, status: "Planned" },
+  { label: "Workspaces", icon: Users, status: "Active" },
   { label: "Projects", icon: FolderKanban, status: "Soon" },
   { label: "Tasks", icon: CheckSquare2, status: "Soon" },
   { label: "Notifications", icon: Bell, status: "Soon" }
@@ -136,7 +136,7 @@ function Sidebar() {
         </div>
         <p className="mt-1 text-xs leading-5 text-white/45">
           Password, Google OAuth, refresh rotation, and rate limits are ready.
-          Workspace features arrive next.
+          Workspace selection is now connected to real membership data.
         </p>
       </div>
     </div>
@@ -264,7 +264,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <p className="text-sm font-semibold">Home</p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Workspace foundation overview
+              Workspace home
             </p>
           </div>
           <Button
