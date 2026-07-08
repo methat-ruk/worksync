@@ -31,7 +31,7 @@ describe("auth API client", () => {
       })
     );
     vi.stubGlobal("fetch", fetchMock);
-    const { refreshSession } = await import("./api-client");
+    const { refreshSession } = await import("./auth-api");
 
     const [first, second, third] = await Promise.all([
       refreshSession(),

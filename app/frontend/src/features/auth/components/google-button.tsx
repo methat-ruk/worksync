@@ -7,7 +7,7 @@ import {
   TooltipTrigger
 } from "@/components/ui/tooltip";
 
-import { googleLoginUrl, googleOAuthEnabled } from "../api-client";
+import { googleLoginUrl, googleOAuthEnabled } from "../api/auth-api";
 import { GoogleIcon } from "./google-icon";
 
 export function GoogleButton() {

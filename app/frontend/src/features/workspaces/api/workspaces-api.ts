@@ -1,4 +1,4 @@
-import { apiRequest, parseApiError } from "../auth/api-client";
+import { apiRequest, parseApiError } from "../../auth/api/auth-api";
 import {
   createWorkspaceInputSchema,
   workspaceListResponseSchema,
@@ -6,7 +6,7 @@ import {
   type CreateWorkspaceInput,
   type PublicWorkspace,
   type WorkspaceListData
-} from "./workspace-contract";
+} from "../model/workspace-contract";
 
 export async function listWorkspaces(): Promise<WorkspaceListData> {
   const response = await apiRequest(

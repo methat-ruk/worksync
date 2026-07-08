@@ -11,7 +11,7 @@ import {
   immediatePasswordChecks,
   PASSWORD_POLICY_MESSAGES,
   type PasswordPolicyEvaluation
-} from "../password-policy";
+} from "../model/password-policy";
 
 const labels = ["Very weak", "Weak", "Fair", "Strong", "Very strong"];
 

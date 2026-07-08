@@ -7,7 +7,7 @@ import {
   type AuthData,
   type LoginInput,
   type SignUpInput
-} from "./auth-contract";
+} from "../model/auth-contract";
 
 const API_BASE_URL = (() => {
   const value = process.env.NEXT_PUBLIC_API_BASE_URL;

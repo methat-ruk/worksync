@@ -3,10 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { HomeDashboard } from "./home-dashboard";
-import { createWorkspace, listWorkspaces } from "../workspaces/api-client";
-import type { PublicWorkspace } from "../workspaces/workspace-contract";
+import { createWorkspace, listWorkspaces } from "../workspaces/api/workspaces-api";
+import type { PublicWorkspace } from "../workspaces/model/workspace-contract";
 
-vi.mock("../workspaces/api-client", () => ({
+vi.mock("../workspaces/api/workspaces-api", () => ({
   createWorkspace: vi.fn(),
   listWorkspaces: vi.fn()
 }));

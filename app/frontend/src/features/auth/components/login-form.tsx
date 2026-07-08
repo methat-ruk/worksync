@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import { login } from "../auth-store";
-import { authErrorMessage } from "../error-message";
+import { authErrorMessage } from "../model/auth-error-message";
 import { safeNextPath } from "../navigation";
 import { AuthError } from "./auth-error";
 import { GoogleButton } from "./google-button";

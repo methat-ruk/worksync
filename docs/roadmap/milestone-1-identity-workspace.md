@@ -66,6 +66,12 @@ Still required:
 - role matrix finalization for project, task, comment, file, and activity
   actions
 
+Follow-up technical debt:
+
+- Move frontend authenticated HTTP request/error handling out of the auth
+  feature into a shared API client before additional workspace-scoped clients
+  such as projects and tasks reuse the same request/refresh/error boundary.
+
 Feature plan order:
 
 1. [Workspace Foundation](feature-plans/completed/workspace-foundation.md)

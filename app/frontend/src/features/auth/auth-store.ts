@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import type { AuthData, PublicUser } from "./auth-contract";
+import type { AuthData, PublicUser } from "./model/auth-contract";
 import {
   clearAccessToken,
   login as loginRequest,
@@ -10,7 +10,7 @@ import {
   logoutAll as logoutAllRequest,
   refreshSession,
   signUp as signUpRequest
-} from "./api-client";
+} from "./api/auth-api";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 

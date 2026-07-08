@@ -48,7 +48,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { BrandMark } from "../auth/components/brand-mark";
-import { authErrorMessage } from "../auth/error-message";
+import { authErrorMessage } from "../auth/model/auth-error-message";
 import { logout, logoutAll, useAuth } from "../auth/auth-store";
 import { useTheme } from "../theme/theme-provider";
 

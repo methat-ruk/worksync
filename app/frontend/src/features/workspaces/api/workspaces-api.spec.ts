@@ -56,8 +56,8 @@ describe("workspace API client", () => {
       );
     vi.stubGlobal("fetch", fetchMock);
 
-    const { refreshSession } = await import("../auth/api-client");
-    const { listWorkspaces } = await import("./api-client");
+    const { refreshSession } = await import("../../auth/api/auth-api");
+    const { listWorkspaces } = await import("./workspaces-api");
 
     await refreshSession();
     const data = await listWorkspaces();
@@ -84,8 +84,8 @@ describe("workspace API client", () => {
       );
     vi.stubGlobal("fetch", fetchMock);
 
-    const { refreshSession } = await import("../auth/api-client");
-    const { createWorkspace } = await import("./api-client");
+    const { refreshSession } = await import("../../auth/api/auth-api");
+    const { createWorkspace } = await import("./workspaces-api");
 
     await refreshSession();
     const workspace = await createWorkspace({ name: " Product Team " });

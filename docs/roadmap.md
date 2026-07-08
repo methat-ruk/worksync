@@ -30,6 +30,9 @@ Still missing before the collaboration MVP works:
 - project/task APIs and frontend workflows
 - workspace-scoped authorization for project, task, comment, file, and activity
   resources
+- frontend shared API client cleanup so workspace, project, and task clients do
+  not depend on auth feature internals for authenticated HTTP request/error
+  handling
 - comments, mentions, notifications, realtime, files, jobs, and production
   readiness
 
@@ -50,7 +53,9 @@ Still missing before the collaboration MVP works:
    - create the first workspace-scoped project API and authorization boundary.
 2. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
    - build the first task workflow inside the workspace/project boundary.
-3. Add activity, comments, notifications, files, jobs, and production readiness
+3. Extract frontend authenticated HTTP request/error handling into a shared API
+   client before more workspace-scoped frontend clients depend on auth internals.
+4. Add activity, comments, notifications, files, jobs, and production readiness
    only after workspace-scoped project/task authorization evidence exists.
 
 ## Guiding Principles
