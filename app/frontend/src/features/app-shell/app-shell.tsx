@@ -89,6 +89,13 @@ const themeOptions = [
   { value: "dark", label: "Dark", icon: Moon }
 ] as const;
 
+function navStatusClass(status?: string): string {
+  if (status === "Active") {
+    return "border-primary/35 bg-primary/20 text-white";
+  }
+  return "border-white/10 bg-white/[0.06] text-white/[0.6]";
+}
+
 function initials(name: string): string {
   return name
     .split(/\s+/)
@@ -120,7 +127,10 @@ function Sidebar() {
             <item.icon aria-hidden="true" className="size-4" />
             <span>{item.label}</span>
             {item.status && (
-              <Badge className="ml-auto rounded-full border border-white/10 bg-white/[0.06] px-2 py-0 text-[10px] text-white/[0.52]">
+              <Badge
+                className={`ml-auto rounded-full px-2 py-0 text-[10px] ${navStatusClass(item.status)}`}
+                variant="outline"
+              >
                 {item.status}
               </Badge>
             )}

@@ -29,6 +29,17 @@ import {
 
 type WorkspaceLoadState = "loading" | "success" | "error";
 
+const surfaceClass =
+  "rounded-2xl border border-border/80 bg-card shadow-sm shadow-slate-950/5 dark:border-primary/20 dark:shadow-black/25";
+const featureBadgeClass =
+  "rounded-full border border-primary/20 bg-primary/10 px-2.5 text-primary dark:bg-primary/15";
+const statusBadgeClass =
+  "rounded-full border border-primary/20 bg-primary/10 px-2.5 text-primary dark:bg-primary/15";
+const iconTileClass =
+  "grid place-items-center border border-primary/15 bg-primary/10 text-primary dark:bg-primary/15";
+const createButtonClass =
+  "workspace-create-button w-full gap-2 rounded-xl shadow-sm transition-all hover:-translate-y-px hover:shadow-md focus-visible:ring-primary/30 md:w-auto";
+
 const upcomingItems = [
   {
     icon: FolderKanban,
@@ -59,7 +70,7 @@ function formatDate(value: Date): string {
 function WorkspaceSkeleton() {
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <section className="rounded-2xl border bg-card p-6 shadow-sm">
+      <section className={`${surfaceClass} p-6`}>
         <Skeleton className="h-7 w-52" />
         <Skeleton className="mt-3 h-4 w-full max-w-lg" />
         <div className="mt-6 grid gap-3 md:grid-cols-3">
@@ -85,16 +96,18 @@ function WorkspaceCard({
   return (
     <button
       aria-pressed={selected}
-      className="rounded-2xl border bg-card p-4 text-left shadow-sm transition hover:border-primary/35 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:border-primary/50 data-[selected=true]:bg-primary/5"
+      className="rounded-2xl border border-border/80 bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-px hover:border-primary/45 hover:bg-accent/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:border-primary/60 data-[selected=true]:bg-primary/10 dark:border-primary/15"
       data-selected={selected}
       onClick={onSelect}
       type="button"
     >
       <div className="flex items-start justify-between gap-3">
-        <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+        <span className={`${iconTileClass} size-10 rounded-xl`}>
           <Building2 aria-hidden="true" className="size-4" />
         </span>
-        <Badge variant="secondary">{workspace.membershipRole}</Badge>
+        <Badge className={statusBadgeClass} variant="outline">
+          {workspace.membershipRole}
+        </Badge>
       </div>
       <h3 className="mt-4 truncate text-sm font-semibold">{workspace.name}</h3>
       <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -161,9 +174,11 @@ function WorkspaceCreateForm({
         <FieldError>{error}</FieldError>
       </Field>
       <div className={compact ? "flex items-end" : undefined}>
-        <Button className="w-full gap-2 md:w-auto" disabled={pending} type="submit">
-          <Plus aria-hidden="true" className="size-4" />
-          {pending ? "Creating..." : "Create workspace"}
+        <Button className={createButtonClass} disabled={pending} type="submit">
+          <Plus aria-hidden="true" className="size-4 shrink-0" />
+          <span className="leading-none">
+            {pending ? "Creating..." : "Create workspace"}
+          </span>
         </Button>
       </div>
     </form>
@@ -227,8 +242,8 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
   if (loadState === "error") {
     return (
       <div className="mx-auto max-w-3xl">
-        <section className="rounded-2xl border bg-card p-6 shadow-sm">
-          <Badge className="rounded-full" variant="secondary">
+        <section className={`${surfaceClass} p-6`}>
+          <Badge className={featureBadgeClass} variant="outline">
             Workspace bootstrap
           </Badge>
           <h1 className="mt-5 text-2xl font-semibold tracking-tight">
@@ -254,10 +269,12 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
-      <section className="rounded-2xl border bg-card p-6 shadow-sm md:p-7">
+      <section
+        className={`${surfaceClass} bg-[linear-gradient(135deg,color-mix(in_oklch,var(--card),var(--primary)_12%),var(--card))] p-6 md:p-7`}
+      >
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl">
-            <Badge className="rounded-full" variant="secondary">
+            <Badge className={featureBadgeClass} variant="outline">
               Workspace bootstrap
             </Badge>
             <h1 className="mt-5 text-3xl font-semibold tracking-tight md:text-4xl">
@@ -269,7 +286,7 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
             </p>
           </div>
           {selectedWorkspace && (
-            <div className="rounded-2xl border bg-muted/40 p-4 lg:min-w-72">
+            <div className="rounded-2xl border border-primary/20 bg-primary/10 p-4 lg:min-w-72">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Current workspace
               </p>
@@ -277,7 +294,9 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
                 {selectedWorkspace.name}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">{selectedWorkspace.membershipRole}</Badge>
+                <Badge className={statusBadgeClass} variant="outline">
+                  {selectedWorkspace.membershipRole}
+                </Badge>
                 <span className="text-xs text-muted-foreground">
                   /{selectedWorkspace.slug}
                 </span>
@@ -295,9 +314,9 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
       )}
 
       {!hasWorkspaces ? (
-        <section className="grid gap-5 rounded-2xl border bg-card p-6 shadow-sm lg:grid-cols-[1fr_360px]">
+        <section className={`${surfaceClass} grid gap-5 p-6 lg:grid-cols-[1fr_360px]`}>
           <div>
-            <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <div className={`${iconTileClass} size-12 rounded-2xl`}>
               <Users aria-hidden="true" className="size-5" />
             </div>
             <h2 className="mt-5 text-xl font-semibold">
@@ -312,7 +331,7 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
         </section>
       ) : (
         <section className="grid gap-5 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-2xl border bg-card p-5 shadow-sm">
+          <div className={`${surfaceClass} p-5`}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Your workspaces</h2>
@@ -320,7 +339,9 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
                   Select a workspace context for upcoming project and task work.
                 </p>
               </div>
-              <Badge variant="secondary">{workspaces.length} total</Badge>
+              <Badge className={statusBadgeClass} variant="outline">
+                {workspaces.length} total
+              </Badge>
             </div>
             <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {workspaces.map((workspace) => (
@@ -333,7 +354,7 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
               ))}
             </div>
           </div>
-          <aside className="rounded-2xl border bg-card p-5 shadow-sm">
+          <aside className={`${surfaceClass} p-5`}>
             <h2 className="text-lg font-semibold">Add another workspace</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
               Create keeps the backend as source of truth, then selects the new
@@ -349,21 +370,23 @@ export function HomeDashboard({ user }: { user: PublicUser }) {
       <section className="grid gap-4 lg:grid-cols-2">
         {upcomingItems.map((item) => (
           <article
-            className="rounded-2xl border bg-card p-5 opacity-80 shadow-sm"
+            className={`${surfaceClass} p-5 transition-colors hover:border-primary/35`}
             key={item.title}
           >
             <div className="flex items-start justify-between gap-3">
-              <span className="grid size-11 place-items-center rounded-2xl bg-muted text-muted-foreground">
+              <span className={`${iconTileClass} size-11 rounded-2xl`}>
                 <item.icon aria-hidden="true" className="size-5" />
               </span>
-              <Badge variant="secondary">{item.status}</Badge>
+              <Badge className={statusBadgeClass} variant="outline">
+                {item.status}
+              </Badge>
             </div>
             <h2 className="mt-5 text-base font-semibold">{item.title}</h2>
             <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">
               {item.body}
             </p>
             <Button
-              className="mt-4 h-auto cursor-not-allowed items-center gap-1.5 px-0 text-muted-foreground opacity-70"
+              className="mt-4 h-auto cursor-not-allowed items-center gap-1.5 px-0 text-muted-foreground opacity-80"
               disabled
               variant="link"
             >
