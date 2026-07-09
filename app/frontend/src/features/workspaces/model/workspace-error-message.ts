@@ -1,4 +1,4 @@
-import { ApiError } from "../../auth/api/auth-api";
+import { ApiError } from "@/lib/api/api-error";
 
 const messages: Record<string, string> = {
   AUTHENTICATION_REQUIRED: "Sign in again to load your workspaces.",

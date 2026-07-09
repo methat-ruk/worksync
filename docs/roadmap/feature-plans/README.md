@@ -57,6 +57,7 @@ reconstructing every historical implementation detail.
 | [Workspace Foundation](completed/workspace-foundation.md) | Done |
 | [Workspace Membership and RBAC](completed/workspace-membership-rbac.md) | Done |
 | [Workspace Frontend Bootstrap](completed/workspace-frontend-bootstrap.md) | Done |
+| [Frontend Structure Boundaries](completed/frontend-structure-boundaries.md) | Done |
 
 ## Feature Plan Template
 

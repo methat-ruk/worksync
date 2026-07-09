@@ -7,10 +7,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-import type { PublicUser } from "../auth/model/auth-contract";
-import { listWorkspaces } from "../workspaces/api/workspaces-api";
-import { workspaceErrorMessage } from "../workspaces/model/workspace-error-message";
-import type { PublicWorkspace } from "../workspaces/model/workspace-contract";
+import { listWorkspaces } from "../api/workspaces-api";
+import { workspaceErrorMessage } from "../model/workspace-error-message";
+import type { PublicWorkspace } from "../model/workspace-contract";
 import {
   featureBadgeClass,
   statusBadgeClass,
@@ -20,7 +19,11 @@ import {
   WorkspaceCreateForm,
   WorkspaceEmptyState,
   WorkspaceSkeleton
-} from "./workspace-home/workspace-home-ui";
+} from "./workspace-home-ui";
+
+type WorkspaceHomeUser = {
+  displayName: string;
+};
 
 type WorkspaceLoadState = "loading" | "success" | "error";
 
@@ -28,7 +31,7 @@ function firstName(displayName: string): string {
   return displayName.split(" ")[0] ?? displayName;
 }
 
-export function HomeDashboard({ user }: { user: PublicUser }) {
+export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
   const [loadState, setLoadState] = useState<WorkspaceLoadState>("loading");
   const [workspaces, setWorkspaces] = useState<PublicWorkspace[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(

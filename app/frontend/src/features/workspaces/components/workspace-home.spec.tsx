@@ -2,21 +2,17 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HomeDashboard } from "./home-dashboard";
-import { createWorkspace, listWorkspaces } from "../workspaces/api/workspaces-api";
-import type { PublicWorkspace } from "../workspaces/model/workspace-contract";
+import { createWorkspace, listWorkspaces } from "../api/workspaces-api";
+import type { PublicWorkspace } from "../model/workspace-contract";
+import { WorkspaceHome } from "./workspace-home";
 
-vi.mock("../workspaces/api/workspaces-api", () => ({
+vi.mock("../api/workspaces-api", () => ({
   createWorkspace: vi.fn(),
   listWorkspaces: vi.fn()
 }));
 
 const user = {
-  id: "user-1",
-  email: "ada@example.com",
-  displayName: "Ada Lovelace",
-  createdAt: new Date("2026-06-23T00:00:00.000Z"),
-  updatedAt: new Date("2026-06-23T00:00:00.000Z")
+  displayName: "Ada Lovelace"
 };
 
 const workspace: PublicWorkspace = {
@@ -31,7 +27,7 @@ const workspace: PublicWorkspace = {
 const listWorkspacesMock = vi.mocked(listWorkspaces);
 const createWorkspaceMock = vi.mocked(createWorkspace);
 
-describe("HomeDashboard", () => {
+describe("WorkspaceHome", () => {
   beforeEach(() => {
     listWorkspacesMock.mockReset();
     createWorkspaceMock.mockReset();
@@ -45,7 +41,7 @@ describe("HomeDashboard", () => {
       total: 1
     });
 
-    render(<HomeDashboard user={user} />);
+    render(<WorkspaceHome user={user} />);
 
     expect((await screen.findAllByText("Product Team")).length).toBeGreaterThan(
       0
@@ -64,7 +60,7 @@ describe("HomeDashboard", () => {
     });
     createWorkspaceMock.mockResolvedValue(workspace);
 
-    render(<HomeDashboard user={user} />);
+    render(<WorkspaceHome user={user} />);
 
     expect(
       await screen.findByText("Create your first workspace")
@@ -84,7 +80,7 @@ describe("HomeDashboard", () => {
   it("shows safe feedback when workspace loading fails", async () => {
     listWorkspacesMock.mockRejectedValue(new Error("boom"));
 
-    render(<HomeDashboard user={user} />);
+    render(<WorkspaceHome user={user} />);
 
     expect(
       await screen.findByText("We could not load your workspaces.")
@@ -104,7 +100,7 @@ describe("HomeDashboard", () => {
       total: 0
     });
 
-    render(<HomeDashboard user={user} />);
+    render(<WorkspaceHome user={user} />);
 
     await screen.findByText("Create your first workspace");
     await actor.click(screen.getByRole("button", { name: "Create workspace" }));

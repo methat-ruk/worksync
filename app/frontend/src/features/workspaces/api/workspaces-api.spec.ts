@@ -1,22 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const authBody = {
-  success: true,
-  message: "Session refreshed",
-  data: {
-    user: {
-      id: "user-1",
-      email: "ada@example.com",
-      displayName: "Ada Lovelace",
-      createdAt: "2026-06-23T00:00:00.000Z",
-      updatedAt: "2026-06-23T00:00:00.000Z"
-    },
-    accessToken: "access-token",
-    tokenType: "Bearer",
-    expiresIn: 900
-  }
-};
-
 const workspaceBody = {
   id: "workspace-1",
   name: "Product Team",
@@ -40,29 +23,26 @@ describe("workspace API client", () => {
   });
 
   it("lists workspaces with the current bearer token", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse(authBody))
-      .mockResolvedValueOnce(
-        jsonResponse({
-          success: true,
-          data: {
-            items: [workspaceBody],
-            page: 1,
-            pageSize: 20,
-            total: 1
-          }
-        })
-      );
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      jsonResponse({
+        success: true,
+        data: {
+          items: [workspaceBody],
+          page: 1,
+          pageSize: 20,
+          total: 1
+        }
+      })
+    );
     vi.stubGlobal("fetch", fetchMock);
 
-    const { refreshSession } = await import("../../auth/api/auth-api");
+    const { setAccessToken } = await import("@/lib/api/session-token");
     const { listWorkspaces } = await import("./workspaces-api");
 
-    await refreshSession();
+    setAccessToken("access-token");
     const data = await listWorkspaces();
 
-    const workspaceCall = fetchMock.mock.calls[1]!;
+    const workspaceCall = fetchMock.mock.calls[0]!;
     const headers = workspaceCall[1].headers as Headers;
     expect(workspaceCall[0]).toBe(
       "http://localhost:4000/api/workspaces?page=1&pageSize=20"
@@ -72,25 +52,25 @@ describe("workspace API client", () => {
   });
 
   it("creates a workspace with trimmed input and current bearer token", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(jsonResponse(authBody))
-      .mockResolvedValueOnce(
-        jsonResponse({
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      jsonResponse(
+        {
           success: true,
           message: "Workspace created",
           data: { workspace: workspaceBody }
-        }, 201)
-      );
+        },
+        201
+      )
+    );
     vi.stubGlobal("fetch", fetchMock);
 
-    const { refreshSession } = await import("../../auth/api/auth-api");
+    const { setAccessToken } = await import("@/lib/api/session-token");
     const { createWorkspace } = await import("./workspaces-api");
 
-    await refreshSession();
+    setAccessToken("access-token");
     const workspace = await createWorkspace({ name: " Product Team " });
 
-    const workspaceCall = fetchMock.mock.calls[1]!;
+    const workspaceCall = fetchMock.mock.calls[0]!;
     const init = workspaceCall[1] as RequestInit;
     const headers = init.headers as Headers;
     expect(headers.get("Authorization")).toBe("Bearer access-token");
