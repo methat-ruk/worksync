@@ -59,6 +59,8 @@ Delivered:
 - workspace membership contract, integration, and security tests
 - frontend workspace bootstrap, current user's workspace list, empty state,
   create workspace flow, local workspace selection, and browser E2E coverage
+- frontend shared API client and feature ownership boundary cleanup for auth,
+  workspace, app shell, brand, and root providers
 
 Still required:
 
@@ -66,19 +68,12 @@ Still required:
 - role matrix finalization for project, task, comment, file, and activity
   actions
 
-Follow-up technical debt:
-
-- Complete
-  [Frontend Structure Boundaries](feature-plans/planned/frontend-structure-boundaries.md)
-  before additional workspace-scoped clients such as projects and tasks reuse
-  the same request, refresh, and error boundary.
-
 Feature plan order:
 
 1. [Workspace Foundation](feature-plans/completed/workspace-foundation.md)
 2. [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
 3. [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
-4. [Frontend Structure Boundaries](feature-plans/planned/frontend-structure-boundaries.md)
+4. [Frontend Structure Boundaries](feature-plans/completed/frontend-structure-boundaries.md)
 
 ## Exit Criteria
 
@@ -103,4 +98,4 @@ Feature plan order:
 - [Workspace Foundation](feature-plans/completed/workspace-foundation.md)
 - [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
 - [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
-- [Frontend Structure Boundaries](feature-plans/planned/frontend-structure-boundaries.md)
+- [Frontend Structure Boundaries](feature-plans/completed/frontend-structure-boundaries.md)

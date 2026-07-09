@@ -27,9 +27,6 @@ Done:
 
 Still missing before the collaboration MVP works:
 
-- frontend structure boundaries so workspace, project, and task clients do not
-  depend on auth feature internals for authenticated HTTP request/error
-  handling
 - project/task APIs and frontend workflows
 - workspace-scoped authorization for project, task, comment, file, and activity
   resources
@@ -49,15 +46,11 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Frontend Structure Boundaries](roadmap/feature-plans/planned/frontend-structure-boundaries.md)
-   - extract shared frontend API transport/error handling and restore clear
-     auth, workspace, app shell, brand, and provider ownership before adding
-     project/task clients.
-2. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
+1. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
    - create the first workspace-scoped project API and authorization boundary.
-3. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
+2. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
    - build the first task workflow inside the workspace/project boundary.
-4. Add activity, comments, notifications, files, jobs, and production readiness
+3. Add activity, comments, notifications, files, jobs, and production readiness
    only after workspace-scoped project/task authorization evidence exists.
 
 ## Guiding Principles
