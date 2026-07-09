@@ -68,15 +68,17 @@ Still required:
 
 Follow-up technical debt:
 
-- Move frontend authenticated HTTP request/error handling out of the auth
-  feature into a shared API client before additional workspace-scoped clients
-  such as projects and tasks reuse the same request/refresh/error boundary.
+- Complete
+  [Frontend Structure Boundaries](feature-plans/planned/frontend-structure-boundaries.md)
+  before additional workspace-scoped clients such as projects and tasks reuse
+  the same request, refresh, and error boundary.
 
 Feature plan order:
 
 1. [Workspace Foundation](feature-plans/completed/workspace-foundation.md)
 2. [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
 3. [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
+4. [Frontend Structure Boundaries](feature-plans/planned/frontend-structure-boundaries.md)
 
 ## Exit Criteria
 
@@ -101,3 +103,4 @@ Feature plan order:
 - [Workspace Foundation](feature-plans/completed/workspace-foundation.md)
 - [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
 - [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
+- [Frontend Structure Boundaries](feature-plans/planned/frontend-structure-boundaries.md)

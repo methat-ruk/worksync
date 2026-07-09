@@ -1,4 +1,4 @@
-import { ApiError } from "../api/auth-api";
+import { ApiError } from "@/lib/api/api-error";
 
 const messages: Record<string, string> = {
   INVALID_CREDENTIALS: "Invalid email or password.",

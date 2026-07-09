@@ -22,9 +22,10 @@ Prioritize planned work by:
 
 For the current roadmap, this means:
 
-1. project foundation
-2. task foundation
-3. comments, notifications, files, jobs, and production readiness
+1. frontend structure boundaries
+2. project foundation
+3. task foundation
+4. comments, notifications, files, jobs, and production readiness
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -33,13 +34,14 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Project Foundation](planned/project-foundation.md) | 2 | Next |
-| 2 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
-| 3 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 4 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 5 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 6 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 7 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
+| 1 | [Frontend Structure Boundaries](planned/frontend-structure-boundaries.md) | 1 | Next |
+| 2 | [Project Foundation](planned/project-foundation.md) | 2 | Planned |
+| 3 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
+| 4 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 5 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 6 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 7 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 8 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
 
 ## Completed Feature Summaries
 

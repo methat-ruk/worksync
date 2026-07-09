@@ -1,4 +1,4 @@
-import { apiRequest, parseApiError } from "../../auth/api/auth-api";
+import { apiRequest, parseApiError } from "@/lib/api/api-client";
 import {
   createWorkspaceInputSchema,
   workspaceListResponseSchema,

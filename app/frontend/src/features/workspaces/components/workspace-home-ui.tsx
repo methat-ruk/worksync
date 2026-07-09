@@ -16,12 +16,12 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { createWorkspace } from "../../workspaces/api/workspaces-api";
-import { workspaceErrorMessage } from "../../workspaces/model/workspace-error-message";
+import { createWorkspace } from "../api/workspaces-api";
+import { workspaceErrorMessage } from "../model/workspace-error-message";
 import {
   createWorkspaceInputSchema,
   type PublicWorkspace
-} from "../../workspaces/model/workspace-contract";
+} from "../model/workspace-contract";
 
 export const surfaceClass =
   "rounded-2xl border border-border/80 bg-card shadow-sm shadow-slate-950/5 dark:border-primary/20 dark:shadow-black/25";

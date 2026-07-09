@@ -4,7 +4,7 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-07-08
+Last updated: 2026-07-09
 
 ## Current Snapshot
 
@@ -27,12 +27,12 @@ Done:
 
 Still missing before the collaboration MVP works:
 
+- frontend structure boundaries so workspace, project, and task clients do not
+  depend on auth feature internals for authenticated HTTP request/error
+  handling
 - project/task APIs and frontend workflows
 - workspace-scoped authorization for project, task, comment, file, and activity
   resources
-- frontend shared API client cleanup so workspace, project, and task clients do
-  not depend on auth feature internals for authenticated HTTP request/error
-  handling
 - comments, mentions, notifications, realtime, files, jobs, and production
   readiness
 
@@ -49,12 +49,14 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
+1. [Frontend Structure Boundaries](roadmap/feature-plans/planned/frontend-structure-boundaries.md)
+   - extract shared frontend API transport/error handling and restore clear
+     auth, workspace, app shell, brand, and provider ownership before adding
+     project/task clients.
+2. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
    - create the first workspace-scoped project API and authorization boundary.
-2. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
+3. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
    - build the first task workflow inside the workspace/project boundary.
-3. Extract frontend authenticated HTTP request/error handling into a shared API
-   client before more workspace-scoped frontend clients depend on auth internals.
 4. Add activity, comments, notifications, files, jobs, and production readiness
    only after workspace-scoped project/task authorization evidence exists.
 

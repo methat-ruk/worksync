@@ -105,7 +105,8 @@ the frontend. They do not authorize API actions.
 
 ## Follow-up
 
+- [frontend structure boundaries](../planned/frontend-structure-boundaries.md):
+  move authenticated HTTP request/error handling out of the auth feature so
+  workspace, project, and task clients do not depend on auth internals for
+  shared transport behavior
 - project foundation
-- frontend shared API client cleanup: move authenticated HTTP request/error
-  handling out of the auth feature so workspace, project, and task clients do
-  not depend on auth internals for shared transport behavior

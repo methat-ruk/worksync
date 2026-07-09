@@ -4,13 +4,13 @@ import { useSyncExternalStore } from "react";
 
 import type { AuthData, PublicUser } from "./model/auth-contract";
 import {
-  clearAccessToken,
   login as loginRequest,
   logout as logoutRequest,
   logoutAll as logoutAllRequest,
   refreshSession,
   signUp as signUpRequest
 } from "./api/auth-api";
+import { clearAccessToken } from "@/lib/api/session-token";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 

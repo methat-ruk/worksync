@@ -2,8 +2,7 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { AuthProvider } from "@/features/auth/auth-provider";
-import { ThemeProvider } from "@/features/theme/theme-provider";
+import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
   title: "WorkSync",
@@ -25,9 +24,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
       </head>
       <body>
-        <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

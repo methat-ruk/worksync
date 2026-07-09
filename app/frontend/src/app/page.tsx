@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
+import { BrandMark } from "@/components/brand-mark";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { BrandMark } from "@/features/auth/components/brand-mark";
 import { OAuthLanding } from "@/features/auth/components/oauth-landing";
 
 const previewItems = [

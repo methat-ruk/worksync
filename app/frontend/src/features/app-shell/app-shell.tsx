@@ -36,6 +36,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BrandMark } from "@/components/brand-mark";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +48,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-import { BrandMark } from "../auth/components/brand-mark";
 import { authErrorMessage } from "../auth/model/auth-error-message";
 import { logout, logoutAll, useAuth } from "../auth/auth-store";
 import { useTheme } from "../theme/theme-provider";

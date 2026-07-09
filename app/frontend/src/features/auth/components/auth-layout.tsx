@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { BrandMark } from "./brand-mark";
+import { BrandMark } from "@/components/brand-mark";
 
 export function AuthLayout({
   title,

@@ -31,21 +31,8 @@ export const messageResponseSchema = z.object({
   message: z.string()
 });
 
-export const apiErrorSchema = z.object({
-  success: z.literal(false),
-  message: z.string(),
-  data: z
-    .object({
-      code: z.string().optional(),
-      fields: z.record(z.string(), z.array(z.string())).optional(),
-      correlationId: z.string().optional()
-    })
-    .optional()
-});
-
 export type PublicUser = z.infer<typeof publicUserSchema>;
 export type AuthData = z.infer<typeof authDataSchema>;
-export type ApiErrorBody = z.infer<typeof apiErrorSchema>;
 
 export type LoginInput = {
   email: string;
