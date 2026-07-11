@@ -24,6 +24,10 @@ evidence rather than best-effort manual confidence.
 - production deployment target
 - immutable image publishing and promotion
 - environment-specific secret management
+- explicit secret-scanning ownership and evidence
+- refresh-session retention and cleanup policy
+- production Redis transport/client evidence for TLS, credentials, reconnect,
+  pooling, and failure behavior
 - production-grade observability for critical journeys
 - incident-response automation/runbooks
 - backup and restore evidence

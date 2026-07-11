@@ -14,7 +14,8 @@ inside a workspace boundary.
 ## Scope
 
 - project create/list/read/update APIs
-- workspace-scoped authorization for all project routes
+- consume the reusable trusted workspace actor boundary for every project route
+- define project-action policy without duplicating workspace membership queries
 - project DTO and error contract
 - Swagger docs
 - backend integration/contract/security tests
@@ -37,7 +38,9 @@ inside a workspace boundary.
 ## Security and Data Boundary
 
 Every project query must prove workspace membership. Direct project ID access
-must not bypass workspace authorization.
+must not bypass workspace authorization. Membership identity and role must come
+from the shared server-owned workspace authorization boundary, not from client
+input or a project-specific membership implementation.
 
 ## Required Evidence
 
@@ -56,6 +59,7 @@ must not bypass workspace authorization.
 
 - workspace foundation
 - workspace membership/RBAC
+- [workspace authorization boundary](workspace-authorization-boundary.md)
 
 ## Follow-up
 

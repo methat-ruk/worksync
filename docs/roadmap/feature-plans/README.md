@@ -22,9 +22,11 @@ Prioritize planned work by:
 
 For the current roadmap, this means:
 
-1. project foundation
-2. task foundation
-3. comments, notifications, files, jobs, and production readiness
+1. close the repository-health auth, workspace-list, and authorization-boundary
+   findings that would otherwise compound in project work
+2. project foundation
+3. task foundation
+4. comments, notifications, files, jobs, and production readiness
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -33,13 +35,17 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Project Foundation](planned/project-foundation.md) | 2 | Next |
-| 2 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
-| 3 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 4 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 5 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 6 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 7 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
+| 1 | [Frontend Auth State and Redirect Safety](planned/frontend-auth-state-and-redirect-safety.md) | Health remediation | Next |
+| 2 | [Auth Session Concurrency Hardening](planned/auth-session-concurrency-hardening.md) | Health remediation | Planned |
+| 3 | [Workspace Pagination and Selection](planned/workspace-pagination-and-selection.md) | Health remediation | Planned |
+| 4 | [Workspace Authorization Boundary](planned/workspace-authorization-boundary.md) | Health remediation | Planned |
+| 5 | [Project Foundation](planned/project-foundation.md) | 2 | Planned |
+| 6 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
+| 7 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 8 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 9 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 10 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 11 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
 
 ## Completed Feature Summaries
 
