@@ -4,7 +4,7 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-07-09
+Last updated: 2026-07-11
 
 ## Current Snapshot
 
@@ -27,6 +27,9 @@ Done:
 
 Still missing before the collaboration MVP works:
 
+- repository-health remediation for frontend auth state/redirect safety,
+  multi-context refresh concurrency, workspace pagination, and a reusable
+  workspace authorization boundary
 - project/task APIs and frontend workflows
 - workspace-scoped authorization for project, task, comment, file, and activity
   resources
@@ -46,11 +49,20 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
-   - create the first workspace-scoped project API and authorization boundary.
-2. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
+1. [Frontend Auth State and Redirect Safety](roadmap/feature-plans/planned/frontend-auth-state-and-redirect-safety.md)
+   and [Auth Session Concurrency Hardening](roadmap/feature-plans/planned/auth-session-concurrency-hardening.md)
+   - make session state, navigation, and concurrent refresh behavior explicit
+     before more authenticated workflows depend on them.
+2. [Workspace Pagination and Selection](roadmap/feature-plans/planned/workspace-pagination-and-selection.md)
+   and [Workspace Authorization Boundary](roadmap/feature-plans/planned/workspace-authorization-boundary.md)
+   - close the existing workspace UX gap and establish the reusable tenant
+     boundary required by downstream resources.
+3. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
+   - create the first workspace-scoped project API on the shared authorization
+     boundary.
+4. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
    - build the first task workflow inside the workspace/project boundary.
-3. Add activity, comments, notifications, files, jobs, and production readiness
+5. Add activity, comments, notifications, files, jobs, and production readiness
    only after workspace-scoped project/task authorization evidence exists.
 
 ## Guiding Principles
