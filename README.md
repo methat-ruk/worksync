@@ -67,7 +67,7 @@ references/        WorkSync project profile and implementation decisions
 - Docker and Docker Compose
 - Git
 
-This repository uses `pnpm@9.15.0` through Corepack.
+This repository uses `pnpm@11.13.1` through Corepack.
 
 ## Quick Start
 
