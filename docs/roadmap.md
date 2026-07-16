@@ -4,7 +4,7 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-07-11
+Last updated: 2026-07-16
 
 ## Current Snapshot
 
@@ -18,6 +18,9 @@ Done:
 - session lifecycle and refresh rotation
 - Google OAuth login
 - frontend auth flows and protected routing
+- explicit frontend auth recovery states, existing-session handling on public
+  auth routes, Google OAuth completion retry, and same-origin post-login
+  redirects
 - auth rate limiting
 - workspace creation, list/read APIs, owner membership, workspace isolation
   evidence, workspace membership/RBAC APIs, and frontend workspace bootstrap
@@ -27,9 +30,8 @@ Done:
 
 Still missing before the collaboration MVP works:
 
-- repository-health remediation for frontend auth state/redirect safety,
-  multi-context refresh concurrency, workspace pagination, and a reusable
-  workspace authorization boundary
+- repository-health remediation for multi-context refresh concurrency,
+  workspace pagination, and a reusable workspace authorization boundary
 - project/task APIs and frontend workflows
 - workspace-scoped authorization for project, task, comment, file, and activity
   resources
@@ -49,10 +51,9 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Frontend Auth State and Redirect Safety](roadmap/feature-plans/planned/frontend-auth-state-and-redirect-safety.md)
-   and [Auth Session Concurrency Hardening](roadmap/feature-plans/planned/auth-session-concurrency-hardening.md)
-   - make session state, navigation, and concurrent refresh behavior explicit
-     before more authenticated workflows depend on them.
+1. [Auth Session Concurrency Hardening](roadmap/feature-plans/planned/auth-session-concurrency-hardening.md)
+   - make concurrent refresh and replay behavior explicit before more
+     authenticated workflows depend on it.
 2. [Workspace Pagination and Selection](roadmap/feature-plans/planned/workspace-pagination-and-selection.md)
    and [Workspace Authorization Boundary](roadmap/feature-plans/planned/workspace-authorization-boundary.md)
    - close the existing workspace UX gap and establish the reusable tenant

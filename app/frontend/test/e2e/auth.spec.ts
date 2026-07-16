@@ -201,7 +201,9 @@ test("shows auth rate-limit feedback on login and signup", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("exits protected-route loading when refresh fails", async ({ page }) => {
+test("keeps protected content hidden and recovers after refresh failure", async ({
+  page
+}) => {
   await page.unroute(apiUrl("/api/auth/refresh"));
   await page.route(apiUrl("/api/auth/refresh"), (route) =>
     route.fulfill({
@@ -216,9 +218,209 @@ test("exits protected-route loading when refresh fails", async ({ page }) => {
   );
 
   await page.goto("/app");
-  await expect(page).toHaveURL(/\/login\?next=%2Fapp$/, {
-    timeout: 15_000
-  });
+  await expect(page.getByText("We couldn't verify your session.")).toBeVisible();
+  await expect(page.getByText("Workspace bootstrap")).not.toBeVisible();
+  await expect(page).toHaveURL(/\/app$/);
+
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [workspace], page: 1, pageSize: 20, total: 1 }
+      })
+    })
+  );
+
+  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page.getByText("Product Team").first()).toBeVisible();
+  await expect(page).toHaveURL(/\/app$/);
+});
+
+test("keeps public auth forms hidden until refresh can decide", async ({ page }) => {
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        message: "Internal server error",
+        data: { code: "INTERNAL_SERVER_ERROR" }
+      })
+    })
+  );
+
+  await page.goto("/login");
+  await expect(page.getByText("We couldn't verify your session.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in" })).not.toBeVisible();
+  await expect(page).toHaveURL(/\/login$/);
+
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 401,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        message: "Authentication required",
+        data: { code: "AUTHENTICATION_REQUIRED" }
+      })
+    })
+  );
+
+  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+});
+
+test("redirects an existing session away from public auth routes", async ({
+  page
+}) => {
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [workspace], page: 1, pageSize: 20, total: 1 }
+      })
+    })
+  );
+
+  await page.goto("/login");
+  await expect(page).toHaveURL(/\/app$/);
+  await page.goto("/signup");
+  await expect(page).toHaveURL(/\/app$/);
+});
+
+test("uses a safe local next path after login", async ({ page }) => {
+  await page.route(apiUrl("/api/auth/login"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(authBody)
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [workspace], page: 1, pageSize: 20, total: 1 }
+      })
+    })
+  );
+
+  await page.goto("/login?next=%2Fapp%3Ftab%3Dboard%23task");
+  await page.getByLabel("Email").fill("ada@example.com");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("correct horse battery staple");
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  await expect(page).toHaveURL(/\/app\?tab=board#task$/);
+});
+
+test("falls back to the app for unsafe encoded and normalized next paths", async ({
+  page
+}) => {
+  await page.route(apiUrl("/api/auth/login"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(authBody)
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [workspace], page: 1, pageSize: 20, total: 1 }
+      })
+    })
+  );
+
+  await page.goto("/login?next=%252F%252Fevil.example");
+  await page.getByLabel("Email").fill("ada@example.com");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("correct horse battery staple");
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  await expect(page).toHaveURL(/\/app$/);
+
+  await page.goto("/login?next=%2F..%2F%2Fevil.example");
+  await page.getByLabel("Email").fill("ada@example.com");
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("correct horse battery staple");
+  await page.getByRole("button", { name: "Sign in" }).click();
+
+  await expect(page).toHaveURL(/\/app$/);
+});
+
+test("recovers Google callback completion without restarting sign-in", async ({
+  page
+}) => {
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        message: "Internal server error",
+        data: { code: "INTERNAL_SERVER_ERROR" }
+      })
+    })
+  );
+
+  await page.goto("/?auth=google-success");
+  await expect(
+    page.getByText("We couldn't finish signing you in.")
+  ).toBeVisible();
+
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [workspace], page: 1, pageSize: 20, total: 1 }
+      })
+    })
+  );
+
+  await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page).toHaveURL(/\/app$/);
 });
 
 test("shows real workspace data for authenticated users", async ({ page }) => {

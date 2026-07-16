@@ -17,7 +17,12 @@ type ApiRequestOptions = {
   retryAfterRefresh?: boolean;
 };
 
-type RefreshSessionHandler = () => Promise<boolean>;
+export type RefreshSessionHandlerOutcome =
+  | { kind: "refreshed" }
+  | { kind: "unauthenticated" }
+  | { kind: "recoverable-error"; error: unknown };
+
+type RefreshSessionHandler = () => Promise<RefreshSessionHandlerOutcome>;
 
 let refreshSessionHandler: RefreshSessionHandler | null = null;
 
@@ -55,12 +60,15 @@ export async function apiRequest(
     options.retryAfterRefresh !== false &&
     refreshSessionHandler
   ) {
-    const refreshed = await refreshSessionHandler();
-    if (refreshed) {
+    const refreshOutcome = await refreshSessionHandler();
+    if (refreshOutcome.kind === "refreshed") {
       return apiRequest(path, init, {
         authenticated: true,
         retryAfterRefresh: false
       });
+    }
+    if (refreshOutcome.kind === "recoverable-error") {
+      throw refreshOutcome.error;
     }
   }
 

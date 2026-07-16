@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
@@ -9,29 +9,58 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
 
 import { refreshAuth } from "../auth-store";
+import { AuthRecoveryScreen } from "./auth-recovery-screen";
+
+type CompletionState = "loading" | "invalid" | "recoverable-error";
 
 export function OAuthLanding() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const authResult = searchParams.get("auth");
-  const [failed, setFailed] = useState(false);
+  const [completionState, setCompletionState] =
+    useState<CompletionState>("loading");
+
+  const completeGoogleSignIn = useCallback(() => {
+    setCompletionState("loading");
+    void refreshAuth()
+      .then((snapshot) => {
+        switch (snapshot.status) {
+          case "authenticated":
+            router.replace("/app");
+            return;
+          case "recoverable-error":
+            setCompletionState("recoverable-error");
+            return;
+          case "unauthenticated":
+            setCompletionState("invalid");
+            return;
+          case "loading":
+            return;
+        }
+      })
+      .catch(() => setCompletionState("recoverable-error"));
+  }, [router]);
 
   useEffect(() => {
     if (authResult !== "google-success") {
       return;
     }
-    void refreshAuth()
-      .then((snapshot) => {
-        if (snapshot.status === "authenticated") {
-          router.replace("/app");
-        } else {
-          setFailed(true);
-        }
-      })
-      .catch(() => setFailed(true));
-  }, [authResult, router]);
+    completeGoogleSignIn();
+  }, [authResult, completeGoogleSignIn]);
 
-  if (authResult === "google-success" && !failed) {
+  if (
+    authResult === "google-success" &&
+    completionState === "recoverable-error"
+  ) {
+    return (
+      <AuthRecoveryScreen
+        title="We couldn't finish signing you in."
+        onRetry={completeGoogleSignIn}
+      />
+    );
+  }
+
+  if (authResult === "google-success" && completionState === "loading") {
     return (
       <main className="grid min-h-screen place-items-center bg-background px-6">
         <div className="flex items-center gap-3 text-sm text-muted-foreground">

@@ -8,19 +8,28 @@ import {
   logout as logoutRequest,
   logoutAll as logoutAllRequest,
   refreshSession,
-  signUp as signUpRequest
+  signUp as signUpRequest,
+  type RefreshSessionOutcome
 } from "./api/auth-api";
+import {
+  setRefreshSessionHandler,
+  type RefreshSessionHandlerOutcome
+} from "@/lib/api/api-client";
 import { clearAccessToken } from "@/lib/api/session-token";
 
-export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
+export type AuthSnapshot =
+  | { status: "loading"; user: null }
+  | { status: "authenticated"; user: PublicUser }
+  | { status: "unauthenticated"; user: null }
+  | { status: "recoverable-error"; user: null };
 
-export type AuthSnapshot = {
-  status: AuthStatus;
-  user: PublicUser | null;
+type RefreshTransition = {
+  outcome: RefreshSessionOutcome;
+  snapshot: AuthSnapshot;
 };
 
 let snapshot: AuthSnapshot = { status: "loading", user: null };
-let bootstrapPromise: Promise<AuthSnapshot> | null = null;
+let refreshTransitionPromise: Promise<RefreshTransition> | null = null;
 const listeners = new Set<() => void>();
 
 function publish(next: AuthSnapshot): AuthSnapshot {
@@ -33,6 +42,31 @@ function authenticated(data: AuthData): AuthSnapshot {
   return publish({ status: "authenticated", user: data.user });
 }
 
+function applyRefreshOutcome(outcome: RefreshSessionOutcome): AuthSnapshot {
+  switch (outcome.kind) {
+    case "authenticated":
+      return authenticated(outcome.data);
+    case "unauthenticated":
+      return publish({ status: "unauthenticated", user: null });
+    case "recoverable-error":
+      return publish({ status: "recoverable-error", user: null });
+  }
+}
+
+function runRefreshTransition(): Promise<RefreshTransition> {
+  if (!refreshTransitionPromise) {
+    refreshTransitionPromise = refreshSession()
+      .then((outcome) => ({
+        outcome,
+        snapshot: applyRefreshOutcome(outcome)
+      }))
+      .finally(() => {
+        refreshTransitionPromise = null;
+      });
+  }
+  return refreshTransitionPromise;
+}
+
 export function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
@@ -43,18 +77,16 @@ export function getAuthSnapshot(): AuthSnapshot {
 }
 
 export function bootstrapAuth(): Promise<AuthSnapshot> {
-  if (!bootstrapPromise) {
-    bootstrapPromise = refreshSession()
-      .then((data) =>
-        data
-          ? authenticated(data)
-          : publish({ status: "unauthenticated", user: null })
-      )
-      .catch(() =>
-        publish({ status: "unauthenticated", user: null })
-      );
+  if (
+    snapshot.status === "authenticated" ||
+    snapshot.status === "unauthenticated"
+  ) {
+    return Promise.resolve(snapshot);
   }
-  return bootstrapPromise;
+  if (snapshot.status === "recoverable-error") {
+    publish({ status: "loading", user: null });
+  }
+  return runRefreshTransition().then((transition) => transition.snapshot);
 }
 
 export async function login(
@@ -75,10 +107,10 @@ export async function signUp(
 }
 
 export async function refreshAuth(): Promise<AuthSnapshot> {
-  const data = await refreshSession();
-  return data
-    ? authenticated(data)
-    : publish({ status: "unauthenticated", user: null });
+  if (snapshot.status === "recoverable-error") {
+    publish({ status: "loading", user: null });
+  }
+  return (await runRefreshTransition()).snapshot;
 }
 
 export async function logout(): Promise<void> {
@@ -102,7 +134,19 @@ export function useAuth(): AuthSnapshot {
 
 export function resetAuthStoreForTests(): void {
   clearAccessToken();
-  bootstrapPromise = null;
+  refreshTransitionPromise = null;
   snapshot = { status: "loading", user: null };
   listeners.clear();
 }
+
+setRefreshSessionHandler(async (): Promise<RefreshSessionHandlerOutcome> => {
+  const { outcome } = await runRefreshTransition();
+  switch (outcome.kind) {
+    case "authenticated":
+      return { kind: "refreshed" };
+    case "unauthenticated":
+      return { kind: "unauthenticated" };
+    case "recoverable-error":
+      return { kind: "recoverable-error", error: outcome.error };
+  }
+});

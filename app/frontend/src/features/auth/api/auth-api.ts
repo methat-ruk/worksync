@@ -1,6 +1,5 @@
 import {
   authResponseSchema,
-  currentUserResponseSchema,
   messageResponseSchema,
   type AuthData,
   type LoginInput,
@@ -9,15 +8,17 @@ import {
 import {
   API_BASE_URL,
   apiRequest,
-  parseApiError,
-  setRefreshSessionHandler
+  parseApiError
 } from "@/lib/api/api-client";
 import {
   clearAccessToken,
   setAccessToken
 } from "@/lib/api/session-token";
 
-let refreshPromise: Promise<AuthData | null> | null = null;
+export type RefreshSessionOutcome =
+  | { kind: "authenticated"; data: AuthData }
+  | { kind: "unauthenticated" }
+  | { kind: "recoverable-error"; error: unknown };
 
 async function authCommand(
   path: string,
@@ -43,12 +44,8 @@ export async function signUp(input: SignUpInput): Promise<AuthData> {
   return authCommand("/api/auth/signup", input);
 }
 
-export async function refreshSession(): Promise<AuthData | null> {
-  if (refreshPromise) {
-    return refreshPromise;
-  }
-
-  refreshPromise = (async () => {
+export async function refreshSession(): Promise<RefreshSessionOutcome> {
+  try {
     const response = await apiRequest(
       "/api/auth/refresh",
       { method: "POST" },
@@ -56,31 +53,18 @@ export async function refreshSession(): Promise<AuthData | null> {
     );
     if (response.status === 401) {
       clearAccessToken();
-      return null;
+      return { kind: "unauthenticated" };
     }
     if (!response.ok) {
       throw await parseApiError(response);
     }
     const parsed = authResponseSchema.parse(await response.json());
     setAccessToken(parsed.data.accessToken);
-    return parsed.data;
-  })().finally(() => {
-    refreshPromise = null;
-  });
-
-  return refreshPromise;
-}
-
-export async function currentUser() {
-  const response = await apiRequest(
-    "/api/auth/me",
-    {},
-    { authenticated: true }
-  );
-  if (!response.ok) {
-    throw await parseApiError(response);
+    return { kind: "authenticated", data: parsed.data };
+  } catch (error: unknown) {
+    clearAccessToken();
+    return { kind: "recoverable-error", error };
   }
-  return currentUserResponseSchema.parse(await response.json()).data.user;
 }
 
 export async function logout(): Promise<void> {
@@ -111,5 +95,3 @@ export function googleLoginUrl(): string {
 
 export const googleOAuthEnabled =
   process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "true";
-
-setRefreshSessionHandler(async () => Boolean(await refreshSession()));

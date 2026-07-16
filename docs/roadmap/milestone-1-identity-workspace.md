@@ -30,6 +30,9 @@ Delivered:
 - safe Google identity linking policy
 - frontend login, signup, Google login entry, protected routing, and auth
   browser E2E coverage
+- explicit frontend auth recovery states, valid-session handling on public auth
+  routes, recoverable Google OAuth completion, and same-origin post-login
+  redirect validation
 
 Deferred account lifecycle work:
 
@@ -64,7 +67,6 @@ Delivered:
 
 Still required:
 
-- consistent frontend auth transitions and same-origin redirect validation
 - legitimate multi-context refresh concurrency without successful-session
   revocation
 - access to and accurate counts for paginated workspace lists
@@ -79,7 +81,7 @@ Feature plan order:
 2. [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
 3. [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
 4. [Frontend Structure Boundaries](feature-plans/completed/frontend-structure-boundaries.md)
-5. [Frontend Auth State and Redirect Safety](feature-plans/planned/frontend-auth-state-and-redirect-safety.md)
+5. [Frontend Auth State and Redirect Safety](feature-plans/completed/frontend-auth-state-and-redirect-safety.md)
 6. [Auth Session Concurrency Hardening](feature-plans/planned/auth-session-concurrency-hardening.md)
 7. [Workspace Pagination and Selection](feature-plans/planned/workspace-pagination-and-selection.md)
 8. [Workspace Authorization Boundary](feature-plans/planned/workspace-authorization-boundary.md)
@@ -108,7 +110,7 @@ Feature plan order:
 - [Workspace Membership and RBAC](feature-plans/completed/workspace-membership-rbac.md)
 - [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
 - [Frontend Structure Boundaries](feature-plans/completed/frontend-structure-boundaries.md)
-- [Frontend Auth State and Redirect Safety](feature-plans/planned/frontend-auth-state-and-redirect-safety.md)
+- [Frontend Auth State and Redirect Safety](feature-plans/completed/frontend-auth-state-and-redirect-safety.md)
 - [Auth Session Concurrency Hardening](feature-plans/planned/auth-session-concurrency-hardening.md)
 - [Workspace Pagination and Selection](feature-plans/planned/workspace-pagination-and-selection.md)
 - [Workspace Authorization Boundary](feature-plans/planned/workspace-authorization-boundary.md)

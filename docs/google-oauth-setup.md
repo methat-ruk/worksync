@@ -52,9 +52,11 @@ values are present.
 http://localhost:3000/?auth=google-success
 ```
 
-The frontend integration is intentionally separate. A future callback page
-will call `POST /api/auth/refresh` with credentials included to obtain the
-access token.
+The frontend callback landing calls `POST /api/auth/refresh` with credentials
+included to obtain the access token. A confirmed session continues to `/app`.
+A temporary refresh failure keeps the callback in a recovery state and lets the
+user retry without restarting Google sign-in; only a confirmed missing session
+is treated as an incomplete sign-in.
 
 Cancellation redirects with `auth=google-cancelled`. Other failures redirect
 with the generic `auth=google-error&code=GOOGLE_LOGIN_FAILED` status. Redirect

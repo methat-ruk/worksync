@@ -131,7 +131,7 @@ code revert is not sufficient.
 
 ## Dependencies
 
-- [Frontend Auth State and Redirect Safety](frontend-auth-state-and-redirect-safety.md)
+- [Frontend Auth State and Redirect Safety](../completed/frontend-auth-state-and-redirect-safety.md)
 - completed auth session lifecycle
 
 ## Follow-up
