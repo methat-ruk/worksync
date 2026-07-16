@@ -82,6 +82,13 @@ read HttpOnly refresh cookie
 Refresh sessions are stored in PostgreSQL. Redis is not the auth-session source
 of truth.
 
+The frontend treats only refresh `401` as proof that the browser session is
+unauthenticated. Network, throttling, other non-`401`, malformed-response, and
+parsing failures enter a recoverable state that hides protected content and
+public auth forms until the user retries. Bootstrap, OAuth completion, and
+automatic authenticated-request recovery share one in-flight frontend refresh
+transition.
+
 ### Logout
 
 ```text
@@ -101,6 +108,8 @@ read refresh cookie
 - Sensitive auth endpoints must expose `429 RATE_LIMITED` when abuse controls
   trigger.
 - Frontend route protection is UX only; backend authorization is authoritative.
+- Post-login navigation accepts only validated same-origin root-relative paths
+  and fails closed to `/app`.
 
 ## Validation
 

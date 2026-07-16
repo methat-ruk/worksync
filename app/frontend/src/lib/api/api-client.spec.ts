@@ -45,7 +45,7 @@ describe("shared API client", () => {
       .fn()
       .mockResolvedValueOnce(jsonResponse({ success: false, message: "Expired" }, 401))
       .mockResolvedValueOnce(jsonResponse({ success: true }));
-    const refreshHandler = vi.fn().mockResolvedValue(true);
+    const refreshHandler = vi.fn().mockResolvedValue({ kind: "refreshed" });
     vi.stubGlobal("fetch", fetchMock);
 
     const { apiRequest, setRefreshSessionHandler } = await import("./api-client");
@@ -67,7 +67,7 @@ describe("shared API client", () => {
       .fn()
       .mockResolvedValueOnce(jsonResponse({ success: false, message: "Expired" }, 401))
       .mockResolvedValueOnce(jsonResponse({ success: false, message: "Expired" }, 401));
-    const refreshHandler = vi.fn().mockResolvedValue(true);
+    const refreshHandler = vi.fn().mockResolvedValue({ kind: "refreshed" });
     vi.stubGlobal("fetch", fetchMock);
 
     const { apiRequest, setRefreshSessionHandler } = await import("./api-client");
@@ -82,6 +82,51 @@ describe("shared API client", () => {
     expect(response.status).toBe(401);
     expect(refreshHandler).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry when refresh confirms the session is unauthenticated", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ success: false, message: "Expired" }, 401));
+    const refreshHandler = vi
+      .fn()
+      .mockResolvedValue({ kind: "unauthenticated" });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { apiRequest, setRefreshSessionHandler } = await import("./api-client");
+    setRefreshSessionHandler(refreshHandler);
+
+    const response = await apiRequest(
+      "/api/workspaces?page=1&pageSize=20",
+      {},
+      { authenticated: true }
+    );
+
+    expect(response.status).toBe(401);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("propagates recoverable refresh failure without retrying", async () => {
+    const refreshError = new Error("Refresh unavailable");
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ success: false, message: "Expired" }, 401));
+    const refreshHandler = vi
+      .fn()
+      .mockResolvedValue({ kind: "recoverable-error", error: refreshError });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { apiRequest, setRefreshSessionHandler } = await import("./api-client");
+    setRefreshSessionHandler(refreshHandler);
+
+    await expect(
+      apiRequest(
+        "/api/workspaces?page=1&pageSize=20",
+        {},
+        { authenticated: true }
+      )
+    ).rejects.toBe(refreshError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("parses non-JSON failures into a safe API error", async () => {
