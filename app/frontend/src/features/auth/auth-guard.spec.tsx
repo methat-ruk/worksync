@@ -83,6 +83,35 @@ describe("auth route guards", () => {
     expect(mocks.replace).not.toHaveBeenCalled();
   });
 
+  it("keeps protected content hidden while session bootstrap is loading", async () => {
+    render(
+      <ProtectedRoute>
+        <div>Protected content</div>
+      </ProtectedRoute>
+    );
+
+    expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Checking your session…"
+    );
+    await waitFor(() => expect(mocks.bootstrapAuth).toHaveBeenCalledTimes(1));
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
+  it("renders protected content only after authentication is known", () => {
+    mocks.auth = { status: "authenticated", user: { id: "user-1" } };
+
+    render(
+      <ProtectedRoute>
+        <div>Protected content</div>
+      </ProtectedRoute>
+    );
+
+    expect(screen.getByText("Protected content")).toBeVisible();
+    expect(mocks.bootstrapAuth).not.toHaveBeenCalled();
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+
   it("redirects protected routes only after unauthenticated is known", async () => {
     mocks.auth = { status: "unauthenticated", user: null };
 
