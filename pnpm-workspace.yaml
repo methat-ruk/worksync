@@ -1,3 +1,19 @@
 packages:
   - "app/*"
   - "packages/*"
+
+overrides:
+  "@hono/node-server": "1.19.13"
+  "js-yaml": "4.2.0"
+  "lodash": "4.18.1"
+  "multer": "2.2.0"
+  "postcss": "8.5.10"
+  "qs": "6.15.2"
+
+allowBuilds:
+  "@prisma/engines@7.8.0": true
+  "@scarf/scarf@1.4.0": false
+  "esbuild@0.27.7": true
+  "prisma@7.8.0": true
+  "sharp@0.34.5": true
+  "unrs-resolver@1.12.2": true
