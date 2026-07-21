@@ -7,6 +7,7 @@ const workspaceRoot = path.resolve(frontendRoot, "..", "..");
 const backendRoot = path.join(workspaceRoot, "app", "backend");
 const nextCli = path.join(frontendRoot, "node_modules", "next", "dist", "bin", "next");
 const nestCli = path.join(backendRoot, "node_modules", "@nestjs", "cli", "bin", "nest.js");
+const backendEntry = path.join(backendRoot, "dist", "main.js");
 const playwrightCli = path.join(
   frontendRoot,
   "node_modules",
@@ -17,6 +18,7 @@ const playwrightCli = path.join(
 const databaseUrl = process.env.TEST_DATABASE_URL;
 const startupTimeoutMs = 120_000;
 const children = [];
+const childFailures = new WeakMap();
 
 if (!databaseUrl) {
   throw new Error("TEST_DATABASE_URL is required for live auth E2E");
@@ -30,9 +32,13 @@ async function isReady(url) {
   }
 }
 
-async function waitFor(url, label) {
+async function waitFor(url, label, child) {
   const deadline = Date.now() + startupTimeoutMs;
   while (Date.now() < deadline) {
+    const failure = child ? childFailures.get(child) : undefined;
+    if (failure) {
+      throw new Error(`${label} ${failure}`);
+    }
     if (await isReady(url)) {
       return;
     }
@@ -57,14 +63,26 @@ function start(command, args, options) {
   const child = spawn(command, args, {
     ...options,
     detached: true,
-    stdio: "ignore"
+    stdio: "inherit"
+  });
+  child.once("error", (error) => {
+    childFailures.set(child, `failed to start: ${error.message}`);
+  });
+  child.once("exit", (code, signal) => {
+    childFailures.set(
+      child,
+      signal
+        ? `exited before becoming ready (signal ${signal})`
+        : `exited before becoming ready (code ${code ?? "unknown"})`
+    );
   });
   child.unref();
   children.push(child);
+  return child;
 }
 
 function stop(child) {
-  if (child.exitCode !== null) {
+  if (!child.pid || child.exitCode !== null) {
     return;
   }
   if (process.platform === "win32") {
@@ -81,7 +99,17 @@ async function main() {
   await waitForBackendPortToBeFree();
   const reuseFrontend = await isReady("http://localhost:3000");
 
-  start(process.execPath, [nestCli, "start"], {
+  const backendBuild = spawnSync(process.execPath, [nestCli, "build"], {
+    cwd: backendRoot,
+    stdio: "inherit"
+  });
+  if (backendBuild.status !== 0) {
+    throw new Error(
+      `Backend build failed (code ${backendBuild.status ?? "unknown"})`
+    );
+  }
+
+  const backend = start(process.execPath, [backendEntry], {
     cwd: backendRoot,
     env: {
       ...process.env,
@@ -104,18 +132,22 @@ async function main() {
       EMAIL_PROVIDER: "disabled"
     }
   });
-  await waitFor("http://localhost:4000/health/live", "Backend");
+  await waitFor("http://localhost:4000/health/live", "Backend", backend);
 
   if (!reuseFrontend) {
-    start(process.execPath, [nextCli, "dev", "--port", "3000"], {
-      cwd: frontendRoot,
-      env: {
-        ...process.env,
-        NEXT_PUBLIC_API_BASE_URL: "http://localhost:4000",
-        NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
+    const frontend = start(
+      process.execPath,
+      [nextCli, "dev", "--port", "3000"],
+      {
+        cwd: frontendRoot,
+        env: {
+          ...process.env,
+          NEXT_PUBLIC_API_BASE_URL: "http://localhost:4000",
+          NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
+        }
       }
-    });
-    await waitFor("http://localhost:3000", "Frontend");
+    );
+    await waitFor("http://localhost:3000", "Frontend", frontend);
   }
 
   const result = spawnSync(
