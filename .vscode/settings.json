@@ -1,0 +1,16 @@
+{
+  "eslint.workingDirectories": [
+    {
+      "directory": "./app/frontend",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "./app/backend",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "./packages/auth-policy",
+      "changeProcessCWD": true
+    }
+  ]
+}
