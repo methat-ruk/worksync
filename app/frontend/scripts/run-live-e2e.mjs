@@ -8,6 +8,13 @@ const backendRoot = path.join(workspaceRoot, "app", "backend");
 const nextCli = path.join(frontendRoot, "node_modules", "next", "dist", "bin", "next");
 const nestCli = path.join(backendRoot, "node_modules", "@nestjs", "cli", "bin", "nest.js");
 const backendEntry = path.join(backendRoot, "dist", "main.js");
+const prismaCli = path.join(
+  backendRoot,
+  "node_modules",
+  "prisma",
+  "build",
+  "index.js"
+);
 const playwrightCli = path.join(
   frontendRoot,
   "node_modules",
@@ -81,6 +88,19 @@ function start(command, args, options) {
   return child;
 }
 
+function runOrThrow(label, command, args, options) {
+  const result = spawnSync(command, args, {
+    ...options,
+    stdio: "inherit"
+  });
+  if (result.error) {
+    throw new Error(`${label} failed to start: ${result.error.message}`);
+  }
+  if (result.status !== 0) {
+    throw new Error(`${label} failed (code ${result.status ?? "unknown"})`);
+  }
+}
+
 function stop(child) {
   if (!child.pid || child.exitCode !== null) {
     return;
@@ -99,15 +119,21 @@ async function main() {
   await waitForBackendPortToBeFree();
   const reuseFrontend = await isReady("http://localhost:3000");
 
-  const backendBuild = spawnSync(process.execPath, [nestCli, "build"], {
-    cwd: backendRoot,
-    stdio: "inherit"
+  runOrThrow(
+    "Prisma client generation",
+    process.execPath,
+    [prismaCli, "generate"],
+    {
+      cwd: backendRoot,
+      env: {
+        ...process.env,
+        DATABASE_URL: databaseUrl
+      }
+    }
+  );
+  runOrThrow("Backend build", process.execPath, [nestCli, "build"], {
+    cwd: backendRoot
   });
-  if (backendBuild.status !== 0) {
-    throw new Error(
-      `Backend build failed (code ${backendBuild.status ?? "unknown"})`
-    );
-  }
 
   const backend = start(process.execPath, [backendEntry], {
     cwd: backendRoot,
