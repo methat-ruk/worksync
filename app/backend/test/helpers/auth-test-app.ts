@@ -189,6 +189,7 @@ export async function createAuthTestApp(
             id?: string;
             userId?: string;
             refreshTokenHash?: string;
+            lastUsedAt?: Date;
             revokedAt?: null;
             expiresAt?: { gt: Date };
           };
@@ -201,6 +202,8 @@ export async function createAuthTestApp(
               (where.userId && session.userId !== where.userId) ||
               (where.refreshTokenHash &&
                 session.refreshTokenHash !== where.refreshTokenHash) ||
+              (where.lastUsedAt &&
+                session.lastUsedAt.getTime() !== where.lastUsedAt.getTime()) ||
               (where.revokedAt === null && session.revokedAt !== null) ||
               (where.expiresAt && session.expiresAt <= where.expiresAt.gt)
             ) {

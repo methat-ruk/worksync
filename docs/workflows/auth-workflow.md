@@ -75,7 +75,8 @@ identity is keyed by provider subject, not email.
 read HttpOnly refresh cookie
 -> verify session and token hash
 -> rotate refresh token
--> revoke unsafe reuse when detected
+-> return retryable 409 for a rotation conflict within 5 seconds
+-> conditionally revoke unsafe reuse outside the grace window
 -> return a new access token
 ```
 
@@ -88,6 +89,17 @@ parsing failures enter a recoverable state that hides protected content and
 public auth forms until the user retries. Bootstrap, OAuth completion, and
 automatic authenticated-request recovery share one in-flight frontend refresh
 transition.
+
+Refresh, logout, and logout-all share the exclusive
+`worksync-auth-session` Web Lock across same-origin tabs when the API exists.
+The frontend holds the lock across up to two exact
+`409 REFRESH_CONCURRENCY_CONFLICT` retries, honoring a clamped
+`Retry-After` delay. Only refresh `401` proves the session is unauthenticated;
+an exhausted conflict remains recoverable. Successful logout and definitive
+refresh `401` outcomes broadcast only `{ "type": "session-invalidated" }` so
+other tabs clear memory-only access state without rebroadcasting. Browsers
+without Web Locks or BroadcastChannel rely on the backend state machine and
+their next authoritative request.
 
 ### Logout
 
@@ -137,7 +149,8 @@ Frontend evidence should cover:
 
 - Client-facing login errors leak whether a user exists.
 - Provider-only users accidentally pass through password login logic.
-- Refresh token replay does not revoke the affected session family.
+- A concurrent refresh loser revokes the newer winning rotation.
+- Replay revocation uses stale observations and can revoke a newer rotation.
 - OAuth redirect URL includes sensitive provider data or tokens.
 - Rate limit behavior exists in code but is undocumented in Swagger/contracts.
 - Frontend stores tokens in URLs, logs, or durable state without an explicit

@@ -52,7 +52,8 @@ export function configureApplication(app: INestApplication): void {
   });
   app.enableCors({
     origin: config.get("CORS_ORIGIN", { infer: true }),
-    credentials: true
+    credentials: true,
+    exposedHeaders: ["Retry-After"]
   });
 
   app.use((request: RequestWithId, response: Response, next: NextFunction) => {

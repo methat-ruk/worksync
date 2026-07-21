@@ -1,12 +1,20 @@
 import { randomUUID } from "node:crypto";
 
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { PinoLogger } from "nestjs-pino";
 
 import { API_ERROR_CODE } from "../../common/errors/api-error-code";
 import type { Environment } from "../../config/environment";
 import { PrismaService } from "../../database/prisma.service";
 import type { Prisma } from "../../generated/prisma/client";
+import { CorrelationContextService } from "../../observability/correlation-context.service";
 import type { AuthDataDto } from "../dto/auth.dto";
 import type { PublicUser } from "../types/auth.types";
 import {
@@ -25,6 +33,35 @@ const SESSION_USER_SELECT = {
   createdAt: true,
   updatedAt: true
 } satisfies Prisma.UserSelect;
+
+export const REFRESH_CONCURRENCY_GRACE_MS = 5_000;
+
+export type RefreshReuseClassification =
+  | "CONCURRENCY_CONFLICT"
+  | "REPLAY"
+  | "UNCLASSIFIABLE";
+
+export function classifyRefreshReuse(
+  lastUsedAt: Date,
+  now: Date
+): RefreshReuseClassification {
+  const elapsedMs = now.getTime() - lastUsedAt.getTime();
+  if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
+    return "UNCLASSIFIABLE";
+  }
+  return elapsedMs <= REFRESH_CONCURRENCY_GRACE_MS
+    ? "CONCURRENCY_CONFLICT"
+    : "REPLAY";
+}
+
+type ObservedSession = {
+  id: string;
+  userId: string;
+  refreshTokenHash: string;
+  expiresAt: Date;
+  lastUsedAt: Date;
+  revokedAt: Date | null;
+};
 
 export type SessionAuthentication = {
   data: AuthDataDto;
@@ -51,8 +88,12 @@ export class SessionService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService<Environment, true>,
     private readonly accessTokens: AccessTokenService,
-    private readonly refreshTokens: RefreshTokenService
-  ) {}
+    private readonly refreshTokens: RefreshTokenService,
+    private readonly logger: PinoLogger,
+    private readonly correlationContext: CorrelationContextService
+  ) {
+    this.logger.setContext(SessionService.name);
+  }
 
   async create(
     user: PublicUser,
@@ -96,6 +137,7 @@ export class SessionService {
         userId: true,
         refreshTokenHash: true,
         expiresAt: true,
+        lastUsedAt: true,
         revokedAt: true,
         user: { select: SESSION_USER_SELECT }
       }
@@ -112,8 +154,7 @@ export class SessionService {
     }
 
     if (!this.refreshTokens.matches(refreshToken, session.refreshTokenHash)) {
-      await this.revokeSession(session.id);
-      throw this.invalidRefreshToken();
+      await this.rejectStaleRefresh(session, now, "HASH_MISMATCH");
     }
 
     const nextRefresh = await this.refreshTokens.issue(
@@ -142,8 +183,16 @@ export class SessionService {
     });
 
     if (updated.count !== 1) {
-      await this.revokeSession(session.id);
-      throw this.invalidRefreshToken();
+      const current = await this.readObservedSession(session.id);
+      if (
+        !current ||
+        current.userId !== session.userId ||
+        current.revokedAt ||
+        current.expiresAt <= now
+      ) {
+        throw this.invalidRefreshToken();
+      }
+      await this.rejectStaleRefresh(current, new Date(), "CAS_LOST");
     }
 
     return this.authentication(session.user, nextAccess, nextRefresh);
@@ -183,11 +232,114 @@ export class SessionService {
     return session?.user ?? null;
   }
 
-  private async revokeSession(sessionId: string): Promise<void> {
-    await this.prisma.authSession.updateMany({
-      where: { id: sessionId, revokedAt: null },
-      data: { revokedAt: new Date() }
+  private async readObservedSession(
+    sessionId: string
+  ): Promise<ObservedSession | null> {
+    return this.prisma.authSession.findUnique({
+      where: { id: sessionId },
+      select: {
+        id: true,
+        userId: true,
+        refreshTokenHash: true,
+        expiresAt: true,
+        lastUsedAt: true,
+        revokedAt: true
+      }
     });
+  }
+
+  private async rejectStaleRefresh(
+    observed: ObservedSession,
+    now: Date,
+    source: "HASH_MISMATCH" | "CAS_LOST",
+    retry = true
+  ): Promise<never> {
+    const classification = classifyRefreshReuse(observed.lastUsedAt, now);
+    if (classification === "CONCURRENCY_CONFLICT") {
+      this.logRefreshEvent(
+        "info",
+        "refresh_concurrency_conflict",
+        `${source}_WITHIN_GRACE`,
+        "Session refresh concurrency conflict"
+      );
+      throw new HttpException(
+        {
+          message: "Session refresh conflicted; retry shortly",
+          code: API_ERROR_CODE.REFRESH_CONCURRENCY_CONFLICT,
+          retryAfterSeconds: 1
+        },
+        HttpStatus.CONFLICT
+      );
+    }
+
+    if (classification === "UNCLASSIFIABLE") {
+      this.throwUnclassifiableRefresh(`${source}_CLOCK_STATE`);
+    }
+
+    const revoked = await this.prisma.authSession.updateMany({
+      where: {
+        id: observed.id,
+        userId: observed.userId,
+        refreshTokenHash: observed.refreshTokenHash,
+        lastUsedAt: observed.lastUsedAt,
+        revokedAt: null,
+        expiresAt: { gt: now }
+      },
+      data: { revokedAt: now }
+    });
+    if (revoked.count === 1) {
+      this.logRefreshEvent(
+        "warn",
+        "refresh_replay_revoked",
+        `${source}_OUTSIDE_GRACE`,
+        "Refresh token replay revoked session"
+      );
+      throw this.invalidRefreshToken();
+    }
+
+    const current = await this.readObservedSession(observed.id);
+    if (
+      !current ||
+      current.userId !== observed.userId ||
+      current.revokedAt ||
+      current.expiresAt <= now
+    ) {
+      throw this.invalidRefreshToken();
+    }
+    if (retry) {
+      return this.rejectStaleRefresh(current, new Date(), source, false);
+    }
+    this.throwUnclassifiableRefresh(`${source}_STATE_CHANGED_REPEATEDLY`);
+  }
+
+  private throwUnclassifiableRefresh(reasonCode: string): never {
+    this.logRefreshEvent(
+      "warn",
+      "refresh_classification_unexpected",
+      reasonCode,
+      "Refresh state could not be classified safely"
+    );
+    throw new ServiceUnavailableException({
+      message: "Authentication is temporarily unavailable",
+      code: API_ERROR_CODE.SERVICE_NOT_READY
+    });
+  }
+
+  private logRefreshEvent(
+    level: "info" | "warn",
+    event: string,
+    reasonCode: string,
+    message: string
+  ): void {
+    this.logger[level](
+      {
+        logType: "business_event",
+        event,
+        reasonCode,
+        correlationId: this.correlationContext.getCorrelationId()
+      },
+      message
+    );
   }
 
   private authentication(

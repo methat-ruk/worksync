@@ -82,7 +82,7 @@ Feature plan order:
 3. [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
 4. [Frontend Structure Boundaries](feature-plans/completed/frontend-structure-boundaries.md)
 5. [Frontend Auth State and Redirect Safety](feature-plans/completed/frontend-auth-state-and-redirect-safety.md)
-6. [Auth Session Concurrency Hardening](feature-plans/planned/auth-session-concurrency-hardening.md)
+6. [Auth Session Concurrency Hardening](feature-plans/completed/auth-session-concurrency-hardening.md)
 7. [Workspace Pagination and Selection](feature-plans/planned/workspace-pagination-and-selection.md)
 8. [Workspace Authorization Boundary](feature-plans/planned/workspace-authorization-boundary.md)
 
@@ -111,6 +111,6 @@ Feature plan order:
 - [Workspace Frontend Bootstrap](feature-plans/completed/workspace-frontend-bootstrap.md)
 - [Frontend Structure Boundaries](feature-plans/completed/frontend-structure-boundaries.md)
 - [Frontend Auth State and Redirect Safety](feature-plans/completed/frontend-auth-state-and-redirect-safety.md)
-- [Auth Session Concurrency Hardening](feature-plans/planned/auth-session-concurrency-hardening.md)
+- [Auth Session Concurrency Hardening](feature-plans/completed/auth-session-concurrency-hardening.md)
 - [Workspace Pagination and Selection](feature-plans/planned/workspace-pagination-and-selection.md)
 - [Workspace Authorization Boundary](feature-plans/planned/workspace-authorization-boundary.md)

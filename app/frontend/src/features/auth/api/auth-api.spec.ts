@@ -19,6 +19,7 @@ const authBody = {
 
 describe("auth API client", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.resetModules();
   });
@@ -103,5 +104,112 @@ describe("auth API client", () => {
 
     expect((await refreshSession()).kind).toBe("recoverable-error");
     expect((await refreshSession()).kind).toBe("recoverable-error");
+  });
+
+  it("retries only the exact refresh conflict and preserves the token between attempts", async () => {
+    vi.useFakeTimers();
+    const conflict = () =>
+      new Response(
+        JSON.stringify({
+          success: false,
+          message: "Session refresh conflicted; retry shortly",
+          data: { code: "REFRESH_CONCURRENCY_CONFLICT" }
+        }),
+        {
+          status: 409,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": "8"
+          }
+        }
+      );
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(conflict())
+      .mockResolvedValueOnce(conflict())
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(authBody), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        })
+      );
+    vi.stubGlobal("fetch", fetchMock);
+    const { setAccessToken, getAccessToken } = await import(
+      "@/lib/api/session-token"
+    );
+    const { refreshSession } = await import("./auth-api");
+    setAccessToken("current-access-token");
+
+    const result = refreshSession();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(getAccessToken()).toBe("current-access-token");
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    await expect(result).resolves.toMatchObject({ kind: "authenticated" });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(getAccessToken()).toBe("access-token");
+  });
+
+  it("clears the token after bounded conflict retry exhaustion", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            success: false,
+            message: "Session refresh conflicted; retry shortly",
+            data: { code: "REFRESH_CONCURRENCY_CONFLICT" }
+          }),
+          {
+            status: 409,
+            headers: { "Content-Type": "application/json" }
+          }
+        )
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { setAccessToken, getAccessToken } = await import(
+      "@/lib/api/session-token"
+    );
+    const { refreshSession } = await import("./auth-api");
+    setAccessToken("current-access-token");
+
+    const result = refreshSession();
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    await expect(result).resolves.toMatchObject({ kind: "recoverable-error" });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(getAccessToken()).toBeNull();
+  });
+
+  it("does not retry a different 409 error code", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: false,
+          message: "Conflict",
+          data: { code: "RESOURCE_CONFLICT" }
+        }),
+        { status: 409, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { refreshSession } = await import("./auth-api");
+
+    await expect(refreshSession()).resolves.toMatchObject({
+      kind: "recoverable-error"
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [null, 1_000],
+    ["invalid", 1_000],
+    ["0", 0],
+    ["1", 1_000],
+    ["30", 1_000]
+  ])("bounds Retry-After %s to %i ms", async (header, expected) => {
+    const { refreshConflictDelayMs } = await import("./auth-api");
+    expect(refreshConflictDelayMs(header)).toBe(expected);
   });
 });

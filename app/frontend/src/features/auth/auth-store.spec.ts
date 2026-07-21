@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
@@ -28,6 +28,7 @@ vi.mock("@/lib/api/api-client", () => ({
 import {
   bootstrapAuth,
   getAuthSnapshot,
+  logoutAll,
   resetAuthStoreForTests,
   subscribe
 } from "./auth-store";
@@ -52,6 +53,10 @@ beforeEach(() => {
   mocks.refreshSession.mockReset();
   mocks.signUp.mockReset();
   resetAuthStoreForTests();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("auth store refresh transitions", () => {
@@ -115,6 +120,20 @@ describe("auth store refresh transitions", () => {
     expect(mocks.refreshSession).toHaveBeenCalledTimes(2);
   });
 
+  it("enters recoverable state without sending refresh when lock acquisition rejects", async () => {
+    vi.stubGlobal("navigator", {
+      locks: {
+        request: vi.fn().mockRejectedValue(new Error("lock unavailable"))
+      }
+    });
+
+    await expect(bootstrapAuth()).resolves.toEqual({
+      status: "recoverable-error",
+      user: null
+    });
+    expect(mocks.refreshSession).not.toHaveBeenCalled();
+  });
+
   it("uses the same transition for simultaneous shared API refresh callbacks", async () => {
     const handler = mocks.refreshSessionHandler;
     expect(handler).toBeTypeOf("function");
@@ -142,6 +161,25 @@ describe("auth store refresh transitions", () => {
     expect(getAuthSnapshot()).toEqual({
       status: "authenticated",
       user: authData.user
+    });
+  });
+
+  it("refreshes an expired access token inside the logout-all lock", async () => {
+    mocks.logoutAll
+      .mockRejectedValueOnce({ status: 401 })
+      .mockResolvedValueOnce(undefined);
+    mocks.refreshSession.mockResolvedValue({
+      kind: "authenticated",
+      data: authData
+    });
+
+    await logoutAll();
+
+    expect(mocks.refreshSession).toHaveBeenCalledTimes(1);
+    expect(mocks.logoutAll).toHaveBeenCalledTimes(2);
+    expect(getAuthSnapshot()).toEqual({
+      status: "unauthenticated",
+      user: null
     });
   });
 });

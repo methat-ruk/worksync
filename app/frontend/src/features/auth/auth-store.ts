@@ -16,6 +16,12 @@ import {
   type RefreshSessionHandlerOutcome
 } from "@/lib/api/api-client";
 import { clearAccessToken } from "@/lib/api/session-token";
+import {
+  publishSessionInvalidated,
+  resetAuthSessionCoordinatorForTests,
+  runAuthSessionOperation,
+  setSessionInvalidationHandler
+} from "./auth-session-coordinator";
 
 export type AuthSnapshot =
   | { status: "loading"; user: null }
@@ -47,6 +53,7 @@ function applyRefreshOutcome(outcome: RefreshSessionOutcome): AuthSnapshot {
     case "authenticated":
       return authenticated(outcome.data);
     case "unauthenticated":
+      publishSessionInvalidated();
       return publish({ status: "unauthenticated", user: null });
     case "recoverable-error":
       return publish({ status: "recoverable-error", user: null });
@@ -55,7 +62,13 @@ function applyRefreshOutcome(outcome: RefreshSessionOutcome): AuthSnapshot {
 
 function runRefreshTransition(): Promise<RefreshTransition> {
   if (!refreshTransitionPromise) {
-    refreshTransitionPromise = refreshSession()
+    refreshTransitionPromise = runAuthSessionOperation(refreshSession)
+      .catch(
+        (error: unknown): RefreshSessionOutcome => ({
+          kind: "recoverable-error",
+          error
+        })
+      )
       .then((outcome) => ({
         outcome,
         snapshot: applyRefreshOutcome(outcome)
@@ -114,13 +127,38 @@ export async function refreshAuth(): Promise<AuthSnapshot> {
 }
 
 export async function logout(): Promise<void> {
-  await logoutRequest();
+  await runAuthSessionOperation(logoutRequest);
   publish({ status: "unauthenticated", user: null });
+  publishSessionInvalidated();
 }
 
 export async function logoutAll(): Promise<void> {
-  await logoutAllRequest();
+  await runAuthSessionOperation(async () => {
+    try {
+      await logoutAllRequest();
+    } catch (error: unknown) {
+      if (
+        typeof error !== "object" ||
+        error === null ||
+        !("status" in error) ||
+        error.status !== 401
+      ) {
+        throw error;
+      }
+      const outcome = await refreshSession();
+      applyRefreshOutcome(outcome);
+      if (outcome.kind === "authenticated") {
+        await logoutAllRequest();
+        return;
+      }
+      if (outcome.kind === "recoverable-error") {
+        throw outcome.error;
+      }
+      throw error;
+    }
+  });
   publish({ status: "unauthenticated", user: null });
+  publishSessionInvalidated();
 }
 
 export function clearAuth(): void {
@@ -137,7 +175,16 @@ export function resetAuthStoreForTests(): void {
   refreshTransitionPromise = null;
   snapshot = { status: "loading", user: null };
   listeners.clear();
+  resetAuthSessionCoordinatorForTests();
+  setSessionInvalidationHandler(handleSessionInvalidated);
 }
+
+function handleSessionInvalidated(): void {
+  clearAccessToken();
+  publish({ status: "unauthenticated", user: null });
+}
+
+setSessionInvalidationHandler(handleSessionInvalidated);
 
 setRefreshSessionHandler(async (): Promise<RefreshSessionHandlerOutcome> => {
   const { outcome } = await runRefreshTransition();

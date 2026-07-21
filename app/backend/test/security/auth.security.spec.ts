@@ -221,7 +221,7 @@ describe("authentication security controls", () => {
     expect(response.body.data.code).toBe("INVALID_ACCESS_TOKEN");
   });
 
-  it("rejects refresh-token reuse and revokes that session family", async () => {
+  it("separates recent refresh conflict from stale-token replay", async () => {
     const signup = await request(app.getHttpServer())
       .post("/api/auth/signup")
       .send({
@@ -231,6 +231,9 @@ describe("authentication security controls", () => {
       })
       .expect(201);
     const originalCookie = refreshCookie(signup);
+    const rotationSessionId = new JwtService().decode(
+      signup.body.data.accessToken as string
+    ).sid as string;
     const rotated = await request(app.getHttpServer())
       .post("/api/auth/refresh")
       .set("cookie", originalCookie)
@@ -239,8 +242,26 @@ describe("authentication security controls", () => {
     const reuse = await request(app.getHttpServer())
       .post("/api/auth/refresh")
       .set("cookie", originalCookie)
+      .expect(409);
+    expect(reuse.body.data.code).toBe("REFRESH_CONCURRENCY_CONFLICT");
+    expect(reuse.headers["retry-after"]).toBe("1");
+    expect(reuse.headers["set-cookie"]).toBeUndefined();
+
+    await request(app.getHttpServer())
+      .get("/api/auth/me")
+      .set("authorization", `Bearer ${rotated.body.data.accessToken as string}`)
+      .expect(200);
+
+    const session = context.sessions.get(rotationSessionId)!;
+    context.sessions.set(rotationSessionId, {
+      ...session,
+      lastUsedAt: new Date(Date.now() - 10_000)
+    });
+    const replay = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", originalCookie)
       .expect(401);
-    expect(reuse.body.data.code).toBe("INVALID_REFRESH_TOKEN");
+    expect(replay.body.data.code).toBe("INVALID_REFRESH_TOKEN");
 
     await request(app.getHttpServer())
       .get("/api/auth/me")

@@ -54,7 +54,16 @@ Required controls:
 - store only refresh-token hashes and deliver refresh tokens through a scoped HttpOnly cookie
 - rotate refresh tokens after every successful refresh
 - invalidate the current session immediately on logout and all sessions on logout-all
+- reject refresh-token reuse within the fixed 5-second rotation grace window
+  without issuing credentials or revoking the winning rotation
 - revoke the affected session family when refresh-token reuse is detected
+  outside that grace window, using a conditional update that cannot revoke a
+  newer rotation observed afterward
+- serialize same-origin browser refresh, logout, and logout-all operations with
+  Web Locks when available, while retaining server-side race protection
+- propagate only credential-free session invalidation events through
+  BroadcastChannel; never use browser storage as a credential or coordination
+  fallback
 - enforce an absolute session lifetime rather than extending it on refresh
 - validate browser request origins for cookie-authenticated auth commands
 - rate-limit sensitive authentication endpoints using safe, hashed limiter keys

@@ -47,6 +47,6 @@ Status: Done
 
 ## Known Follow-up
 
-- [Auth Session Concurrency Hardening](../planned/auth-session-concurrency-hardening.md)
+- [Auth Session Concurrency Hardening](auth-session-concurrency-hardening.md)
   owns cross-tab refresh coordination, backend rotation concurrency, and
   refresh-versus-logout race policy

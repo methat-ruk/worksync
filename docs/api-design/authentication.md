@@ -36,10 +36,23 @@ login attempts return the same public failure.
 
 Refresh tokens are one-time-use JWTs stored only in a scoped HttpOnly cookie.
 Their hashes and session lifecycle state are persisted in PostgreSQL. Rotation
-retains the original absolute session expiry, token reuse revokes that session,
-and logout invalidates access tokens for the revoked session immediately.
-Browser auth requests with an `Origin` header must match the configured CORS
-origin.
+retains the original absolute session expiry. Reuse within 5 seconds of a
+successful rotation returns `409 REFRESH_CONCURRENCY_CONFLICT` with
+`Retry-After: 1`, issues no credentials, and does not revoke the winning
+rotation. Reuse after that fixed grace window revokes the affected session.
+An active state that cannot be classified safely returns recoverable
+`503 SERVICE_NOT_READY` without issuing credentials or revoking the session.
+Logout invalidates access tokens for the revoked session immediately. Browser
+auth requests with an `Origin` header must match the configured CORS origin;
+CORS exposes `Retry-After` so the frontend can honor the conflict contract.
+
+The browser serializes refresh, logout, and logout-all across same-origin tabs
+with the Web Locks API when available. It retries only the exact refresh
+conflict contract, at most twice with no more than two seconds of total delay.
+Successful logout and definitive refresh `401` outcomes publish a
+credential-free `session-invalidated` BroadcastChannel event. Access tokens
+remain memory-only, and browsers without these APIs rely on the server contract
+and the next authoritative request rather than persistent-storage fallbacks.
 
 ## Rate Limits and Public Errors
 

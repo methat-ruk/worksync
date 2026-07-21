@@ -122,6 +122,54 @@ describe("authentication API contract", () => {
     });
   });
 
+  it("returns the retryable refresh conflict contract without credentials", async () => {
+    const signup = await request(app.getHttpServer())
+      .post("/api/auth/signup")
+      .send({
+        displayName: "Refresh Contract",
+        email: "refresh-contract@example.com",
+        password: "correct horse battery staple"
+      })
+      .expect(201);
+    const cookie = getRefreshCookie(signup);
+    await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", cookie)
+      .expect(200);
+
+    const conflict = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("origin", "http://localhost:3000")
+      .set("cookie", cookie)
+      .expect(409);
+
+    expect(conflict.body).toMatchObject({
+      success: false,
+      message: "Session refresh conflicted; retry shortly",
+      data: { code: "REFRESH_CONCURRENCY_CONFLICT" }
+    });
+    expect(conflict.headers["retry-after"]).toBe("1");
+    expect(conflict.headers["access-control-expose-headers"]).toBe("Retry-After");
+    expect(conflict.headers["set-cookie"]).toBeUndefined();
+    expect(conflict.body).not.toHaveProperty("data.accessToken");
+
+    const sessionId = [...context.sessions.keys()].find((id) => {
+      const session = context.sessions.get(id);
+      return session?.userId === signup.body.data.user.id;
+    })!;
+    const session = context.sessions.get(sessionId)!;
+    context.sessions.set(sessionId, {
+      ...session,
+      lastUsedAt: new Date(Date.now() + 1_000)
+    });
+    const unavailable = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", cookie)
+      .expect(503);
+    expect(unavailable.body.data.code).toBe("SERVICE_NOT_READY");
+    expect(unavailable.headers["set-cookie"]).toBeUndefined();
+  });
+
   it.each([
     ["too short", "too short"],
     ["leading whitespace", " correct horse battery staple"],
@@ -411,8 +459,17 @@ describe("authentication API contract", () => {
           })
         }),
         "401": expect.any(Object),
+        "409": expect.any(Object),
         "429": expect.any(Object),
-        "403": expect.any(Object)
+        "403": expect.any(Object),
+        "503": expect.any(Object)
+      }
+    });
+    expect(
+      document.paths["/api/auth/refresh"]?.post?.responses?.["409"]
+    ).toMatchObject({
+      headers: {
+        "Retry-After": expect.any(Object)
       }
     });
     expect(document.paths["/api/auth/logout"]?.post?.responses).toMatchObject({
@@ -459,6 +516,7 @@ describe("authentication API contract", () => {
         "INVALID_ACCESS_TOKEN",
         "INVALID_CREDENTIALS",
         "RATE_LIMITED",
+        "REFRESH_CONCURRENCY_CONFLICT",
         "VALIDATION_ERROR"
       ])
     });
