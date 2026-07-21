@@ -17,6 +17,7 @@ import { createGoogleOAuthTestHarness } from "../helpers/google-oauth-test-harne
 const describeWithDatabase = process.env.TEST_DATABASE_URL
   ? describe
   : describe.skip;
+const CONCURRENCY_STRESS_TEST_TIMEOUT_MS = 30_000;
 
 function refreshCookie(response: request.Response): string {
   const header = response.headers["set-cookie"];
@@ -269,7 +270,7 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
         )
         .expect(200);
     }
-  });
+  }, CONCURRENCY_STRESS_TEST_TIMEOUT_MS);
 
   it("does not revoke a newer rotation from a stale replay observation", async () => {
     const signup = await request(app.getHttpServer())
