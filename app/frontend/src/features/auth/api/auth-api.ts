@@ -1,5 +1,6 @@
 import {
   authResponseSchema,
+  currentUserResponseSchema,
   messageResponseSchema,
   type AuthData,
   type LoginInput,
@@ -19,6 +20,11 @@ import {
 export type RefreshSessionOutcome =
   | { kind: "authenticated"; data: AuthData }
   | { kind: "unauthenticated" }
+  | { kind: "recoverable-error"; error: unknown };
+
+export type CurrentSessionValidationOutcome =
+  | { kind: "active" }
+  | { kind: "inactive" }
   | { kind: "recoverable-error"; error: unknown };
 
 const REFRESH_CONFLICT_MAX_RETRIES = 2;
@@ -96,6 +102,26 @@ export async function refreshSession(): Promise<RefreshSessionOutcome> {
     }
   } catch (error: unknown) {
     clearAccessToken();
+    return { kind: "recoverable-error", error };
+  }
+}
+
+export async function validateCurrentSession(): Promise<CurrentSessionValidationOutcome> {
+  try {
+    const response = await apiRequest(
+      "/api/auth/me",
+      { method: "GET" },
+      { authenticated: true, retryAfterRefresh: false }
+    );
+    if (response.status === 401) {
+      return { kind: "inactive" };
+    }
+    if (!response.ok) {
+      throw await parseApiError(response);
+    }
+    currentUserResponseSchema.parse(await response.json());
+    return { kind: "active" };
+  } catch (error: unknown) {
     return { kind: "recoverable-error", error };
   }
 }

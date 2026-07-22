@@ -2,6 +2,7 @@
 
 const AUTH_SESSION_COORDINATOR_NAME = "worksync-auth-session";
 const SESSION_INVALIDATED_MESSAGE = { type: "session-invalidated" } as const;
+export const AUTH_SESSION_LOCK_WAIT_TIMEOUT_MS = 10_000;
 
 let channel: BroadcastChannel | null | undefined;
 let invalidationHandler: (() => void) | null = null;
@@ -42,13 +43,28 @@ export function runAuthSessionOperation<T>(
   if (typeof navigator === "undefined" || !navigator.locks) {
     return operation();
   }
+
+  const abortController = new AbortController();
+  const timeout = globalThis.setTimeout(() => {
+    abortController.abort(
+      new DOMException(
+        "Auth session lock acquisition timed out",
+        "TimeoutError"
+      )
+    );
+  }, AUTH_SESSION_LOCK_WAIT_TIMEOUT_MS);
+
   return navigator.locks
     .request<Promise<T>>(
       AUTH_SESSION_COORDINATOR_NAME,
-      { mode: "exclusive" },
-      operation
+      { mode: "exclusive", signal: abortController.signal },
+      () => {
+        globalThis.clearTimeout(timeout);
+        return operation();
+      }
     )
-    .then((result) => result);
+    .then((result) => result)
+    .finally(() => globalThis.clearTimeout(timeout));
 }
 
 export function publishSessionInvalidated(): void {

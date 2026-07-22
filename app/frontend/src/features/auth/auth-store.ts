@@ -9,13 +9,14 @@ import {
   logoutAll as logoutAllRequest,
   refreshSession,
   signUp as signUpRequest,
+  validateCurrentSession,
   type RefreshSessionOutcome
 } from "./api/auth-api";
 import {
   setRefreshSessionHandler,
   type RefreshSessionHandlerOutcome
 } from "@/lib/api/api-client";
-import { clearAccessToken } from "@/lib/api/session-token";
+import { clearAccessToken, getAccessToken } from "@/lib/api/session-token";
 import {
   publishSessionInvalidated,
   resetAuthSessionCoordinatorForTests,
@@ -36,6 +37,9 @@ type RefreshTransition = {
 
 let snapshot: AuthSnapshot = { status: "loading", user: null };
 let refreshTransitionPromise: Promise<RefreshTransition> | null = null;
+let invalidationTransitionPromise: Promise<void> | null = null;
+let pendingSessionInvalidation = false;
+let authGeneration = 0;
 const listeners = new Set<() => void>();
 
 function publish(next: AuthSnapshot): AuthSnapshot {
@@ -45,6 +49,7 @@ function publish(next: AuthSnapshot): AuthSnapshot {
 }
 
 function authenticated(data: AuthData): AuthSnapshot {
+  authGeneration += 1;
   return publish({ status: "authenticated", user: data.user });
 }
 
@@ -54,8 +59,10 @@ function applyRefreshOutcome(outcome: RefreshSessionOutcome): AuthSnapshot {
       return authenticated(outcome.data);
     case "unauthenticated":
       publishSessionInvalidated();
+      authGeneration += 1;
       return publish({ status: "unauthenticated", user: null });
     case "recoverable-error":
+      authGeneration += 1;
       return publish({ status: "recoverable-error", user: null });
   }
 }
@@ -128,6 +135,7 @@ export async function refreshAuth(): Promise<AuthSnapshot> {
 
 export async function logout(): Promise<void> {
   await runAuthSessionOperation(logoutRequest);
+  authGeneration += 1;
   publish({ status: "unauthenticated", user: null });
   publishSessionInvalidated();
 }
@@ -157,12 +165,14 @@ export async function logoutAll(): Promise<void> {
       throw error;
     }
   });
+  authGeneration += 1;
   publish({ status: "unauthenticated", user: null });
   publishSessionInvalidated();
 }
 
 export function clearAuth(): void {
   clearAccessToken();
+  authGeneration += 1;
   publish({ status: "unauthenticated", user: null });
 }
 
@@ -173,6 +183,9 @@ export function useAuth(): AuthSnapshot {
 export function resetAuthStoreForTests(): void {
   clearAccessToken();
   refreshTransitionPromise = null;
+  invalidationTransitionPromise = null;
+  pendingSessionInvalidation = false;
+  authGeneration = 0;
   snapshot = { status: "loading", user: null };
   listeners.clear();
   resetAuthSessionCoordinatorForTests();
@@ -180,8 +193,52 @@ export function resetAuthStoreForTests(): void {
 }
 
 function handleSessionInvalidated(): void {
+  if (invalidationTransitionPromise) {
+    pendingSessionInvalidation = true;
+    return;
+  }
+
+  invalidationTransitionPromise = reconcileSessionInvalidation().finally(() => {
+    invalidationTransitionPromise = null;
+    if (pendingSessionInvalidation) {
+      pendingSessionInvalidation = false;
+      handleSessionInvalidated();
+    }
+  });
+}
+
+async function reconcileSessionInvalidation(): Promise<void> {
+  const accessToken = getAccessToken();
+  const authenticatedUser =
+    snapshot.status === "authenticated" ? snapshot.user : null;
+  const generation = authGeneration;
+
+  if (!accessToken || !authenticatedUser) {
+    clearAccessToken();
+    authGeneration += 1;
+    publish({ status: "unauthenticated", user: null });
+    return;
+  }
+
+  publish({ status: "loading", user: null });
+  const outcome = await validateCurrentSession();
+
+  if (generation !== authGeneration || accessToken !== getAccessToken()) {
+    return;
+  }
+
+  if (outcome.kind === "active") {
+    publish({ status: "authenticated", user: authenticatedUser });
+    return;
+  }
+
   clearAccessToken();
-  publish({ status: "unauthenticated", user: null });
+  authGeneration += 1;
+  publish({
+    status:
+      outcome.kind === "inactive" ? "unauthenticated" : "recoverable-error",
+    user: null
+  });
 }
 
 setSessionInvalidationHandler(handleSessionInvalidated);

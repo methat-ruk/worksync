@@ -63,6 +63,51 @@ describe("auth API client", () => {
     expect(getAccessToken()).toBeNull();
   });
 
+  it("validates the current access-token session without refreshing", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ success: true, data: { user: authBody.data.user } }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { setAccessToken } = await import("@/lib/api/session-token");
+    const { validateCurrentSession } = await import("./auth-api");
+    setAccessToken("current-access-token");
+
+    await expect(validateCurrentSession()).resolves.toEqual({ kind: "active" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/auth/me"),
+      expect.objectContaining({
+        method: "GET",
+        credentials: "include",
+        headers: expect.any(Headers)
+      })
+    );
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(new Headers(request.headers).get("Authorization")).toBe(
+      "Bearer current-access-token"
+    );
+  });
+
+  it.each([
+    [401, "inactive"],
+    [503, "recoverable-error"]
+  ])("classifies current-session validation %i as %s", async (status, kind) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ success: false, message: "Session unavailable" }),
+          { status, headers: { "Content-Type": "application/json" } }
+        )
+      )
+    );
+    const { validateCurrentSession } = await import("./auth-api");
+
+    await expect(validateCurrentSession()).resolves.toMatchObject({ kind });
+  });
+
   it.each([
     [429, "Too many attempts"],
     [403, "Forbidden"],

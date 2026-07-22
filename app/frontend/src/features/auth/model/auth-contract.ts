@@ -21,6 +21,11 @@ export const authResponseSchema = z.object({
   data: authDataSchema
 });
 
+export const currentUserResponseSchema = z.object({
+  success: z.literal(true),
+  data: z.object({ user: publicUserSchema })
+});
+
 export const messageResponseSchema = z.object({
   success: z.literal(true),
   message: z.string()

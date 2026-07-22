@@ -65,6 +65,10 @@ describe("WorkspaceHome", () => {
     expect(
       await screen.findByText("Create your first workspace")
     ).toBeInTheDocument();
+    expect(screen.getByLabelText("Workspace name")).toHaveAttribute(
+      "placeholder",
+      "Product Team"
+    );
     await actor.type(screen.getByLabelText("Workspace name"), " Product Team ");
     await actor.click(screen.getByRole("button", { name: "Create workspace" }));
 

@@ -104,6 +104,7 @@ export function SignupForm() {
               id="displayName"
               autoComplete="name"
               className="h-10"
+              placeholder="Your name"
               aria-invalid={Boolean(form.formState.errors.displayName)}
               {...form.register("displayName")}
             />
@@ -116,6 +117,7 @@ export function SignupForm() {
               type="email"
               autoComplete="email"
               className="h-10"
+              placeholder="name@company.com"
               aria-invalid={Boolean(form.formState.errors.email)}
               {...form.register("email")}
             />
@@ -127,6 +129,7 @@ export function SignupForm() {
               id="password"
               autoComplete="new-password"
               maxLength={PASSWORD_POLICY.maxLength}
+              placeholder="Create a memorable passphrase"
               aria-invalid={Boolean(form.formState.errors.password)}
               {...form.register("password")}
             />
@@ -142,6 +145,7 @@ export function SignupForm() {
               id="confirmPassword"
               autoComplete="new-password"
               maxLength={PASSWORD_POLICY.maxLength}
+              placeholder="Re-enter your passphrase"
               aria-invalid={Boolean(form.formState.errors.confirmPassword)}
               {...form.register("confirmPassword")}
             />

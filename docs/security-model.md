@@ -60,10 +60,13 @@ Required controls:
   outside that grace window, using a conditional update that cannot revoke a
   newer rotation observed afterward
 - serialize same-origin browser refresh, logout, and logout-all operations with
-  Web Locks when available, while retaining server-side race protection
+  Web Locks when available, bound lock acquisition to 10 seconds, and retain
+  server-side race protection
 - propagate only credential-free session invalidation events through
   BroadcastChannel; never use browser storage as a credential or coordination
   fallback
+- reconcile received invalidations against the current access-token session so
+  a delayed event cannot clear a newer active login
 - enforce an absolute session lifetime rather than extending it on refresh
 - validate browser request origins for cookie-authenticated auth commands
 - rate-limit sensitive authentication endpoints using safe, hashed limiter keys

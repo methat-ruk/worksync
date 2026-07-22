@@ -165,7 +165,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
-    if (normalized.status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    const isExpectedServiceUnavailable =
+      exception instanceof HttpException &&
+      normalized.status === HttpStatus.SERVICE_UNAVAILABLE &&
+      normalized.body.data?.code === API_ERROR_CODE.SERVICE_NOT_READY;
+    if (
+      normalized.status >= HttpStatus.INTERNAL_SERVER_ERROR &&
+      !isExpectedServiceUnavailable
+    ) {
       this.logger.error(
         {
           logType: "error",

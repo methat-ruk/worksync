@@ -47,12 +47,16 @@ auth requests with an `Origin` header must match the configured CORS origin;
 CORS exposes `Retry-After` so the frontend can honor the conflict contract.
 
 The browser serializes refresh, logout, and logout-all across same-origin tabs
-with the Web Locks API when available. It retries only the exact refresh
-conflict contract, at most twice with no more than two seconds of total delay.
+with the Web Locks API when available and bounds lock acquisition to 10 seconds.
+It retries only the exact refresh conflict contract, at most twice with no more
+than two seconds of total delay.
 Successful logout and definitive refresh `401` outcomes publish a
-credential-free `session-invalidated` BroadcastChannel event. Access tokens
-remain memory-only, and browsers without these APIs rely on the server contract
-and the next authoritative request rather than persistent-storage fallbacks.
+credential-free `session-invalidated` BroadcastChannel event. Receiving tabs
+hide protected content and validate their current access-token session through
+`/api/auth/me` without refresh, so a delayed event cannot clear a newer active
+login. Access tokens remain memory-only, and browsers without these APIs rely
+on the server contract and the next authoritative request rather than
+persistent-storage fallbacks.
 
 ## Rate Limits and Public Errors
 

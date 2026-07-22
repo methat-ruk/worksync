@@ -72,8 +72,9 @@ than this remediation needs.
   they win or lose a race with refresh
 - behavior works across at least two tabs in one browser context, not only
   within one JavaScript module instance
-- only refresh `401` is definitive unauthenticated state; exhausted retryable
-  conflicts remain recoverable
+- only an authoritative auth `401` from refresh or current-session validation
+  is definitive unauthenticated state; exhausted retryable conflicts remain
+  recoverable
 - concurrency semantics, timing bounds, mixed-version behavior, and residual
   replay risk are documented
 - logs, responses, browser messages, and test artifacts do not disclose access
@@ -136,6 +137,8 @@ logout wins first, refresh returns `401`.
   `worksync-auth-session`
 - keep the current in-module refresh promise inside that cross-tab boundary
 - hold the lock through the refresh request and all bounded conflict retries
+- abort lock acquisition after 10 seconds so a stalled tab cannot queue auth
+  operations indefinitely; never run an operation later after that timeout
 - when `navigator.locks` is absent before execution, call the operation once
   without a lock and rely on the backend conflict contract
 - if lock acquisition rejects, do not repeat an operation whose execution is
@@ -148,7 +151,7 @@ logout wins first, refresh returns `401`.
   clear the current memory access token during intermediate conflict retries
 - after retry exhaustion, clear the memory access token and enter the existing
   recoverable-error state
-- continue to treat only refresh `401` as unauthenticated
+- continue to treat only an authoritative auth `401` as unauthenticated
 
 Use a lazy singleton BroadcastChannel named `worksync-auth-session`. After a
 successful logout or logout-all, or a definitive refresh `401`, publish only:
@@ -157,9 +160,13 @@ successful logout or logout-all, or a definitive refresh `401`, publish only:
 { "type": "session-invalidated" }
 ```
 
-Receiving tabs clear their memory access token and publish the existing
-unauthenticated snapshot without rebroadcasting. Failed logout does not publish
-invalidation and preserves the existing authenticated UI behavior. If
+Receiving tabs hide protected content while they validate the current
+memory-only access token through `/api/auth/me` without refresh. They clear the
+token and publish the existing unauthenticated snapshot only when that request
+returns `401`; a newer active login is retained, while a transient or malformed
+validation failure clears the token and enters recoverable-error. The receiver
+does not rebroadcast. Failed logout does not publish invalidation and preserves
+the existing authenticated UI behavior. If
 BroadcastChannel is absent or construction fails before publication, continue
 without cross-tab messaging: the initiating tab still updates immediately and
 other tabs become unauthenticated on their next authoritative API or refresh
@@ -174,6 +181,10 @@ Add structured business events:
 - `refresh_replay_revoked` at warn level with a stable reason code and
   correlation ID
 - an unexpected-classification event at warn level for investigation
+
+Expected `503 SERVICE_NOT_READY` responses are not emitted as
+`unhandled_request_error`; a specific originating service event when emitted,
+plus the normal HTTP request log, remains the operational evidence.
 
 Do not include session IDs, user IDs, tokens, cookies, hashes, authorization
 headers, or other account identifiers. A rise in conflict events is an
@@ -205,9 +216,10 @@ production monitoring target is selected.
   `Retry-After: 1`, CORS exposure, absence of `Set-Cookie`, and recoverable
   `503 SERVICE_NOT_READY` for an unclassifiable active state
 - frontend unit evidence for Web Lock serialization, API-absent fallback,
-  lock-rejection behavior, bounded `Retry-After` parsing, exact-code retries,
-  retry exhaustion, BroadcastChannel invalidation, and channel-unavailable
-  fallback
+  bounded acquisition timeout, lock-rejection behavior, bounded `Retry-After`
+  parsing, exact-code retries, retry exhaustion, authoritative
+  BroadcastChannel invalidation reconciliation including newer-login and
+  overlapping-event races, and channel-unavailable fallback
 
 ### Real PostgreSQL and Security Evidence
 

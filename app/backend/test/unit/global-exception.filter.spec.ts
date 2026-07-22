@@ -4,7 +4,8 @@ import {
   HttpException,
   HttpStatus,
   type LoggerService,
-  NotFoundException
+  NotFoundException,
+  ServiceUnavailableException
 } from "@nestjs/common";
 
 import {
@@ -138,5 +139,41 @@ describe("normalizeException", () => {
     expect(response.status).toHaveBeenCalledWith(
       HttpStatus.INTERNAL_SERVER_ERROR
     );
+  });
+
+  it("does not misclassify an expected service-unavailable response as unhandled", () => {
+    const logger = { error: jest.fn() } as unknown as LoggerService;
+    const response = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn()
+    };
+    const host = {
+      switchToHttp: () => ({
+        getRequest: () => ({ method: "POST", originalUrl: "/api/auth/refresh" }),
+        getResponse: () => response
+      })
+    } as unknown as ArgumentsHost;
+    const filter = new GlobalExceptionFilter(logger, {
+      getCorrelationId: () => "request-456"
+    } as CorrelationContextService);
+
+    filter.catch(
+      new ServiceUnavailableException({
+        message: "Authentication service is temporarily unavailable",
+        code: "SERVICE_NOT_READY"
+      }),
+      host
+    );
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(response.status).toHaveBeenCalledWith(HttpStatus.SERVICE_UNAVAILABLE);
+    expect(response.json).toHaveBeenCalledWith({
+      success: false,
+      message: "Authentication service is temporarily unavailable",
+      data: {
+        code: "SERVICE_NOT_READY",
+        correlationId: "request-456"
+      }
+    });
   });
 });
