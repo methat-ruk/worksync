@@ -17,6 +17,7 @@ import { createGoogleOAuthTestHarness } from "../helpers/google-oauth-test-harne
 const describeWithDatabase = process.env.TEST_DATABASE_URL
   ? describe
   : describe.skip;
+const CONCURRENCY_STRESS_TEST_TIMEOUT_MS = 30_000;
 
 function refreshCookie(response: request.Response): string {
   const header = response.headers["set-cookie"];
@@ -145,7 +146,7 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
     expect(response.body.data.code).toBe("AUTH_EMAIL_CONFLICT");
   });
 
-  it("persists only a refresh-token hash and revokes the family on reuse", async () => {
+  it("persists only a hash and revokes refresh replay outside grace", async () => {
     const lifecycleEmail = `auth-lifecycle-${Date.now()}@example.com`;
     const signup = await request(app.getHttpServer())
       .post("/api/auth/signup")
@@ -172,6 +173,20 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
       .expect(200);
     expect(refreshCookie(rotated)).not.toBe(originalCookie);
 
+    const recentReuse = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", originalCookie)
+      .expect(409);
+    expect(recentReuse.body.data.code).toBe("REFRESH_CONCURRENCY_CONFLICT");
+    await request(app.getHttpServer())
+      .get("/api/auth/me")
+      .set("authorization", `Bearer ${rotated.body.data.accessToken as string}`)
+      .expect(200);
+
+    await prisma.authSession.update({
+      where: { id: stored.id },
+      data: { lastUsedAt: new Date(Date.now() - 10_000) }
+    });
     await request(app.getHttpServer())
       .post("/api/auth/refresh")
       .set("cookie", originalCookie)
@@ -222,32 +237,180 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
       .expect(401);
   });
 
-  it("allows only one concurrent refresh and revokes the raced session", async () => {
-    const concurrentEmail = `auth-concurrent-${Date.now()}@example.com`;
+  it("keeps the winning session active across repeated concurrent refreshes", async () => {
+    for (let iteration = 0; iteration < 20; iteration += 1) {
+      const signup = await request(app.getHttpServer())
+        .post("/api/auth/signup")
+        .send({
+          displayName: "Concurrent Refresh",
+          email: `auth-concurrent-${Date.now()}-${iteration}@example.com`,
+          password: "correct horse battery staple"
+        })
+        .expect(201);
+      const cookie = refreshCookie(signup);
+      const responses = await Promise.all([
+        request(app.getHttpServer())
+          .post("/api/auth/refresh")
+          .set("cookie", cookie),
+        request(app.getHttpServer())
+          .post("/api/auth/refresh")
+          .set("cookie", cookie)
+      ]);
+
+      expect(responses.map(({ status }) => status).sort()).toEqual([200, 409]);
+      const successful = responses.find(({ status }) => status === 200)!;
+      const conflict = responses.find(({ status }) => status === 409)!;
+      expect(conflict.body.data.code).toBe("REFRESH_CONCURRENCY_CONFLICT");
+      expect(conflict.headers["set-cookie"]).toBeUndefined();
+      await request(app.getHttpServer())
+        .get("/api/auth/me")
+        .set(
+          "authorization",
+          `Bearer ${successful.body.data.accessToken as string}`
+        )
+        .expect(200);
+    }
+  }, CONCURRENCY_STRESS_TEST_TIMEOUT_MS);
+
+  it("does not revoke a newer rotation from a stale replay observation", async () => {
     const signup = await request(app.getHttpServer())
       .post("/api/auth/signup")
       .send({
-        displayName: "Concurrent Refresh",
-        email: concurrentEmail,
+        displayName: "Conditional Replay",
+        email: `auth-conditional-replay-${Date.now()}@example.com`,
         password: "correct horse battery staple"
       })
       .expect(201);
-    const cookie = refreshCookie(signup);
-    const responses = await Promise.all([
-      request(app.getHttpServer()).post("/api/auth/refresh").set("cookie", cookie),
-      request(app.getHttpServer()).post("/api/auth/refresh").set("cookie", cookie)
-    ]);
+    const originalCookie = refreshCookie(signup);
+    const firstRotation = await request(app.getHttpServer())
+      .post("/api/auth/refresh")
+      .set("cookie", originalCookie)
+      .expect(200);
+    const currentCookie = refreshCookie(firstRotation);
+    const sessionId = new JwtService().decode(
+      firstRotation.body.data.accessToken as string
+    ).sid as string;
+    await prisma.authSession.update({
+      where: { id: sessionId },
+      data: { lastUsedAt: new Date(Date.now() - 10_000) }
+    });
 
-    expect(responses.map(({ status }) => status).sort()).toEqual([200, 401]);
-    const successful = responses.find(({ status }) => status === 200);
-    await request(app.getHttpServer())
-      .get("/api/auth/me")
-      .set(
-        "authorization",
-        `Bearer ${successful?.body.data.accessToken as string}`
-      )
-      .expect(401);
+    const originalUpdateMany = prisma.authSession.updateMany.bind(
+      prisma.authSession
+    );
+    let releaseReplay!: () => void;
+    let replayObserved!: () => void;
+    const replayRelease = new Promise<void>((resolve) => {
+      releaseReplay = resolve;
+    });
+    const replayObservation = new Promise<void>((resolve) => {
+      replayObserved = resolve;
+    });
+    let blocked = false;
+    const updateMany = jest
+      .spyOn(prisma.authSession, "updateMany")
+      .mockImplementation((args) => {
+        const execute = async () => {
+          const input = args as {
+            data?: { revokedAt?: Date };
+            where?: { lastUsedAt?: Date };
+          };
+          if (
+            !blocked &&
+            input.data?.revokedAt instanceof Date &&
+            input.where?.lastUsedAt instanceof Date
+          ) {
+            blocked = true;
+            replayObserved();
+            await replayRelease;
+          }
+          return originalUpdateMany(args);
+        };
+        return execute() as ReturnType<typeof prisma.authSession.updateMany>;
+      });
+
+    try {
+      const staleResponsePromise = request(app.getHttpServer())
+        .post("/api/auth/refresh")
+        .set("cookie", originalCookie)
+        .then((response) => response);
+      await replayObservation;
+      const newestRotation = await request(app.getHttpServer())
+        .post("/api/auth/refresh")
+        .set("cookie", currentCookie)
+        .expect(200);
+      releaseReplay();
+      const staleResponse = await staleResponsePromise;
+
+      expect(staleResponse.status).toBe(409);
+      expect(staleResponse.body.data.code).toBe(
+        "REFRESH_CONCURRENCY_CONFLICT"
+      );
+      await request(app.getHttpServer())
+        .get("/api/auth/me")
+        .set(
+          "authorization",
+          `Bearer ${newestRotation.body.data.accessToken as string}`
+        )
+        .expect(200);
+    } finally {
+      releaseReplay();
+      updateMany.mockRestore();
+    }
   });
+
+  it.each(["logout", "logout-all"] as const)(
+    "ends refresh-versus-%s races in a revoked state",
+    async (command) => {
+      for (let iteration = 0; iteration < 5; iteration += 1) {
+        const signup = await request(app.getHttpServer())
+          .post("/api/auth/signup")
+          .send({
+            displayName: "Logout Race",
+            email: `auth-${command}-race-${Date.now()}-${iteration}@example.com`,
+            password: "correct horse battery staple"
+          })
+          .expect(201);
+        const cookie = refreshCookie(signup);
+        const refreshRequest = request(app.getHttpServer())
+          .post("/api/auth/refresh")
+          .set("cookie", cookie);
+        const logoutRequest = request(app.getHttpServer()).post(
+          `/api/auth/${command}`
+        );
+        const configuredLogoutRequest =
+          command === "logout"
+            ? logoutRequest.set("cookie", cookie)
+            : logoutRequest.set(
+                "authorization",
+                `Bearer ${signup.body.data.accessToken as string}`
+              );
+
+        const [refreshResponse, logoutResponse] = await Promise.all([
+          refreshRequest,
+          configuredLogoutRequest
+        ]);
+        expect([200, 401]).toContain(refreshResponse.status);
+        expect(logoutResponse.status).toBe(200);
+        const sessionId = new JwtService().decode(
+          signup.body.data.accessToken as string
+        ).sid as string;
+        const stored = await prisma.authSession.findUniqueOrThrow({
+          where: { id: sessionId }
+        });
+        expect(stored.revokedAt).toBeInstanceOf(Date);
+        if (refreshResponse.status === 200) {
+          await request(app.getHttpServer())
+            .get("/api/auth/me")
+            .set(
+              "authorization",
+              `Bearer ${refreshResponse.body.data.accessToken as string}`
+            )
+            .expect(401);
+        }
+      }
+    }
+  );
 
   it("creates and reuses a Google identity without a password hash", async () => {
     const googleEmail = `google-new-${Date.now()}@gmail.com`;

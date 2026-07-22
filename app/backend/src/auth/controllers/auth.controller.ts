@@ -279,6 +279,20 @@ export class AuthController {
     description: "A valid refresh-token cookie is required",
     type: ApiErrorResponseDto
   })
+  @ApiConflictResponse({
+    description: "A concurrent refresh rotated the session first",
+    headers: {
+      "Retry-After": {
+        description: "Seconds before retrying the refresh request",
+        schema: { type: "integer", example: 1 }
+      }
+    },
+    type: ApiErrorResponseDto
+  })
+  @ApiServiceUnavailableResponse({
+    description: "The active refresh state could not be classified safely",
+    type: ApiErrorResponseDto
+  })
   @ApiForbiddenResponse({
     description: "The browser request origin is not allowed",
     type: ApiErrorResponseDto

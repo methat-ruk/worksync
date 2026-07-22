@@ -75,7 +75,8 @@ identity is keyed by provider subject, not email.
 read HttpOnly refresh cookie
 -> verify session and token hash
 -> rotate refresh token
--> revoke unsafe reuse when detected
+-> return retryable 409 for a rotation conflict within 5 seconds
+-> conditionally revoke unsafe reuse outside the grace window
 -> return a new access token
 ```
 
@@ -83,11 +84,26 @@ Refresh sessions are stored in PostgreSQL. Redis is not the auth-session source
 of truth.
 
 The frontend treats only refresh `401` as proof that the browser session is
-unauthenticated. Network, throttling, other non-`401`, malformed-response, and
-parsing failures enter a recoverable state that hides protected content and
-public auth forms until the user retries. Bootstrap, OAuth completion, and
-automatic authenticated-request recovery share one in-flight frontend refresh
-transition.
+unauthenticated during refresh. A tab receiving a cross-tab invalidation also
+accepts `/api/auth/me` `401` as authoritative for its current access token.
+Network, throttling, other non-`401`, malformed-response, and parsing failures
+enter a recoverable state that hides protected content and public auth forms
+until the user retries. Bootstrap, OAuth completion, and automatic
+authenticated-request recovery share one in-flight frontend refresh transition.
+
+Refresh, logout, and logout-all share the exclusive
+`worksync-auth-session` Web Lock across same-origin tabs when the API exists.
+Lock acquisition times out after 10 seconds without allowing the queued
+operation to run later. The frontend holds the lock across up to two exact
+`409 REFRESH_CONCURRENCY_CONFLICT` retries, honoring a clamped
+`Retry-After` delay. Only refresh `401` proves the session is unauthenticated;
+an exhausted conflict remains recoverable. Successful logout and definitive
+refresh `401` outcomes broadcast only `{ "type": "session-invalidated" }`.
+Other tabs hide protected content and validate their current access token
+without refresh before clearing it, which prevents a delayed event from
+invalidating a newer login. They do not rebroadcast. Browsers without Web Locks
+or BroadcastChannel rely on the backend state machine and their next
+authoritative request.
 
 ### Logout
 
@@ -137,7 +153,8 @@ Frontend evidence should cover:
 
 - Client-facing login errors leak whether a user exists.
 - Provider-only users accidentally pass through password login logic.
-- Refresh token replay does not revoke the affected session family.
+- A concurrent refresh loser revokes the newer winning rotation.
+- Replay revocation uses stale observations and can revoke a newer rotation.
 - OAuth redirect URL includes sensitive provider data or tokens.
 - Rate limit behavior exists in code but is undocumented in Swagger/contracts.
 - Frontend stores tokens in URLs, logs, or durable state without an explicit

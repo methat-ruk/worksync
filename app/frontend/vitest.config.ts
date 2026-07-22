@@ -20,6 +20,6 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
     clearMocks: true,
-    exclude: ["test/e2e/**", "node_modules/**"]
+    exclude: ["test/e2e/**", "test/live-e2e/**", "node_modules/**"]
   }
 });

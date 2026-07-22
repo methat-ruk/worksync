@@ -22,6 +22,27 @@ describe("SignupForm", () => {
     signUp.mockResolvedValue(undefined);
   });
 
+  it("shows helpful placeholders for every signup input", () => {
+    render(<SignupForm />);
+
+    expect(screen.getByLabelText("Name")).toHaveAttribute(
+      "placeholder",
+      "Your name"
+    );
+    expect(screen.getByLabelText("Email")).toHaveAttribute(
+      "placeholder",
+      "name@company.com"
+    );
+    expect(screen.getByLabelText("Password")).toHaveAttribute(
+      "placeholder",
+      "Create a memorable passphrase"
+    );
+    expect(screen.getByLabelText("Confirm password")).toHaveAttribute(
+      "placeholder",
+      "Re-enter your passphrase"
+    );
+  });
+
   it("blocks a weak password before sending a request", async () => {
     const user = userEvent.setup();
     render(<SignupForm />);

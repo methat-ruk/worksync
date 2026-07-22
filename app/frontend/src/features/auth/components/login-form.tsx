@@ -65,6 +65,7 @@ export function LoginForm() {
               type="email"
               autoComplete="email"
               className="h-10"
+              placeholder="name@company.com"
               aria-invalid={Boolean(form.formState.errors.email)}
               {...form.register("email")}
             />
@@ -75,6 +76,7 @@ export function LoginForm() {
             <PasswordInput
               id="password"
               autoComplete="current-password"
+              placeholder="Enter your password"
               aria-invalid={Boolean(form.formState.errors.password)}
               {...form.register("password")}
             />

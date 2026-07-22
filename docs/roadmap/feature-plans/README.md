@@ -35,16 +35,15 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Auth Session Concurrency Hardening](planned/auth-session-concurrency-hardening.md) | Health remediation | Next |
-| 2 | [Workspace Pagination and Selection](planned/workspace-pagination-and-selection.md) | Health remediation | Planned |
-| 3 | [Workspace Authorization Boundary](planned/workspace-authorization-boundary.md) | Health remediation | Planned |
-| 4 | [Project Foundation](planned/project-foundation.md) | 2 | Planned |
-| 5 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
-| 6 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 7 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 8 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 9 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 10 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
+| 1 | [Workspace Pagination and Selection](planned/workspace-pagination-and-selection.md) | Health remediation | Next |
+| 2 | [Workspace Authorization Boundary](planned/workspace-authorization-boundary.md) | Health remediation | Planned |
+| 3 | [Project Foundation](planned/project-foundation.md) | 2 | Planned |
+| 4 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
+| 5 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 6 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 7 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 8 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 9 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
 
 ## Completed Feature Summaries
 
@@ -64,6 +63,7 @@ reconstructing every historical implementation detail.
 | [Workspace Frontend Bootstrap](completed/workspace-frontend-bootstrap.md) | Done |
 | [Frontend Structure Boundaries](completed/frontend-structure-boundaries.md) | Done |
 | [Frontend Auth State and Redirect Safety](completed/frontend-auth-state-and-redirect-safety.md) | Done |
+| [Auth Session Concurrency Hardening](completed/auth-session-concurrency-hardening.md) | Done |
 
 ## Feature Plan Template
 

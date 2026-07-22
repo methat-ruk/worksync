@@ -51,13 +51,10 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Auth Session Concurrency Hardening](roadmap/feature-plans/planned/auth-session-concurrency-hardening.md)
-   - make concurrent refresh and replay behavior explicit before more
-     authenticated workflows depend on it.
-2. [Workspace Pagination and Selection](roadmap/feature-plans/planned/workspace-pagination-and-selection.md)
-   and [Workspace Authorization Boundary](roadmap/feature-plans/planned/workspace-authorization-boundary.md)
-   - close the existing workspace UX gap and establish the reusable tenant
-     boundary required by downstream resources.
+1. [Workspace Pagination and Selection](roadmap/feature-plans/planned/workspace-pagination-and-selection.md)
+   - close the existing workspace list and selection UX gap.
+2. [Workspace Authorization Boundary](roadmap/feature-plans/planned/workspace-authorization-boundary.md)
+   - establish the reusable tenant boundary required by downstream resources.
 3. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
    - create the first workspace-scoped project API on the shared authorization
      boundary.
