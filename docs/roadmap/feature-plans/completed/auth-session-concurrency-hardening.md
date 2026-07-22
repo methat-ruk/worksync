@@ -182,9 +182,10 @@ Add structured business events:
   correlation ID
 - an unexpected-classification event at warn level for investigation
 
-Expected `503 SERVICE_NOT_READY` responses are not emitted as
-`unhandled_request_error`; a specific originating service event when emitted,
-plus the normal HTTP request log, remains the operational evidence.
+A `503 SERVICE_NOT_READY` response is omitted from
+`unhandled_request_error` only when its originating service has marked that it
+already emitted a specific event. Unmarked service-unavailable failures retain
+the generic error event, and every case retains the normal HTTP request log.
 
 Do not include session IDs, user IDs, tokens, cookies, hashes, authorization
 headers, or other account identifiers. A rise in conflict events is an

@@ -321,7 +321,8 @@ export class SessionService {
     );
     throw new ServiceUnavailableException({
       message: "Authentication is temporarily unavailable",
-      code: API_ERROR_CODE.SERVICE_NOT_READY
+      code: API_ERROR_CODE.SERVICE_NOT_READY,
+      suppressUnhandledRequestLog: true
     });
   }
 

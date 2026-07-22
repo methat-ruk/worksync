@@ -165,13 +165,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
-    const isExpectedServiceUnavailable =
+    const exceptionResponse =
+      exception instanceof HttpException ? exception.getResponse() : undefined;
+    const suppressUnhandledRequestLog =
       exception instanceof HttpException &&
       normalized.status === HttpStatus.SERVICE_UNAVAILABLE &&
-      normalized.body.data?.code === API_ERROR_CODE.SERVICE_NOT_READY;
+      normalized.body.data?.code === API_ERROR_CODE.SERVICE_NOT_READY &&
+      typeof exceptionResponse === "object" &&
+      (exceptionResponse as { suppressUnhandledRequestLog?: unknown })
+        .suppressUnhandledRequestLog === true;
     if (
       normalized.status >= HttpStatus.INTERNAL_SERVER_ERROR &&
-      !isExpectedServiceUnavailable
+      !suppressUnhandledRequestLog
     ) {
       this.logger.error(
         {
