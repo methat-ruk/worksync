@@ -122,7 +122,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Restore Next.js build cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: app/frontend/.next/cache
           key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/frontend/**/*.[jt]s', 'app/frontend/**/*.[jt]sx') }}
@@ -177,7 +177,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Restore Playwright browser cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
@@ -232,28 +232,26 @@ jobs:
           services="$(docker compose -f docker/compose.yml -f docker/compose.app.yml config --services | sort | tr '\n' ' ')"
           test "$services" = "backend frontend minio postgres redis "
 
-      - name: Build backend image
-        uses: docker/build-push-action@v6
+      # Both targets share this job's ephemeral BuildKit cache. PR validation
+      # has no downstream consumer for a daemon-loaded image or remote cache.
+      - name: Validate backend image target
+        uses: docker/build-push-action@v7
         with:
           context: .
           target: backend
           tags: worksync-backend:ci
-          load: true
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
+          outputs: type=cacheonly
 
-      - name: Build frontend image
-        uses: docker/build-push-action@v6
+      - name: Validate frontend image target
+        uses: docker/build-push-action@v7
         with:
           context: .
           target: frontend
           tags: worksync-frontend:ci
-          load: true
+          outputs: type=cacheonly
           build-args: |
             NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
             NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=false
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
 
   security:
     name: Dependency audit
