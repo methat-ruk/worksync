@@ -32,6 +32,9 @@ accurate total when the account has more workspaces than the first API page.
   retry action
 - detected inconsistent final-page evidence and exposed a bounded refresh
   recovery path instead of requesting the same page indefinitely
+- serialized explicit refresh and workspace creation so a stale refresh cannot
+  replace a newly created workspace in local state, while preserving safe
+  create-and-load-more concurrency
 - preserved keyboard-accessible workspace selection, polite count updates, and
   responsive behavior
 
@@ -47,6 +50,9 @@ accurate total when the account has more workspaces than the first API page.
 - determine page exhaustion from `page * pageSize >= total`
 - replace accumulated state on explicit refresh and retain the selected
   identifier only when it exists in the refreshed first page
+- prevent explicit refresh and workspace creation from overlapping because
+  refresh replaces the collection; allow creation and page accumulation to
+  overlap because both reducer paths preserve unique confirmed items
 - keep the backend API and authorization boundary unchanged
 
 ## Security and Data Boundary
@@ -61,7 +67,8 @@ membership or use client selection as an authorization decision.
   response metadata
 - component tests cover accumulation, later-page selection, failure and retry,
   duplicate results, final-page inconsistency recovery, duplicate-request
-  prevention, and create-after-pagination behavior
+  prevention, refresh/create mutual exclusion, safe create/load-more
+  concurrency, and create-after-pagination behavior
 - the full frontend unit/component suite passes
 - Playwright covers a 21-workspace mobile journey, page-two loading,
   later-page selection, loaded-versus-total state, and console errors

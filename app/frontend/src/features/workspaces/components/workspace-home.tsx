@@ -167,7 +167,9 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
   );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [workspaceNotice, setWorkspaceNotice] = useState<string | null>(null);
+  const [createPending, setCreatePending] = useState(false);
   const pageRequestPending = useRef(false);
+  const createPendingRef = useRef(false);
 
   const selectedWorkspace = useMemo(
     () =>
@@ -197,7 +199,10 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
   }, [load]);
 
   async function requestPage(kind: WorkspacePageRequestKind) {
-    if (pageRequestPending.current) {
+    if (
+      pageRequestPending.current ||
+      (kind === "refresh" && createPendingRef.current)
+    ) {
       return;
     }
 
@@ -233,6 +238,11 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
     setLoadError(null);
   }
 
+  function handleCreatePendingChange(pending: boolean) {
+    createPendingRef.current = pending;
+    setCreatePending(pending);
+  }
+
   if (loadState === "loading") {
     return <WorkspaceSkeleton />;
   }
@@ -264,6 +274,8 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
   }
 
   const hasWorkspaces = collection.items.length > 0;
+  const refreshPending =
+    pageRequest.status === "loading" && pageRequest.kind === "refresh";
   const pageRequestLabel =
     pageRequest.kind === "refresh" ? "Retry refresh" : "Retry load more";
 
@@ -372,6 +384,9 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
                   <div className="flex flex-col items-start gap-3">
                     <p>{pageRequest.error}</p>
                     <Button
+                      disabled={
+                        pageRequest.kind === "refresh" && createPending
+                      }
                       onClick={() => void requestPage(pageRequest.kind)}
                       type="button"
                       variant="outline"
@@ -391,7 +406,9 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
                       the list to reconcile the results.
                     </p>
                     <Button
-                      disabled={pageRequest.status === "loading"}
+                      disabled={
+                        pageRequest.status === "loading" || createPending
+                      }
                       onClick={() => void requestPage("refresh")}
                       type="button"
                       variant="outline"
@@ -413,7 +430,12 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
               workspace locally.
             </p>
             <div className="mt-5">
-              <WorkspaceCreateForm compact onCreated={handleCreated} />
+              <WorkspaceCreateForm
+                compact
+                disabled={refreshPending}
+                onCreated={handleCreated}
+                onPendingChange={handleCreatePendingChange}
+              />
             </div>
           </aside>
         </section>

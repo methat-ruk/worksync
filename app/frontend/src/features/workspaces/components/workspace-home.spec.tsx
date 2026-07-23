@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createWorkspace, listWorkspaces } from "../api/workspaces-api";
-import type { PublicWorkspace } from "../model/workspace-contract";
+import type {
+  PublicWorkspace,
+  WorkspaceListData
+} from "../model/workspace-contract";
 import { WorkspaceHome } from "./workspace-home";
 
 vi.mock("../api/workspaces-api", () => ({
@@ -42,6 +45,15 @@ const operationsWorkspace: PublicWorkspace = {
 
 const listWorkspacesMock = vi.mocked(listWorkspaces);
 const createWorkspaceMock = vi.mocked(createWorkspace);
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+
+  return { promise, resolve };
+}
 
 describe("WorkspaceHome", () => {
   beforeEach(() => {
@@ -265,6 +277,158 @@ describe("WorkspaceHome", () => {
       page: 1,
       pageSize: 2
     });
+  });
+
+  it("disables workspace creation while a list refresh is pending", async () => {
+    const actor = userEvent.setup();
+    const refreshRequest = deferred<WorkspaceListData>();
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace, designWorkspace],
+        page: 1,
+        pageSize: 2,
+        total: 3
+      })
+      .mockResolvedValueOnce({
+        items: [designWorkspace],
+        page: 2,
+        pageSize: 2,
+        total: 3
+      })
+      .mockReturnValueOnce(refreshRequest.promise);
+
+    render(<WorkspaceHome user={user} />);
+
+    await screen.findByText("2 of 3 loaded");
+    await actor.click(screen.getByRole("button", { name: "Load more" }));
+    await screen.findByText(
+      "The workspace list changed while it was loading. Refresh the list to reconcile the results."
+    );
+    await actor.click(
+      screen.getByRole("button", { name: "Refresh workspaces" })
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Refreshing..." })
+    ).toBeDisabled();
+    expect(screen.getByLabelText("Workspace name")).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Create workspace" })
+    ).toBeDisabled();
+
+    refreshRequest.resolve({
+      items: [workspace, operationsWorkspace],
+      page: 1,
+      pageSize: 2,
+      total: 3
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Workspace name")).toBeEnabled();
+    });
+  });
+
+  it("disables list refresh while workspace creation is pending", async () => {
+    const actor = userEvent.setup();
+    const createRequest = deferred<PublicWorkspace>();
+    const createdWorkspace: PublicWorkspace = {
+      ...workspace,
+      id: "workspace-4",
+      name: "Research Team",
+      slug: "research-team"
+    };
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace, designWorkspace],
+        page: 1,
+        pageSize: 2,
+        total: 3
+      })
+      .mockResolvedValueOnce({
+        items: [designWorkspace],
+        page: 2,
+        pageSize: 2,
+        total: 3
+      });
+    createWorkspaceMock.mockReturnValueOnce(createRequest.promise);
+
+    render(<WorkspaceHome user={user} />);
+
+    await screen.findByText("2 of 3 loaded");
+    await actor.click(screen.getByRole("button", { name: "Load more" }));
+    await screen.findByText(
+      "The workspace list changed while it was loading. Refresh the list to reconcile the results."
+    );
+    await actor.type(screen.getByLabelText("Workspace name"), "Research Team");
+    await actor.click(screen.getByRole("button", { name: "Create workspace" }));
+
+    expect(
+      screen.getByRole("button", { name: "Creating..." })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Refresh workspaces" })
+    ).toBeDisabled();
+    expect(listWorkspacesMock).toHaveBeenCalledTimes(2);
+
+    createRequest.resolve(createdWorkspace);
+
+    expect(
+      await screen.findByRole("button", { name: /Research Team/ })
+    ).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Refresh workspaces" })
+      ).toBeEnabled();
+    });
+  });
+
+  it("keeps load more available while workspace creation is pending", async () => {
+    const actor = userEvent.setup();
+    const createRequest = deferred<PublicWorkspace>();
+    const nextPageRequest = deferred<WorkspaceListData>();
+    const createdWorkspace: PublicWorkspace = {
+      ...workspace,
+      id: "workspace-4",
+      name: "Research Team",
+      slug: "research-team"
+    };
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace],
+        page: 1,
+        pageSize: 1,
+        total: 2
+      })
+      .mockReturnValueOnce(nextPageRequest.promise);
+    createWorkspaceMock.mockReturnValueOnce(createRequest.promise);
+
+    render(<WorkspaceHome user={user} />);
+
+    await screen.findByText("1 of 2 loaded");
+    await actor.type(screen.getByLabelText("Workspace name"), "Research Team");
+    await actor.click(screen.getByRole("button", { name: "Create workspace" }));
+
+    const loadMoreButton = screen.getByRole("button", { name: "Load more" });
+    expect(loadMoreButton).toBeEnabled();
+    await actor.click(loadMoreButton);
+
+    createRequest.resolve(createdWorkspace);
+    expect(
+      await screen.findByRole("button", { name: /Research Team/ })
+    ).toHaveAttribute("aria-pressed", "true");
+
+    nextPageRequest.resolve({
+      items: [designWorkspace],
+      page: 2,
+      pageSize: 1,
+      total: 2
+    });
+
+    expect(await screen.findByText("Design Team")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Research Team/ })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("3 of 3 loaded")).toBeInTheDocument();
   });
 
   it("prevents duplicate page requests while loading", async () => {
