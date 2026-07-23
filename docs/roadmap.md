@@ -51,16 +51,14 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Workspace Pagination and Selection](roadmap/feature-plans/planned/workspace-pagination-and-selection.md)
-   - close the existing workspace list and selection UX gap.
-2. [Workspace Authorization Boundary](roadmap/feature-plans/planned/workspace-authorization-boundary.md)
+1. [Workspace Authorization Boundary](roadmap/feature-plans/planned/workspace-authorization-boundary.md)
    - establish the reusable tenant boundary required by downstream resources.
-3. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
+2. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
    - create the first workspace-scoped project API on the shared authorization
      boundary.
-4. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
+3. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
    - build the first task workflow inside the workspace/project boundary.
-5. Add activity, comments, notifications, files, jobs, and production readiness
+4. Add activity, comments, notifications, files, jobs, and production readiness
    only after workspace-scoped project/task authorization evidence exists.
 
 ## Guiding Principles

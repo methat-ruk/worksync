@@ -24,6 +24,22 @@ const workspace: PublicWorkspace = {
   membershipRole: "OWNER"
 };
 
+const designWorkspace: PublicWorkspace = {
+  ...workspace,
+  id: "workspace-2",
+  name: "Design Team",
+  slug: "design-team",
+  membershipRole: "ADMIN"
+};
+
+const operationsWorkspace: PublicWorkspace = {
+  ...workspace,
+  id: "workspace-3",
+  name: "Operations Team",
+  slug: "operations-team",
+  membershipRole: "MEMBER"
+};
+
 const listWorkspacesMock = vi.mocked(listWorkspaces);
 const createWorkspaceMock = vi.mocked(createWorkspace);
 
@@ -113,5 +129,230 @@ describe("WorkspaceHome", () => {
       await screen.findByText("Workspace name is required.")
     ).toBeInTheDocument();
     expect(createWorkspaceMock).not.toHaveBeenCalled();
+  });
+
+  it("loads and selects a workspace from a later page", async () => {
+    const actor = userEvent.setup();
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace, designWorkspace],
+        page: 1,
+        pageSize: 2,
+        total: 3
+      })
+      .mockResolvedValueOnce({
+        items: [operationsWorkspace],
+        page: 2,
+        pageSize: 2,
+        total: 3
+      });
+
+    render(<WorkspaceHome user={user} />);
+
+    expect(await screen.findByText("2 of 3 loaded")).toBeInTheDocument();
+    await actor.click(screen.getByRole("button", { name: "Load more" }));
+
+    const operationsButton = await screen.findByRole("button", {
+      name: /Operations Team/
+    });
+    expect(listWorkspacesMock).toHaveBeenLastCalledWith({
+      page: 2,
+      pageSize: 2
+    });
+    expect(screen.getByText("3 of 3 loaded")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more" })
+    ).not.toBeInTheDocument();
+
+    await actor.click(operationsButton);
+    expect(operationsButton).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("keeps loaded workspaces visible and retries the failed page", async () => {
+    const actor = userEvent.setup();
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace, designWorkspace],
+        page: 1,
+        pageSize: 2,
+        total: 3
+      })
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockResolvedValueOnce({
+        items: [operationsWorkspace],
+        page: 2,
+        pageSize: 2,
+        total: 3
+      });
+
+    render(<WorkspaceHome user={user} />);
+
+    await screen.findByText("2 of 3 loaded");
+    await actor.click(screen.getByRole("button", { name: "Load more" }));
+
+    expect(
+      await screen.findByText("Something went wrong. Please try again.")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Product Team/ })
+    ).toBeInTheDocument();
+    expect(screen.getByText("2 of 3 loaded")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more" })
+    ).not.toBeInTheDocument();
+
+    await actor.click(
+      screen.getByRole("button", { name: "Retry load more" })
+    );
+
+    expect(await screen.findByText("Operations Team")).toBeInTheDocument();
+    expect(listWorkspacesMock).toHaveBeenNthCalledWith(2, {
+      page: 2,
+      pageSize: 2
+    });
+    expect(listWorkspacesMock).toHaveBeenNthCalledWith(3, {
+      page: 2,
+      pageSize: 2
+    });
+  });
+
+  it("deduplicates page results and refreshes an inconsistent final page", async () => {
+    const actor = userEvent.setup();
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace, designWorkspace],
+        page: 1,
+        pageSize: 2,
+        total: 3
+      })
+      .mockResolvedValueOnce({
+        items: [designWorkspace],
+        page: 2,
+        pageSize: 2,
+        total: 3
+      })
+      .mockResolvedValueOnce({
+        items: [workspace, operationsWorkspace],
+        page: 1,
+        pageSize: 2,
+        total: 3
+      });
+
+    render(<WorkspaceHome user={user} />);
+
+    await screen.findByText("2 of 3 loaded");
+    await actor.click(screen.getByRole("button", { name: /Design Team/ }));
+    await actor.click(screen.getByRole("button", { name: "Load more" }));
+
+    expect(
+      await screen.findByText(
+        "The workspace list changed while it was loading. Refresh the list to reconcile the results."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: /Design Team/ })
+    ).toHaveLength(1);
+
+    await actor.click(
+      screen.getByRole("button", { name: "Refresh workspaces" })
+    );
+
+    const productButton = await screen.findByRole("button", {
+      name: /Product Team/
+    });
+    expect(productButton).toHaveAttribute("aria-pressed", "true");
+    expect(listWorkspacesMock).toHaveBeenLastCalledWith({
+      page: 1,
+      pageSize: 2
+    });
+  });
+
+  it("prevents duplicate page requests while loading", async () => {
+    const actor = userEvent.setup();
+    let resolveNextPage:
+      | ((data: {
+          items: PublicWorkspace[];
+          page: number;
+          pageSize: number;
+          total: number;
+        }) => void)
+      | undefined;
+    const nextPage = new Promise<{
+      items: PublicWorkspace[];
+      page: number;
+      pageSize: number;
+      total: number;
+    }>((resolve) => {
+      resolveNextPage = resolve;
+    });
+
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace, designWorkspace],
+        page: 1,
+        pageSize: 2,
+        total: 3
+      })
+      .mockReturnValueOnce(nextPage);
+
+    render(<WorkspaceHome user={user} />);
+
+    await screen.findByText("2 of 3 loaded");
+    const loadMoreButton = screen.getByRole("button", { name: "Load more" });
+    await actor.dblClick(loadMoreButton);
+
+    expect(listWorkspacesMock).toHaveBeenCalledTimes(2);
+    expect(
+      screen.getByRole("button", { name: "Loading..." })
+    ).toBeDisabled();
+
+    resolveNextPage?.({
+      items: [operationsWorkspace],
+      page: 2,
+      pageSize: 2,
+      total: 3
+    });
+    expect(await screen.findByText("Operations Team")).toBeInTheDocument();
+  });
+
+  it("keeps accumulated workspaces and selects a newly created workspace", async () => {
+    const actor = userEvent.setup();
+    const createdWorkspace: PublicWorkspace = {
+      ...workspace,
+      id: "workspace-4",
+      name: "Research Team",
+      slug: "research-team"
+    };
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace],
+        page: 1,
+        pageSize: 1,
+        total: 2
+      })
+      .mockResolvedValueOnce({
+        items: [designWorkspace],
+        page: 2,
+        pageSize: 1,
+        total: 2
+      });
+    createWorkspaceMock.mockResolvedValue(createdWorkspace);
+
+    render(<WorkspaceHome user={user} />);
+
+    await screen.findByText("1 of 2 loaded");
+    await actor.click(screen.getByRole("button", { name: "Load more" }));
+    await screen.findByText("Design Team");
+    await actor.type(screen.getByLabelText("Workspace name"), "Research Team");
+    await actor.click(screen.getByRole("button", { name: "Create workspace" }));
+
+    const researchButton = await screen.findByRole("button", {
+      name: /Research Team/
+    });
+    expect(researchButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("3 total")).toBeInTheDocument();
+    expect(screen.getByText("3 of 3 loaded")).toBeInTheDocument();
+    expect(screen.getByText("Product Team")).toBeInTheDocument();
+    expect(screen.getByText("Design Team")).toBeInTheDocument();
   });
 });

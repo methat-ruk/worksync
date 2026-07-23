@@ -64,12 +64,13 @@ Delivered:
   create workspace flow, local workspace selection, and browser E2E coverage
 - frontend shared API client and feature ownership boundary cleanup for auth,
   workspace, app shell, brand, and root providers
+- legitimate multi-context refresh concurrency without successful-session
+  revocation
+- paginated workspace loading, accurate total display, later-page selection,
+  and recoverable partial-failure handling
 
 Still required:
 
-- legitimate multi-context refresh concurrency without successful-session
-  revocation
-- access to and accurate counts for paginated workspace lists
 - a reusable trusted workspace actor boundary for downstream resources
 - workspace isolation enforcement for every future workspace-scoped query
 - role matrix finalization for project, task, comment, file, and activity
@@ -83,7 +84,7 @@ Feature plan order:
 4. [Frontend Structure Boundaries](feature-plans/completed/frontend-structure-boundaries.md)
 5. [Frontend Auth State and Redirect Safety](feature-plans/completed/frontend-auth-state-and-redirect-safety.md)
 6. [Auth Session Concurrency Hardening](feature-plans/completed/auth-session-concurrency-hardening.md)
-7. [Workspace Pagination and Selection](feature-plans/planned/workspace-pagination-and-selection.md)
+7. [Workspace Pagination and Selection](feature-plans/completed/workspace-pagination-and-selection.md)
 8. [Workspace Authorization Boundary](feature-plans/planned/workspace-authorization-boundary.md)
 
 ## Exit Criteria
@@ -112,5 +113,5 @@ Feature plan order:
 - [Frontend Structure Boundaries](feature-plans/completed/frontend-structure-boundaries.md)
 - [Frontend Auth State and Redirect Safety](feature-plans/completed/frontend-auth-state-and-redirect-safety.md)
 - [Auth Session Concurrency Hardening](feature-plans/completed/auth-session-concurrency-hardening.md)
-- [Workspace Pagination and Selection](feature-plans/planned/workspace-pagination-and-selection.md)
+- [Workspace Pagination and Selection](feature-plans/completed/workspace-pagination-and-selection.md)
 - [Workspace Authorization Boundary](feature-plans/planned/workspace-authorization-boundary.md)

@@ -465,6 +465,85 @@ test("shows real workspace data for authenticated users", async ({ page }) => {
   expect(consoleErrors).toEqual([]);
 });
 
+test("loads and selects workspaces beyond the first page", async ({ page }) => {
+  const consoleErrors: string[] = [];
+  const requestedPages: number[] = [];
+  const workspaces = Array.from({ length: 21 }, (_, index) => {
+    const position = index + 1;
+    return {
+      ...workspace,
+      id: `workspace-${position}`,
+      name: `Workspace ${String(position).padStart(2, "0")}`,
+      slug: `workspace-${position}`,
+      membershipRole: position === 1 ? "OWNER" : "MEMBER"
+    };
+  });
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(`${apiUrl("/api/workspaces")}**`, (route) => {
+    const url = new URL(route.request().url());
+    const pageNumber = Number(url.searchParams.get("page") ?? "1");
+    const pageSize = Number(url.searchParams.get("pageSize") ?? "20");
+    const start = (pageNumber - 1) * pageSize;
+    requestedPages.push(pageNumber);
+
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: workspaces.slice(start, start + pageSize),
+          page: pageNumber,
+          pageSize,
+          total: workspaces.length
+        }
+      })
+    });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/app");
+
+  await expect(page.getByText("21 total")).toBeVisible();
+  await expect(page.getByText("20 of 21 loaded")).toBeVisible();
+  await page.getByRole("button", { name: "Load more" }).click();
+
+  const laterWorkspace = page.getByRole("button", {
+    name: /Workspace 21/
+  });
+  await expect(laterWorkspace).toBeVisible();
+  await laterWorkspace.click();
+
+  await expect(laterWorkspace).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("21 of 21 loaded")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Load more" })
+  ).not.toBeVisible();
+  expect(
+    requestedPages.filter((pageNumber) => pageNumber === 1).length
+  ).toBeGreaterThanOrEqual(1);
+  expect(
+    requestedPages.filter((pageNumber) => pageNumber === 2)
+  ).toHaveLength(1);
+  expect(
+    requestedPages.every((pageNumber) => [1, 2].includes(pageNumber))
+  ).toBe(true);
+  expect(consoleErrors).toEqual([]);
+});
+
 test("creates the first workspace from the app empty state", async ({ page }) => {
   let createRequestBody: Record<string, unknown> | null = null;
   let createAuthorization: string | null = null;

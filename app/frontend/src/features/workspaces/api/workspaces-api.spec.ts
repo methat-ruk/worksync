@@ -51,6 +51,32 @@ describe("workspace API client", () => {
     expect(data.items[0]!.name).toBe("Product Team");
   });
 
+  it("requests a later workspace page with the selected page size", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      jsonResponse({
+        success: true,
+        data: {
+          items: [workspaceBody],
+          page: 2,
+          pageSize: 20,
+          total: 21
+        }
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { setAccessToken } = await import("@/lib/api/session-token");
+    const { listWorkspaces } = await import("./workspaces-api");
+
+    setAccessToken("access-token");
+    const data = await listWorkspaces({ page: 2, pageSize: 20 });
+
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      "http://localhost:4000/api/workspaces?page=2&pageSize=20"
+    );
+    expect(data).toMatchObject({ page: 2, pageSize: 20, total: 21 });
+  });
+
   it("creates a workspace with trimmed input and current bearer token", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(
       jsonResponse(
