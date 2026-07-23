@@ -113,9 +113,13 @@ export function WorkspaceCard({
 
 export function WorkspaceCreateForm({
   compact = false,
+  disabled = false,
+  onPendingChange,
   onCreated
 }: {
   compact?: boolean;
+  disabled?: boolean;
+  onPendingChange?: (pending: boolean) => void;
   onCreated: (workspace: PublicWorkspace) => void;
 }) {
   const [name, setName] = useState("");
@@ -133,6 +137,7 @@ export function WorkspaceCreateForm({
     }
 
     setPending(true);
+    onPendingChange?.(true);
     try {
       const workspace = await createWorkspace(parsed.data);
       setName("");
@@ -141,8 +146,11 @@ export function WorkspaceCreateForm({
       setError(workspaceErrorMessage(requestError));
     } finally {
       setPending(false);
+      onPendingChange?.(false);
     }
   }
+
+  const unavailable = disabled || pending;
 
   return (
     <form
@@ -155,7 +163,7 @@ export function WorkspaceCreateForm({
         </FieldLabel>
         <Input
           autoComplete="organization"
-          disabled={pending}
+          disabled={unavailable}
           id={compact ? "workspace-name-compact" : "workspace-name"}
           maxLength={100}
           onChange={(event) => setName(event.target.value)}
@@ -165,7 +173,11 @@ export function WorkspaceCreateForm({
         <FieldError>{error}</FieldError>
       </Field>
       <div className={compact ? "flex items-end" : undefined}>
-        <Button className={createButtonClass} disabled={pending} type="submit">
+        <Button
+          className={createButtonClass}
+          disabled={unavailable}
+          type="submit"
+        >
           <Plus aria-hidden="true" className="size-4 shrink-0" />
           <span className="leading-none">
             {pending ? "Creating..." : "Create workspace"}

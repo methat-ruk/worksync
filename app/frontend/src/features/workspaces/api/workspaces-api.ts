@@ -8,9 +8,21 @@ import {
   type WorkspaceListData
 } from "../model/workspace-contract";
 
-export async function listWorkspaces(): Promise<WorkspaceListData> {
+type ListWorkspacesInput = {
+  page?: number;
+  pageSize?: number;
+};
+
+export async function listWorkspaces({
+  page = 1,
+  pageSize = 20
+}: ListWorkspacesInput = {}): Promise<WorkspaceListData> {
+  const query = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize)
+  });
   const response = await apiRequest(
-    "/api/workspaces?page=1&pageSize=20",
+    `/api/workspaces?${query.toString()}`,
     {},
     { authenticated: true }
   );
