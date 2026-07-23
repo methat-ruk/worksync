@@ -234,7 +234,7 @@ jobs:
 
       # Both targets share this job's ephemeral BuildKit cache. PR validation
       # has no downstream consumer for a daemon-loaded image or remote cache.
-      - name: Build backend image
+      - name: Validate backend image target
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -242,7 +242,7 @@ jobs:
           tags: worksync-backend:ci
           outputs: type=cacheonly
 
-      - name: Build frontend image
+      - name: Validate frontend image target
         uses: docker/build-push-action@v6
         with:
           context: .
