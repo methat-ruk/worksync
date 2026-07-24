@@ -4,11 +4,12 @@ packages:
 
 overrides:
   "@nestjs/swagger>js-yaml": "5.2.1"
+  "@prisma/dev>find-my-way": "9.7.0"
   "fast-uri": "3.1.4"
   "js-yaml": "4.3.0"
   "lodash": "4.18.1"
   "multer": "2.2.0"
-  "postcss": "8.5.10"
+  "postcss": "8.5.22"
   "qs": "6.15.2"
   "next>sharp": "0.35.3"
 

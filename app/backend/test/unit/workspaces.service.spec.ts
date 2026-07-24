@@ -1,5 +1,9 @@
 import type { PrismaService } from "../../src/database/prisma.service";
-import { Prisma } from "../../src/generated/prisma/client";
+import {
+  Prisma,
+  WorkspaceRole
+} from "../../src/generated/prisma/client";
+import type { WorkspaceAuthorizationService } from "../../src/workspaces/workspace-authorization.service";
 import { WorkspacesService } from "../../src/workspaces/workspaces.service";
 
 type TransactionClient = {
@@ -28,7 +32,10 @@ describe("WorkspacesService", () => {
           callback(transactionClient)
       )
     } as unknown as PrismaService;
-    const service = new WorkspacesService(prisma);
+    const workspaceAuthorization = {
+      requireActor: jest.fn()
+    } as unknown as WorkspaceAuthorizationService;
+    const service = new WorkspacesService(prisma, workspaceAuthorization);
 
     await expect(
       service.create("user-1", { name: "Product Team" })
@@ -61,5 +68,149 @@ describe("WorkspacesService", () => {
     for (const slug of randomSlugs) {
       expect(slug).toEqual(expect.stringMatching(/^product-team-[a-f0-9]{8}$/));
     }
+  });
+
+  describe("workspace actor transaction propagation", () => {
+    const workspaceId = "workspace-1";
+    const userId = "owner-1";
+    const createdAt = new Date("2026-07-24T00:00:00.000Z");
+    let transaction: {
+      workspaceMember: {
+        count: jest.Mock;
+        findMany: jest.Mock;
+        findFirst: jest.Mock;
+        create: jest.Mock;
+        update: jest.Mock;
+        delete: jest.Mock;
+      };
+      user: {
+        findUnique: jest.Mock;
+      };
+    };
+    let workspaceAuthorization: {
+      requireActor: jest.Mock;
+    };
+    let service: WorkspacesService;
+
+    beforeEach(() => {
+      transaction = {
+        workspaceMember: {
+          count: jest.fn().mockResolvedValue(0),
+          findMany: jest.fn().mockResolvedValue([]),
+          findFirst: jest.fn(),
+          create: jest.fn(),
+          update: jest.fn(),
+          delete: jest.fn()
+        },
+        user: {
+          findUnique: jest.fn()
+        }
+      };
+      const prisma = {
+        $transaction: jest.fn(
+          (callback: (database: typeof transaction) => Promise<unknown>) =>
+            callback(transaction)
+        )
+      } as unknown as PrismaService;
+      workspaceAuthorization = {
+        requireActor: jest.fn().mockResolvedValue({
+          workspaceId,
+          userId,
+          role: WorkspaceRole.OWNER
+        })
+      };
+      service = new WorkspacesService(
+        prisma,
+        workspaceAuthorization as unknown as WorkspaceAuthorizationService
+      );
+    });
+
+    it("passes the list-members transaction to actor resolution", async () => {
+      await service.listMembers(userId, workspaceId, {
+        page: 1,
+        pageSize: 20
+      });
+
+      expect(workspaceAuthorization.requireActor).toHaveBeenCalledWith(
+        userId,
+        workspaceId,
+        transaction
+      );
+    });
+
+    it("passes the add-member transaction to actor resolution", async () => {
+      transaction.user.findUnique.mockResolvedValue({ id: "member-user-1" });
+      transaction.workspaceMember.create.mockResolvedValue({
+        id: "membership-1",
+        userId: "member-user-1",
+        role: WorkspaceRole.MEMBER,
+        createdAt,
+        user: {
+          email: "member@example.com",
+          displayName: "Member"
+        }
+      });
+
+      await service.addMember(userId, workspaceId, {
+        email: "member@example.com",
+        role: WorkspaceRole.MEMBER
+      });
+
+      expect(workspaceAuthorization.requireActor).toHaveBeenCalledWith(
+        userId,
+        workspaceId,
+        transaction
+      );
+    });
+
+    it("passes the update-member transaction to actor resolution", async () => {
+      transaction.workspaceMember.findFirst.mockResolvedValue({
+        id: "membership-1",
+        userId: "member-user-1",
+        role: WorkspaceRole.ADMIN
+      });
+      transaction.workspaceMember.update.mockResolvedValue({
+        id: "membership-1",
+        userId: "member-user-1",
+        role: WorkspaceRole.MEMBER,
+        createdAt,
+        user: {
+          email: "member@example.com",
+          displayName: "Member"
+        }
+      });
+
+      await service.updateMember(
+        userId,
+        workspaceId,
+        "membership-1",
+        { role: WorkspaceRole.MEMBER }
+      );
+
+      expect(workspaceAuthorization.requireActor).toHaveBeenCalledWith(
+        userId,
+        workspaceId,
+        transaction
+      );
+    });
+
+    it("passes the remove-member transaction to actor resolution", async () => {
+      transaction.workspaceMember.findFirst.mockResolvedValue({
+        id: "membership-1",
+        userId: "member-user-1",
+        role: WorkspaceRole.ADMIN
+      });
+
+      await service.removeMember(userId, workspaceId, "membership-1");
+
+      expect(workspaceAuthorization.requireActor).toHaveBeenCalledWith(
+        userId,
+        workspaceId,
+        transaction
+      );
+      expect(transaction.workspaceMember.delete).toHaveBeenCalledWith({
+        where: { id: "membership-1" }
+      });
+    });
   });
 });

@@ -128,6 +128,12 @@ describe("workspace security controls", () => {
       .send({ name: "Hidden Membership Workspace" })
       .expect(201);
     const workspaceId = created.body.data.workspace.id as string;
+    const member = await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ email: "workspace-hidden-member@example.com", role: "MEMBER" })
+      .expect(201);
+    const memberId = member.body.data.member.id as string;
 
     const list = await request(app.getHttpServer())
       .get(`/api/workspaces/${workspaceId}/members`)
@@ -143,6 +149,21 @@ describe("workspace security controls", () => {
     expect(JSON.stringify(add.body)).not.toContain(
       "workspace-hidden-member@example.com"
     );
+
+    const update = await request(app.getHttpServer())
+      .patch(`/api/workspaces/${workspaceId}/members/${memberId}`)
+      .set("authorization", `Bearer ${outsiderToken}`)
+      .send({ role: "VIEWER" })
+      .expect(404);
+    expect(JSON.stringify(update.body)).not.toContain(workspaceId);
+    expect(JSON.stringify(update.body)).not.toContain(memberId);
+
+    const remove = await request(app.getHttpServer())
+      .delete(`/api/workspaces/${workspaceId}/members/${memberId}`)
+      .set("authorization", `Bearer ${outsiderToken}`)
+      .expect(404);
+    expect(JSON.stringify(remove.body)).not.toContain(workspaceId);
+    expect(JSON.stringify(remove.body)).not.toContain(memberId);
   });
 
   it("denies member and viewer access to member management", async () => {
@@ -214,6 +235,87 @@ describe("workspace security controls", () => {
       .set("authorization", `Bearer ${adminToken}`)
       .send({ role: "MEMBER" })
       .expect(403);
+  });
+
+  it("uses the current persisted role after an actor is demoted", async () => {
+    const adminToken = await signUp(
+      app,
+      "workspace-demoted-admin@example.com"
+    );
+    const created = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ name: "Demoted Actor Workspace" })
+      .expect(201);
+    const workspaceId = created.body.data.workspace.id as string;
+    const admin = await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ email: "workspace-demoted-admin@example.com", role: "ADMIN" })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${adminToken}`)
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .patch(
+        `/api/workspaces/${workspaceId}/members/${
+          admin.body.data.member.id as string
+        }`
+      )
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ role: "MEMBER" })
+      .expect(200);
+
+    const denied = await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${adminToken}`)
+      .expect(403);
+    expect(denied.body).toMatchObject({
+      success: false,
+      message: "Not authorized for this workspace action",
+      data: { code: "AUTHORIZATION_DENIED" }
+    });
+  });
+
+  it("fails closed after an actor membership is removed", async () => {
+    const memberToken = await signUp(
+      app,
+      "workspace-removed-actor@example.com"
+    );
+    const created = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ name: "Removed Actor Workspace" })
+      .expect(201);
+    const workspaceId = created.body.data.workspace.id as string;
+    const member = await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({ email: "workspace-removed-actor@example.com", role: "ADMIN" })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .delete(
+        `/api/workspaces/${workspaceId}/members/${
+          member.body.data.member.id as string
+        }`
+      )
+      .set("authorization", `Bearer ${ownerToken}`)
+      .expect(200);
+
+    const hidden = await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${memberToken}`)
+      .expect(404);
+    expect(hidden.body).toMatchObject({
+      success: false,
+      message: "Workspace not found",
+      data: { code: "RESOURCE_NOT_FOUND" }
+    });
+    expect(JSON.stringify(hidden.body)).not.toContain(workspaceId);
   });
 
   it("prevents self-removal and cross-workspace member targeting", async () => {

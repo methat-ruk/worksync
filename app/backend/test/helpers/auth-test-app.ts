@@ -480,6 +480,32 @@ export async function createAuthTestApp(
             .slice(skip, take ? skip + take : undefined)
             .map(selectedWorkspaceMember)
       ),
+      findUnique: jest.fn(
+        ({
+          where
+        }: {
+          where: {
+            workspaceId_userId: {
+              workspaceId: string;
+              userId: string;
+            };
+          };
+        }) => {
+          const identity = where.workspaceId_userId;
+          const member = [...workspaceMembers.values()].find(
+            (candidate) =>
+              candidate.workspaceId === identity.workspaceId &&
+              candidate.userId === identity.userId
+          );
+          return member
+            ? {
+                workspaceId: member.workspaceId,
+                userId: member.userId,
+                role: member.role
+              }
+            : null;
+        }
+      ),
       findFirst: jest.fn(
         ({
           where

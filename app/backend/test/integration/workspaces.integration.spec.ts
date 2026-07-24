@@ -6,6 +6,7 @@ import { AppModule } from "../../src/app.module";
 import { AuthRateLimiterService } from "../../src/auth/services/auth-rate-limit.service";
 import { PrismaService } from "../../src/database/prisma.service";
 import { configureApplication } from "../../src/main";
+import { WorkspaceAuthorizationService } from "../../src/workspaces/workspace-authorization.service";
 
 const describeWithDatabase = process.env.TEST_DATABASE_URL
   ? describe
@@ -19,6 +20,7 @@ type SignedUpUser = {
 describeWithDatabase("workspace PostgreSQL integration", () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let workspaceAuthorization: WorkspaceAuthorizationService;
   const runId = `${Date.now()}`;
   const emailPrefix = `workspace-${runId}`;
   const slugPrefix = `integration-workspace-${runId}`;
@@ -53,6 +55,7 @@ describeWithDatabase("workspace PostgreSQL integration", () => {
     configureApplication(app);
     await app.init();
     prisma = app.get(PrismaService);
+    workspaceAuthorization = app.get(WorkspaceAuthorizationService);
   });
 
   afterAll(async () => {
@@ -174,6 +177,13 @@ describeWithDatabase("workspace PostgreSQL integration", () => {
         where: { workspaceId_userId: { workspaceId, userId: member.userId } }
       })
     ).resolves.toMatchObject({ role: "MEMBER" });
+    await expect(
+      workspaceAuthorization.requireActor(member.userId, workspaceId)
+    ).resolves.toEqual({
+      workspaceId,
+      userId: member.userId,
+      role: "MEMBER"
+    });
 
     const list = await request(app.getHttpServer())
       .get(`/api/workspaces/${workspaceId}/members`)
@@ -203,6 +213,9 @@ describeWithDatabase("workspace PostgreSQL integration", () => {
         where: { workspaceId_userId: { workspaceId, userId: member.userId } }
       })
     ).resolves.toMatchObject({ role: "VIEWER" });
+    await expect(
+      workspaceAuthorization.requireActor(member.userId, workspaceId)
+    ).resolves.toMatchObject({ role: "VIEWER" });
 
     await request(app.getHttpServer())
       .get(`/api/workspaces/${workspaceId}`)
@@ -218,6 +231,15 @@ describeWithDatabase("workspace PostgreSQL integration", () => {
         where: { workspaceId_userId: { workspaceId, userId: member.userId } }
       })
     ).resolves.toBeNull();
+    await expect(
+      workspaceAuthorization.requireActor(member.userId, workspaceId)
+    ).rejects.toMatchObject({
+      response: {
+        message: "Workspace not found",
+        code: "RESOURCE_NOT_FOUND"
+      },
+      status: 404
+    });
 
     await request(app.getHttpServer())
       .get(`/api/workspaces/${workspaceId}`)

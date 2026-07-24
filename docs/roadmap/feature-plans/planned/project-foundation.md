@@ -42,6 +42,16 @@ must not bypass workspace authorization. Membership identity and role must come
 from the shared server-owned workspace authorization boundary, not from client
 input or a project-specific membership implementation.
 
+Project use cases must inject `WorkspaceAuthorizationService` exported by
+`WorkspacesModule` and resolve the internal immutable `WorkspaceActor`
+projection (`workspaceId`, `userId`, and `role`) from authenticated `userId`
+plus route `workspaceId`. The boundary proves current membership only:
+project-action policy remains explicit in the project layer, and every
+project-by-id query must also constrain `workspaceId` to
+`actor.workspaceId`. The actor must not be serialized, cached across requests,
+or widened with project/persistence data. Operations that authorize and mutate
+inside one transaction must pass that active transaction to the resolver.
+
 ## Required Evidence
 
 - allowed member project create/read
@@ -59,7 +69,7 @@ input or a project-specific membership implementation.
 
 - workspace foundation
 - workspace membership/RBAC
-- [workspace authorization boundary](workspace-authorization-boundary.md)
+- [workspace authorization boundary](../completed/workspace-authorization-boundary.md)
 
 ## Follow-up
 

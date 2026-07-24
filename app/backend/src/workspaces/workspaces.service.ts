@@ -26,6 +26,7 @@ import {
   canRemoveWorkspaceMember,
   canUpdateWorkspaceMember
 } from "./workspace-rbac.policy";
+import { WorkspaceAuthorizationService } from "./workspace-authorization.service";
 
 const WORKSPACE_SELECT = {
   id: true,
@@ -59,7 +60,7 @@ type WorkspaceMemberRecord = Prisma.WorkspaceMemberGetPayload<{
   select: typeof WORKSPACE_MEMBER_SELECT;
 }>;
 
-type WorkspaceActorMembership = {
+type WorkspaceMemberTarget = {
   id: string;
   userId: string;
   role: WorkspaceRole;
@@ -162,7 +163,10 @@ function forbidden(): ForbiddenException {
 
 @Injectable()
 export class WorkspacesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly workspaceAuthorization: WorkspaceAuthorizationService
+  ) {}
 
   async create(
     userId: string,
@@ -279,10 +283,10 @@ export class WorkspacesService {
 
     const { items, total } = await this.prisma.$transaction(
       async (transaction) => {
-        const actor = await this.requireWorkspaceMembership(
-          transaction,
+        const actor = await this.workspaceAuthorization.requireActor(
           userId,
-          workspaceId
+          workspaceId,
+          transaction
         );
         if (!canListWorkspaceMembers(actor.role)) {
           throw forbidden();
@@ -315,10 +319,10 @@ export class WorkspacesService {
     input: AddWorkspaceMemberRequestDto
   ): Promise<PublicWorkspaceMemberDto> {
     return this.prisma.$transaction(async (transaction) => {
-      const actor = await this.requireWorkspaceMembership(
-        transaction,
+      const actor = await this.workspaceAuthorization.requireActor(
         userId,
-        workspaceId
+        workspaceId,
+        transaction
       );
       if (!canAddWorkspaceMember(actor.role, input.role)) {
         throw forbidden();
@@ -362,10 +366,10 @@ export class WorkspacesService {
     input: UpdateWorkspaceMemberRequestDto
   ): Promise<PublicWorkspaceMemberDto> {
     return this.prisma.$transaction(async (transaction) => {
-      const actor = await this.requireWorkspaceMembership(
-        transaction,
+      const actor = await this.workspaceAuthorization.requireActor(
         userId,
-        workspaceId
+        workspaceId,
+        transaction
       );
       const target = await this.findWorkspaceMember(
         transaction,
@@ -398,10 +402,10 @@ export class WorkspacesService {
     memberId: string
   ): Promise<void> {
     await this.prisma.$transaction(async (transaction) => {
-      const actor = await this.requireWorkspaceMembership(
-        transaction,
+      const actor = await this.workspaceAuthorization.requireActor(
         userId,
-        workspaceId
+        workspaceId,
+        transaction
       );
       const target = await this.findWorkspaceMember(
         transaction,
@@ -452,26 +456,11 @@ export class WorkspacesService {
     return toPublicWorkspace(workspace);
   }
 
-  private async requireWorkspaceMembership(
-    transaction: Prisma.TransactionClient,
-    userId: string,
-    workspaceId: string
-  ): Promise<WorkspaceActorMembership> {
-    const membership = await transaction.workspaceMember.findFirst({
-      where: { workspaceId, userId },
-      select: { id: true, userId: true, role: true }
-    });
-    if (!membership) {
-      throw notFound("Workspace not found");
-    }
-    return membership;
-  }
-
   private async findWorkspaceMember(
     transaction: Prisma.TransactionClient,
     workspaceId: string,
     memberId: string
-  ): Promise<WorkspaceActorMembership> {
+  ): Promise<WorkspaceMemberTarget> {
     const member = await transaction.workspaceMember.findFirst({
       where: { id: memberId, workspaceId },
       select: { id: true, userId: true, role: true }
