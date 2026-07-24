@@ -200,6 +200,59 @@ describe("workspace API contract", () => {
       });
   });
 
+  it("preserves safe workspace boundary and role-denial errors", async () => {
+    const outsiderToken = await signUp(
+      app,
+      "workspace-contract-outsider@example.com"
+    );
+    const memberToken = await signUp(
+      app,
+      "workspace-contract-lower-role@example.com"
+    );
+    const created = await request(app.getHttpServer())
+      .post("/api/workspaces")
+      .set("authorization", `Bearer ${accessToken}`)
+      .send({ name: "Authorization Contract Team" })
+      .expect(201);
+    const workspaceId = created.body.data.workspace.id as string;
+
+    await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${accessToken}`)
+      .send({
+        email: "workspace-contract-lower-role@example.com",
+        role: "MEMBER"
+      })
+      .expect(201);
+
+    const hidden = await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${outsiderToken}`)
+      .expect(404);
+    expect(hidden.body).toMatchObject({
+      success: false,
+      message: "Workspace not found",
+      data: {
+        code: "RESOURCE_NOT_FOUND",
+        correlationId: expect.any(String)
+      }
+    });
+    expect(JSON.stringify(hidden.body)).not.toContain(workspaceId);
+
+    const denied = await request(app.getHttpServer())
+      .get(`/api/workspaces/${workspaceId}/members`)
+      .set("authorization", `Bearer ${memberToken}`)
+      .expect(403);
+    expect(denied.body).toMatchObject({
+      success: false,
+      message: "Not authorized for this workspace action",
+      data: {
+        code: "AUTHORIZATION_DENIED",
+        correlationId: expect.any(String)
+      }
+    });
+  });
+
   it("rejects invalid create bodies through the standard envelope", async () => {
     const response = await request(app.getHttpServer())
       .post("/api/workspaces")

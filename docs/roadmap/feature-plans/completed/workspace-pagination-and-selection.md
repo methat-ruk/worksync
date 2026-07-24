@@ -98,5 +98,6 @@ and regression-test slice can be reverted together.
 
 ## Follow-up
 
-[Workspace Authorization Boundary](../planned/workspace-authorization-boundary.md)
-is the next repository-health remediation plan.
+[Workspace Authorization Boundary](workspace-authorization-boundary.md) is
+complete. [Project Foundation](../planned/project-foundation.md) is the next
+planned slice.

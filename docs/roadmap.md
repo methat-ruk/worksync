@@ -4,7 +4,7 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-07-16
+Last updated: 2026-07-24
 
 ## Current Snapshot
 
@@ -24,14 +24,13 @@ Done:
 - auth rate limiting
 - workspace creation, list/read APIs, owner membership, workspace isolation
   evidence, workspace membership/RBAC APIs, and frontend workspace bootstrap
+- reusable trusted workspace actor boundary for downstream resources
 - Docker hybrid and full run modes
 - backend/frontend validation commands and CI structure
 - project setup, workflow, API, security, deployment, and roadmap docs
 
 Still missing before the collaboration MVP works:
 
-- repository-health remediation for multi-context refresh concurrency,
-  workspace pagination, and a reusable workspace authorization boundary
 - project/task APIs and frontend workflows
 - workspace-scoped authorization for project, task, comment, file, and activity
   resources
@@ -43,7 +42,7 @@ Still missing before the collaboration MVP works:
 | Milestone | Status | Summary | Details |
 |---|---|---|---|
 | 0 Foundation | Done | App skeleton, auth foundation, CI, Docker, validation, and docs are in place. | [Milestone 0](roadmap/milestone-0-foundation.md) |
-| 1 Identity and Workspace | Partial | Auth, workspace APIs, workspace membership/RBAC, and frontend workspace bootstrap are in place; downstream workspace-scoped resource authorization remains. | [Milestone 1](roadmap/milestone-1-identity-workspace.md) |
+| 1 Identity and Workspace | Partial | Auth, workspace APIs, membership/RBAC, frontend workspace bootstrap, and the reusable actor boundary are in place; downstream resource policy and scoping remain. | [Milestone 1](roadmap/milestone-1-identity-workspace.md) |
 | 2 Projects and Tasks | Partial foundation only | Prisma models exist; APIs, UI, authorization, and tests are not implemented. | [Milestone 2](roadmap/milestone-2-projects-tasks.md) |
 | 3 Comments, Mentions, and Notifications | Partial foundation only | Comment model exists; mentions, notifications, and realtime are not implemented. | [Milestone 3](roadmap/milestone-3-comments-notifications.md) |
 | 4 File Uploads and Background Jobs | Planned | MinIO and Redis local services exist; storage and job features are not implemented. | [Milestone 4](roadmap/milestone-4-files-jobs.md) |
@@ -51,14 +50,12 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Workspace Authorization Boundary](roadmap/feature-plans/planned/workspace-authorization-boundary.md)
-   - establish the reusable tenant boundary required by downstream resources.
-2. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
+1. [Project Foundation](roadmap/feature-plans/planned/project-foundation.md)
    - create the first workspace-scoped project API on the shared authorization
      boundary.
-3. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
+2. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
    - build the first task workflow inside the workspace/project boundary.
-4. Add activity, comments, notifications, files, jobs, and production readiness
+3. Add activity, comments, notifications, files, jobs, and production readiness
    only after workspace-scoped project/task authorization evidence exists.
 
 ## Guiding Principles

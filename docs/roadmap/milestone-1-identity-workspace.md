@@ -68,10 +68,11 @@ Delivered:
   revocation
 - paginated workspace loading, accurate total display, later-page selection,
   and recoverable partial-failure handling
+- reusable trusted workspace actor resolution with transaction participation,
+  safe tenant-hiding failures, and downstream module export
 
 Still required:
 
-- a reusable trusted workspace actor boundary for downstream resources
 - workspace isolation enforcement for every future workspace-scoped query
 - role matrix finalization for project, task, comment, file, and activity
   actions
@@ -85,7 +86,7 @@ Feature plan order:
 5. [Frontend Auth State and Redirect Safety](feature-plans/completed/frontend-auth-state-and-redirect-safety.md)
 6. [Auth Session Concurrency Hardening](feature-plans/completed/auth-session-concurrency-hardening.md)
 7. [Workspace Pagination and Selection](feature-plans/completed/workspace-pagination-and-selection.md)
-8. [Workspace Authorization Boundary](feature-plans/planned/workspace-authorization-boundary.md)
+8. [Workspace Authorization Boundary](feature-plans/completed/workspace-authorization-boundary.md)
 
 ## Exit Criteria
 
@@ -114,4 +115,4 @@ Feature plan order:
 - [Frontend Auth State and Redirect Safety](feature-plans/completed/frontend-auth-state-and-redirect-safety.md)
 - [Auth Session Concurrency Hardening](feature-plans/completed/auth-session-concurrency-hardening.md)
 - [Workspace Pagination and Selection](feature-plans/completed/workspace-pagination-and-selection.md)
-- [Workspace Authorization Boundary](feature-plans/planned/workspace-authorization-boundary.md)
+- [Workspace Authorization Boundary](feature-plans/completed/workspace-authorization-boundary.md)
