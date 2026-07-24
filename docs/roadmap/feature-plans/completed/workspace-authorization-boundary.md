@@ -27,6 +27,19 @@ resources.
 - passed the full backend validation gate: Prisma validation/generation,
   typecheck, lint, 166 tests across 27 suites, build, and artifact validation
 
+### Post-implementation CI Security Maintenance
+
+The first CI run was blocked by newly reported vulnerabilities in existing
+production transitive dependencies unrelated to the authorization change. A
+separate security-maintenance commit in the same Draft PR:
+
+- updates the existing global PostCSS override to `8.5.22`
+- adds a targeted `@prisma/dev>find-my-way` override at `9.7.0` because the
+  latest Prisma release still pins the vulnerable version
+- changes no direct application dependency or runtime contract
+- passes the production dependency audit plus full backend and frontend
+  validation
+
 ## Objective
 
 Expose one narrow, tested backend boundary that resolves the authenticated
@@ -177,8 +190,9 @@ Consumer rules:
 - changing role values or finalizing project/task/comment/file permissions
 - changing endpoint paths, request or response DTOs, Swagger schemas, status
   codes, or public error messages
-- changing Prisma schema, migrations, indexes, seed data, dependencies,
-  environment variables, Docker, CI, or deployment behavior
+- changing Prisma schema, migrations, indexes, seed data, direct application
+  dependencies, environment variables, Docker, CI, or deployment behavior;
+  the post-implementation transitive security overrides are recorded separately
 - solving concurrent revocation after an authorization check has already
   succeeded; this PR preserves the existing per-operation authorization timing
 
@@ -194,7 +208,7 @@ Consumer rules:
 | Auth | Continue receiving identity through `@CurrentUser()` and `AuthGuard` | Confirm unaffected |
 | Security/tenant isolation | Centralize membership proof and safe failure | Direct changed guarantee |
 | Data/schema | Reuse current `WorkspaceMember` composite unique key; no schema change | Real PostgreSQL evidence |
-| Runtime/CI/dependencies | No configuration or dependency change | Existing backend CI remains authoritative |
+| Runtime/CI/dependencies | No runtime/CI or direct dependency change; targeted transitive security overrides were added after advisory drift | Existing CI and production audit remain authoritative |
 | Documentation | Name owner and consumer contract | Update in this PR |
 | Project Foundation | Consume exported actor boundary later | Update plan only; no project code |
 
@@ -266,6 +280,8 @@ Expected documentation changes:
 `workspaces.controller.ts`, workspace DTOs, `workspace-rbac.policy.ts`, Prisma
 schema/migrations, frontend code, runtime configuration, dependencies, and CI
 are review boundaries but are not expected implementation edits.
+`pnpm-workspace.yaml` and `pnpm-lock.yaml` were added only by the recorded
+post-implementation transitive security maintenance.
 
 ## Implementation Steps
 
@@ -561,8 +577,9 @@ Approval requested:
   Foundation dependency, and prior pagination follow-up agree that Workspace
   Authorization Boundary is complete and Project Foundation is next
 - no documentation link points to the removed planned feature path
-- no schema, migration, dependency, frontend, runtime, CI, or deployment change
-  enters the PR
+- no schema, migration, direct application dependency, frontend behavior,
+  runtime, CI, or deployment change enters the PR; the recorded transitive
+  security overrides are the only dependency-maintenance exception
 
 ## Dependencies
 
