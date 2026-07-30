@@ -36,7 +36,8 @@ common local PostgreSQL conflicts. Keep these surfaces aligned when changing
 local ports, service names, or run modes:
 
 - `docker/compose.yml`
-- root and app environment examples
+- `docker/compose.app.yml` and `docker/compose.test.yml`
+- app-local and Docker-local environment examples
 - backend test setup defaults
 - Prisma test migration and runtime smoke commands
 - CI service mappings and injected environment variables

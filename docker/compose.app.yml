@@ -1,5 +1,7 @@
 services:
   backend:
+    image: worksync-backend:local
+    container_name: worksync-backend
     build:
       context: ..
       dockerfile: Dockerfile
@@ -56,6 +58,8 @@ services:
     restart: unless-stopped
 
   frontend:
+    image: worksync-frontend:local
+    container_name: worksync-frontend
     build:
       context: ..
       dockerfile: Dockerfile

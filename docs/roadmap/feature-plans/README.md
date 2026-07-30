@@ -39,6 +39,12 @@ tenant-isolation evidence exist.
 | 5 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
 | 6 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
 
+## Maintenance Plans
+
+| Plan | Status |
+|---|---|
+| [Environment Layout and Docker Test Runtime](planned/environment-layout-docker-test-runtime.md) | Implemented locally; awaiting commit and CI |
+
 ## Completed Feature Summaries
 
 Completed summaries are intentionally lighter than planned feature plans. They

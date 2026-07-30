@@ -25,7 +25,7 @@ Install dependencies
 | Backend validation | Prisma validation/generation, migrations, backend typecheck, lint, Jest projects, backend build, backend artifact checks |
 | Frontend validation | shared auth policy package tests, frontend typecheck, lint, unit/component tests, frontend build |
 | Frontend E2E | Playwright browser evidence for critical auth and navigation behavior |
-| Container topology and images | Compose config, service list, backend image build, frontend image build |
+| Container topology and images | Development/test Compose config and service lists, Docker orchestration self-test, and production/test image builds |
 | Dependency audit | production dependency vulnerability gate |
 
 Keep jobs split by failure ownership. Do not combine unrelated checks just to
@@ -49,6 +49,7 @@ corepack pnpm --filter @worksync/frontend test:e2e
 corepack pnpm docker:full:config
 corepack pnpm docker:full:services
 corepack pnpm docker:full:build
+corepack pnpm test:docker-orchestration
 corepack pnpm audit --prod --audit-level moderate
 ```
 

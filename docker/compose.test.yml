@@ -1,0 +1,74 @@
+x-test-runner: &test-runner
+  build:
+    context: ..
+    dockerfile: Dockerfile
+    target: test-runner
+  image: worksync-test-runner:local
+  env_file:
+    - ${WORKSYNC_DOCKER_TEST_ENV_FILE:-.env.test}
+  environment:
+    CI: "true"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - ${WORKSYNC_DOCKER_TEST_ENV_FILE:-.env.test}
+    volumes:
+      - worksync-test-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migration-test:
+    <<: *test-runner
+    command: ["corepack", "pnpm", "prisma:migrate:deploy:test"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend-test:
+    <<: *test-runner
+    command: ["corepack", "pnpm", "validate:backend"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend-test:
+    <<: *test-runner
+    command: ["corepack", "pnpm", "validate:frontend"]
+
+  frontend-e2e:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: test-e2e
+    image: worksync-test-e2e:local
+    env_file:
+      - ${WORKSYNC_DOCKER_TEST_ENV_FILE:-.env.test}
+    environment:
+      CI: "true"
+    command: ["corepack", "pnpm", "test:e2e:frontend:all"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  worksync-test-postgres-data:

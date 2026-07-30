@@ -203,7 +203,7 @@ jobs:
   containers:
     name: Container topology and images
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -215,20 +215,31 @@ jobs:
         run: docker compose -f docker/compose.yml config --quiet
 
       - name: Validate full container topology
-        env:
-          JWT_ACCESS_SECRET: ci-access-secret-at-least-32-bytes-long
-          JWT_REFRESH_SECRET: ci-refresh-secret-at-least-32-bytes-different
-        run: docker compose -f docker/compose.yml -f docker/compose.app.yml config --quiet
+        run: docker compose --env-file docker/.env.development.example -f docker/compose.yml -f docker/compose.app.yml config --quiet
 
       - name: Validate full container services
-        env:
-          JWT_ACCESS_SECRET: ci-access-secret-at-least-32-bytes-long
-          JWT_REFRESH_SECRET: ci-refresh-secret-at-least-32-bytes-different
         run: |
-          services="$(docker compose -f docker/compose.yml -f docker/compose.app.yml config --services | sort | tr '\n' ' ')"
+          services="$(docker compose --env-file docker/.env.development.example -f docker/compose.yml -f docker/compose.app.yml config --services | sort | tr '\n' ' ')"
           test "$services" = "backend frontend minio postgres redis "
 
-      # Both targets share this job's ephemeral BuildKit cache. PR validation
+      - name: Validate isolated test container topology
+        env:
+          WORKSYNC_DOCKER_TEST_ENV_FILE: .env.test.example
+        run: docker compose --project-name worksync-test --env-file docker/.env.test.example -f docker/compose.test.yml config --quiet
+
+      - name: Validate isolated test container services
+        env:
+          WORKSYNC_DOCKER_TEST_ENV_FILE: .env.test.example
+        run: |
+          services="$(docker compose --project-name worksync-test --env-file docker/.env.test.example -f docker/compose.test.yml config --services | sort | tr '\n' ' ')"
+          test "$services" = "backend-test frontend-e2e frontend-test migration-test postgres redis "
+
+      - name: Validate Docker orchestration scripts
+        run: |
+          node --check scripts/docker-images.cjs
+          node scripts/docker-test-self-test.cjs
+
+      # All targets share this job's ephemeral BuildKit cache. PR validation
       # has no downstream consumer for a daemon-loaded image or remote cache.
       - name: Validate backend image target
         uses: docker/build-push-action@v7
@@ -248,6 +259,22 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
             NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=false
+
+      - name: Validate test runner image target
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: test-runner
+          tags: worksync-test-runner:ci
+          outputs: type=cacheonly
+
+      - name: Validate Playwright test image target
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: test-e2e
+          tags: worksync-test-e2e:ci
+          outputs: type=cacheonly
 
   security:
     name: Dependency audit

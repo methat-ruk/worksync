@@ -7,8 +7,7 @@ This matrix defines the expected repository commands for local development and C
 ```bash
 corepack enable
 corepack pnpm install --frozen-lockfile
-cp .env.local.example .env
-cp app/frontend/.env.example app/frontend/.env.local
+cp app/frontend/.env.local.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
 cp app/backend/.env.test.example app/backend/.env.test
 pnpm docker:infra:up
@@ -42,9 +41,13 @@ following `docs/project-setup.md`.
 | Backend API tests | `pnpm --filter @worksync/backend test:e2e` | Validate health, readiness, error, validation, correlation, and route-prefix contracts |
 | Build | `pnpm build` | Produce frontend and backend build artifacts |
 | Infrastructure Compose config | `docker compose -f docker/compose.yml config` | Validate the infrastructure-only topology for hybrid development |
-| Full Compose config | `docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config` | Validate the combined infrastructure/application topology with the root env file |
-| Full Compose services | `docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config --services` | Confirm the full topology declares frontend, backend, PostgreSQL, Redis, and MinIO |
+| Full Compose config | `pnpm docker:full:config` | Validate the combined infrastructure/application topology with `docker/.env.development` |
+| Full Compose services | `pnpm docker:full:services` | Confirm the full topology declares frontend, backend, PostgreSQL, Redis, and MinIO |
+| Test Compose config | `pnpm docker:test:config` | Validate the guarded Docker test environment and isolated topology |
+| Docker test orchestration | `pnpm test:docker-orchestration` | Verify fail-fast scope ordering, active-project protection, and cleanup error precedence |
+| Isolated Docker tests | `pnpm docker:test` | Run migrations plus backend, frontend, standard E2E, and live E2E validation in disposable containers |
 | Container build | `pnpm docker:full:build` | Build frontend and backend image targets |
+| Image preparation | `pnpm docker:images:prepare` | Pull infrastructure dependencies and build all named development/test images without creating containers |
 | Prisma generate | `pnpm prisma:generate` | Validate Prisma schema and generated client |
 | Prisma validate | `pnpm prisma:validate` | Validate Prisma schema syntax and relation consistency |
 | Dependency audit | `pnpm audit --prod --audit-level moderate` | Fail on moderate-, high-, or critical-severity production dependency findings |
@@ -60,7 +63,7 @@ following `docs/project-setup.md`.
 | CI backend job | Pull requests and pushes to `main` | PostgreSQL and Redis-backed backend validation, migrations, build, and artifact checks |
 | CI frontend job | Pull requests and pushes to `main` | Shared auth policy tests, frontend typecheck, lint, tests, and production build |
 | CI frontend E2E job | Pull requests and pushes to `main` | Playwright browser evidence for critical frontend auth and navigation behavior |
-| CI container job | Pull requests and pushes to `main` | Compose topology and backend/frontend Docker image build checks |
+| CI container job | Pull requests and pushes to `main` | Development/test Compose topology, orchestration self-test, and production/test image target builds |
 | CI security job | Pull requests and pushes to `main` | Production dependency audit |
 
 Git hooks provide local feedback and can be bypassed. CI remains the authoritative merge gate.
@@ -79,6 +82,8 @@ CI jobs: `Backend validation`, `Frontend validation`, `Frontend E2E`,
 - `docker/compose.yml` is the hybrid-development infrastructure topology.
 - `docker/compose.app.yml` is a local/staging-like application overlay for
   full Docker mode; it is not a production deployment manifest.
+- `docker/compose.test.yml` is a disposable validation topology and is not a
+  production or staging deployment manifest.
 
 `pnpm validate:backend` must run with `DATABASE_URL` targeting the CI test
 database so the PostgreSQL integration project passes rather than connecting

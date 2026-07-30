@@ -21,6 +21,11 @@ FROM dependencies AS source
 COPY . .
 RUN corepack pnpm --filter @worksync/auth-policy build
 
+FROM source AS test-runner
+
+FROM test-runner AS test-e2e
+RUN corepack pnpm --filter @worksync/frontend exec playwright install --with-deps chromium
+
 FROM source AS frontend-builder
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000

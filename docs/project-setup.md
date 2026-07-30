@@ -45,19 +45,21 @@ Use `--frozen-lockfile` for reproducible onboarding and CI parity. Run a normal
 macOS or Linux:
 
 ```bash
-cp .env.local.example .env
-cp app/frontend/.env.example app/frontend/.env.local
+cp app/frontend/.env.local.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
 cp app/backend/.env.test.example app/backend/.env.test
+cp docker/.env.development.example docker/.env.development
+cp docker/.env.test.example docker/.env.test
 ```
 
 Windows PowerShell:
 
 ```powershell
-Copy-Item .env.local.example .env
-Copy-Item app/frontend/.env.example app/frontend/.env.local
+Copy-Item app/frontend/.env.local.example app/frontend/.env.local
 Copy-Item app/backend/.env.example app/backend/.env
 Copy-Item app/backend/.env.test.example app/backend/.env.test
+Copy-Item docker/.env.development.example docker/.env.development
+Copy-Item docker/.env.test.example docker/.env.test
 ```
 
 Replace example JWT values with two different local secrets of at least 32
@@ -264,7 +266,6 @@ Hybrid mode is the default for day-to-day development:
 Commands:
 
 ```bash
-cp .env.local.example .env
 corepack pnpm install --frozen-lockfile
 docker compose -f docker/compose.yml up -d
 corepack pnpm dev
@@ -298,14 +299,14 @@ validation:
 Create a Docker-mode environment file, then build and start:
 
 ```bash
-cp .env.docker.example .env
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml up --build -d
+cp docker/.env.development.example docker/.env.development
+corepack pnpm docker:full:up
 ```
 
 Apply committed migrations before serving application traffic:
 
 ```bash
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml \
+docker compose --env-file docker/.env.development -f docker/compose.yml -f docker/compose.app.yml \
   run --rm backend \
   ./node_modules/.bin/prisma migrate deploy
 ```
@@ -318,7 +319,7 @@ corepack pnpm docker:full:down
 
 Container constraints:
 
-- The example JWT secrets in `.env.docker.example` are local-only. Replace
+- The example JWT secrets in `docker/.env.development.example` are local-only. Replace
   them before using any shared, staging, production-like, or internet-exposed
   environment.
 - `NEXT_PUBLIC_*` values are compiled into the frontend image; rebuild that
@@ -328,6 +329,22 @@ Container constraints:
 - For `app.example.com` and `api.example.com`, use `.example.com`, HTTPS, and
   `COOKIE_SECURE=true`.
 - `COOKIE_DOMAIN` must not contain a scheme, port, or path.
+
+### Isolated Docker test mode
+
+Copy the guarded test template before running a test scope:
+
+```bash
+cp docker/.env.test.example docker/.env.test
+corepack pnpm docker:test:config
+corepack pnpm docker:test
+```
+
+The fixed `worksync-test` Compose project has no host ports or named
+containers. It rejects non-test database names and an active project before
+any mutation, then removes its disposable database volume after success,
+failure, or interruption. Use `corepack pnpm docker:test:down` for manual
+recovery. Production Docker topology is not defined by this test runner.
 - The Google callback must exactly match the external backend callback, such
   as `https://api.example.com/api/auth/google/callback`.
 - The Compose overlay is local/staging-like: it does not provide TLS, ingress,
@@ -356,6 +373,9 @@ Container constraints:
 | `corepack pnpm docker:infra:up` | Run PostgreSQL, Redis, and MinIO only |
 | `corepack pnpm docker:full:build` | Build application Docker images |
 | `corepack pnpm docker:full:up` | Run infrastructure and application containers |
+| `corepack pnpm docker:images:prepare` | Pull dependencies and build all development/test images without creating containers |
+| `corepack pnpm docker:test` | Run backend, frontend, and E2E validation in isolated containers |
+| `corepack pnpm docker:test:down` | Remove isolated test containers and their disposable database volume |
 | `corepack pnpm smoke:backend:runtime` | Smoke-test the built backend against the guarded test database |
 | `corepack pnpm docker:infra:down` | Stop local infrastructure |
 | `corepack pnpm --filter @worksync/backend test:integration` | Run PostgreSQL integration tests |
