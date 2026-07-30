@@ -254,6 +254,44 @@ describe("ProjectSection", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("offers reconciliation when a reordered terminal page overlaps earlier results", async () => {
+    const user = userEvent.setup();
+    const secondProject = {
+      ...project,
+      id: "project-2",
+      name: "Platform"
+    };
+    vi.mocked(listProjects)
+      .mockResolvedValueOnce(
+        projectPage([project], { page: 1, pageSize: 1, total: 2 })
+      )
+      .mockResolvedValueOnce(
+        projectPage([project], { page: 2, pageSize: 1, total: 2 })
+      )
+      .mockResolvedValueOnce(projectPage([project, secondProject]));
+
+    render(<ProjectSection workspace={workspace} />);
+    await user.click(
+      await screen.findByRole("button", { name: "Load more projects" })
+    );
+
+    expect(screen.getByText("1 of 2 loaded")).toBeInTheDocument();
+    expect(
+      screen.getByText(/The project list changed while it was loading/)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more projects" })
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "Refresh projects" })
+    );
+
+    expect(await screen.findByText("Platform")).toBeInTheDocument();
+    expect(screen.getByText("2 of 2 loaded")).toBeInTheDocument();
+    expect(listProjects).toHaveBeenCalledTimes(3);
+  });
+
   it("recovers after loading a later page fails", async () => {
     const user = userEvent.setup();
     vi.mocked(listProjects)

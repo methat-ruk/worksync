@@ -53,6 +53,7 @@ type ProjectCollection = {
   pageSize: number;
   nextPage: number;
   exhausted: boolean;
+  inconsistent: boolean;
 };
 
 const initialCollection: ProjectCollection = {
@@ -60,7 +61,8 @@ const initialCollection: ProjectCollection = {
   total: 0,
   pageSize: 20,
   nextPage: 1,
-  exhausted: true
+  exhausted: true,
+  inconsistent: false
 };
 
 const surfaceClass =
@@ -86,12 +88,15 @@ function collectionFromPage(
   current: PublicProject[] = []
 ): ProjectCollection {
   const items = mergeProjects(current, data.items);
+  const total = Math.max(data.total, items.length);
+  const exhausted = data.page * data.pageSize >= total;
   return {
     items,
-    total: Math.max(data.total, items.length),
+    total,
     pageSize: data.pageSize,
     nextPage: data.page + 1,
-    exhausted: data.page * data.pageSize >= data.total
+    exhausted,
+    inconsistent: exhausted && items.length < total
   };
 }
 
@@ -503,6 +508,27 @@ export function ProjectSection({
                     variant="outline"
                   >
                     Retry load more
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {collection.inconsistent && !pageError && (
+            <Alert>
+              <AlertDescription>
+                <div className="flex flex-col items-start gap-3">
+                  <p>
+                    The project list changed while it was loading. Refresh the
+                    list to reconcile the results.
+                  </p>
+                  <Button
+                    disabled={pagePending}
+                    onClick={() => void loadInitial()}
+                    type="button"
+                    variant="outline"
+                  >
+                    Refresh projects
                   </Button>
                 </div>
               </AlertDescription>

@@ -25,10 +25,13 @@ Delivered on `feat/project-foundation`:
 - unit, contract, PostgreSQL integration, security, component, mocked-browser,
   and live-browser coverage
 - standalone project API and security documentation
+- post-implementation dependency-audit remediation for transitive
+  `js-yaml` and `valibot` vulnerabilities
 
 Required validation passed locally. The local shell used Node.js 24 even though
 the repository contract requires Node.js 22; CI remains the merge authority for
-the supported runtime.
+the supported runtime. The follow-up CI run passed after the minimum patched
+transitive versions were applied.
 
 ## Goal
 
@@ -97,8 +100,8 @@ The approved planning baseline is:
   architecture change
 - project update UI; update is backend-contract only in this slice
 - activity logs, realtime events, notifications, files, or background jobs
-- Prisma schema, migration, index, dependency, runtime, Docker, CI, deployment,
-  or production-target changes
+- Prisma schema, migration, index, feature-driven dependency addition, runtime,
+  Docker, CI, deployment, or production-target changes
 
 ## Public API Contract
 
@@ -269,7 +272,8 @@ Behavior:
 | Public API | Four project endpoints and Swagger schemas | Change in this PR |
 | Auth/security | Project RBAC, IDOR/BOLA, workspace isolation | Direct changed guarantee |
 | Data | Use existing Project model and unique key | No schema or migration |
-| Runtime/CI/dependencies | Existing commands and jobs only | Confirm unaffected |
+| Runtime/CI | Existing commands and jobs only | Confirm unaffected |
+| Dependencies | Patch transitive `js-yaml` and `valibot` advisories | Security remediation |
 | Documentation | API, security matrix, roadmap, milestone, plan closeout | Change in this PR |
 | Tasks and downstream features | Consume stable project contract later | Follow-up only |
 
@@ -425,10 +429,12 @@ evidence.
 
 ## Rollback and Forward Fix
 
-No schema, migration, backfill, dependency, runtime, or production deployment
-change is planned. Before external consumers depend on the endpoints, the slice
-is reversible by removing the projects module registration, project API/UI, and
-associated documentation.
+No schema, migration, backfill, runtime, or production deployment change is
+planned. The follow-up dependency-audit remediation is reversible by restoring
+the prior overrides and lockfile, but doing so reintroduces the known
+vulnerabilities. Before external consumers depend on the endpoints, the feature
+slice is reversible by removing the projects module registration, project
+API/UI, and associated documentation.
 
 After the public API has consumers, prefer a forward fix that preserves method,
 path, envelope, key, and authorization contracts. If tenant isolation is found
@@ -537,6 +543,10 @@ Approval outcome:
   cleaned PostgreSQL integration fixtures, covered frontend failure recovery,
   and made live browser evidence re-read the persisted project before final
   validation
+- a separately approved follow-up patched transitive `js-yaml` to `5.2.2` and
+  `valibot` to `1.4.2`; production dependency audit and CI passed
+- PR review added terminal-page reconciliation for offset pagination when
+  concurrent project updates reorder results
 
 ## Done Criteria
 
@@ -547,8 +557,10 @@ Approval outcome:
 - unit, contract, real-PostgreSQL integration, security, component, mocked
   browser, live browser, typecheck, lint, build, Swagger, and diff evidence pass
 - required suites do not skip and post-review findings are resolved
-- no schema, migration, dependency, runtime, CI, Docker, deployment, task,
-  realtime, job, notification, file, or activity work enters the PR
+- no schema, migration, feature dependency, runtime, CI, Docker, deployment,
+  task, realtime, job, notification, file, or activity work enters the PR;
+  dependency changes are limited to the audited transitive security patches
+  recorded above
 - roadmap, Milestone 2, feature-plan index, completed plan, and Task Foundation
   agree that Project Foundation is complete and Task Foundation is next
 
