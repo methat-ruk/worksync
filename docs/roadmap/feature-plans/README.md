@@ -22,9 +22,8 @@ Prioritize planned work by:
 
 For the current roadmap, this means:
 
-1. project foundation
-2. task foundation
-3. comments, notifications, files, jobs, and production readiness
+1. task foundation
+2. comments, notifications, files, jobs, and production readiness
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -33,13 +32,12 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Project Foundation](planned/project-foundation.md) | 2 | Next |
-| 2 | [Task Foundation](planned/task-foundation.md) | 2 | Planned |
-| 3 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 4 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 5 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 6 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 7 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
+| 1 | [Task Foundation](planned/task-foundation.md) | 2 | Next |
+| 2 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 3 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 4 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 5 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 6 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
 
 ## Completed Feature Summaries
 
@@ -62,6 +60,7 @@ reconstructing every historical implementation detail.
 | [Auth Session Concurrency Hardening](completed/auth-session-concurrency-hardening.md) | Done |
 | [Workspace Pagination and Selection](completed/workspace-pagination-and-selection.md) | Done |
 | [Workspace Authorization Boundary](completed/workspace-authorization-boundary.md) | Done |
+| [Project Foundation](completed/project-foundation.md) | Done |
 
 ## Feature Plan Template
 

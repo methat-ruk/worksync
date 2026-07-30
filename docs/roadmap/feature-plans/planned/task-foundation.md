@@ -56,7 +56,7 @@ or creator IDs must not allow cross-workspace relation tampering.
 
 ## Dependencies
 
-- project foundation
+- [project foundation](../completed/project-foundation.md)
 - workspace membership/RBAC
 
 ## Follow-up

@@ -1,6 +1,6 @@
 # Milestone 2 - Projects and Tasks
 
-Status: Partial foundation only
+Status: Partial
 
 ## Goal
 
@@ -14,30 +14,37 @@ track status, and see task activity inside the correct workspace boundary.
 - `TaskStatus` enum with `BACKLOG`, `IN_PROGRESS`, `DONE`, and `CANCELED`
 - user relations for task creator and assignee
 
+## Delivered
+
+- project create, list, read, and update APIs
+- workspace-scoped project authorization and tenant isolation
+- project key normalization, immutability, and workspace-local uniqueness
+- frontend selected-workspace project list/create workflow
+- project unit, contract, integration, security, component, and browser evidence
+
 ## Still Required
 
-- project CRUD APIs
 - task CRUD APIs
 - task status transition rules
 - assignment and due date support
 - task list view
 - board view
 - activity log model and write path
-- workspace-scoped authorization for all project/task routes
-- frontend project/task workflows
-- API contract, integration, and security tests
+- workspace-scoped authorization for all task routes
+- frontend project update and task workflows
+- task API contract, integration, and security tests
 
 Feature plan order:
 
-1. [Project Foundation](feature-plans/planned/project-foundation.md)
+1. [Project Foundation](feature-plans/completed/project-foundation.md)
 2. [Task Foundation](feature-plans/planned/task-foundation.md)
 
 ## Exit Criteria
 
 - task lifecycle invariants are documented: Partial
 - task APIs follow response and error conventions: Not done
-- frontend covers loading, empty, error, and success states: Not done for
-  projects/tasks
+- frontend covers loading, empty, error, and success states: Done for project
+  list/create; not done for tasks
 
 ## Related Docs
 

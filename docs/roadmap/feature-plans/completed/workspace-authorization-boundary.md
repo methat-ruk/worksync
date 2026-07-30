@@ -228,7 +228,7 @@ Consumer rules:
 
 - `app/backend/test/helpers/auth-test-app.ts`: in-memory Prisma behavior may
   need the composite `workspaceId_userId` lookup used by production code
-- `docs/roadmap/feature-plans/planned/project-foundation.md`: must name the
+- `docs/roadmap/feature-plans/completed/project-foundation.md`: must name the
   shared boundary rather than permitting a project-owned membership lookup
 
 ### Adjacent but Unchanged
@@ -267,7 +267,7 @@ Expected evidence and adapter changes:
 Expected documentation changes:
 
 - `docs/api-design/authorization-boundaries.md`
-- `docs/roadmap/feature-plans/planned/project-foundation.md`
+- `docs/roadmap/feature-plans/completed/project-foundation.md`
 - `docs/roadmap/feature-plans/README.md` at successful closeout
 - `docs/roadmap/milestone-1-identity-workspace.md` at successful closeout
 - `docs/roadmap.md` at successful closeout
@@ -593,6 +593,6 @@ Sequencing context, not implementation dependencies:
 
 ## Follow-up
 
-- [Project Foundation](../planned/project-foundation.md) consumes this boundary
+- [Project Foundation](project-foundation.md) consumes this boundary
   and owns project-specific action policy and project-resource workspace
   scoping

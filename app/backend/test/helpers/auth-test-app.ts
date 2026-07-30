@@ -17,6 +17,7 @@ import {
   type AuthIdentity,
   type AuthProvider,
   type AuthSession,
+  type Project,
   type User,
   type Workspace,
   type WorkspaceMember,
@@ -29,6 +30,7 @@ import { configureApplication } from "../../src/main";
 import { createGoogleOAuthTestHarness } from "./google-oauth-test-harness";
 
 type StoredUser = User;
+type StoredProject = Project;
 type StoredWorkspace = Workspace;
 type StoredWorkspaceMember = WorkspaceMember;
 
@@ -47,6 +49,7 @@ export type AuthTestContext = {
   identities: Map<string, AuthIdentity>;
   users: Map<string, StoredUser>;
   sessions: Map<string, AuthSession>;
+  projects: Map<string, StoredProject>;
   workspaces: Map<string, StoredWorkspace>;
   workspaceMembers: Map<string, StoredWorkspaceMember>;
 };
@@ -63,6 +66,7 @@ export async function createAuthTestApp(
   const identities = new Map<string, AuthIdentity>();
   const users = new Map<string, StoredUser>();
   const sessions = new Map<string, AuthSession>();
+  const projects = new Map<string, StoredProject>();
   const workspaces = new Map<string, StoredWorkspace>();
   const workspaceMembers = new Map<string, StoredWorkspaceMember>();
   let sequence = 0;
@@ -106,6 +110,16 @@ export async function createAuthTestApp(
         email: user.email,
         displayName: user.displayName
       }
+    };
+  }
+
+  function selectedProject(project: StoredProject) {
+    return {
+      id: project.id,
+      name: project.name,
+      key: project.key,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt
     };
   }
 
@@ -587,6 +601,111 @@ export async function createAuthTestApp(
         return member;
       })
     },
+    project: {
+      create: jest.fn(
+        ({
+          data
+        }: {
+          data: {
+            workspaceId: string;
+            name: string;
+            key: string;
+          };
+        }) => {
+          const duplicate = [...projects.values()].some(
+            (project) =>
+              project.workspaceId === data.workspaceId &&
+              project.key === data.key
+          );
+          if (duplicate) {
+            throw new Prisma.PrismaClientKnownRequestError(
+              "Unique constraint failed",
+              {
+                code: "P2002",
+                clientVersion: "7.8.0",
+                meta: { target: ["workspaceId", "key"] }
+              }
+            );
+          }
+          const now = new Date(
+            Date.UTC(2026, 6, 30, 10, 0, 0, sequence)
+          );
+          const project: StoredProject = {
+            id: `project-${++sequence}`,
+            workspaceId: data.workspaceId,
+            name: data.name,
+            key: data.key,
+            createdAt: now,
+            updatedAt: now
+          };
+          projects.set(project.id, project);
+          return selectedProject(project);
+        }
+      ),
+      count: jest.fn(
+        ({ where }: { where: { workspaceId: string } }) =>
+          [...projects.values()].filter(
+            (project) => project.workspaceId === where.workspaceId
+          ).length
+      ),
+      findMany: jest.fn(
+        ({
+          where,
+          skip = 0,
+          take
+        }: {
+          where: { workspaceId: string };
+          skip?: number;
+          take?: number;
+        }) =>
+          [...projects.values()]
+            .filter(
+              (project) => project.workspaceId === where.workspaceId
+            )
+            .sort((left, right) => {
+              const updatedAtDelta =
+                right.updatedAt.getTime() - left.updatedAt.getTime();
+              return updatedAtDelta || left.id.localeCompare(right.id);
+            })
+            .slice(skip, take ? skip + take : undefined)
+            .map(selectedProject)
+      ),
+      findFirst: jest.fn(
+        ({
+          where
+        }: {
+          where: { id?: string; workspaceId: string };
+        }) => {
+          const project = [...projects.values()].find(
+            (candidate) =>
+              candidate.workspaceId === where.workspaceId &&
+              (!where.id || candidate.id === where.id)
+          );
+          return project ? selectedProject(project) : null;
+        }
+      ),
+      update: jest.fn(
+        ({
+          where,
+          data
+        }: {
+          where: { id: string };
+          data: { name: string };
+        }) => {
+          const project = projects.get(where.id);
+          if (!project) {
+            throw new Error("Project not found");
+          }
+          const updated: StoredProject = {
+            ...project,
+            name: data.name,
+            updatedAt: new Date(project.updatedAt.getTime() + 1)
+          };
+          projects.set(updated.id, updated);
+          return selectedProject(updated);
+        }
+      )
+    },
     user: {
       create: jest.fn(
         ({
@@ -697,5 +816,13 @@ export async function createAuthTestApp(
   configureApplication(app);
   await app.init();
 
-  return { app, identities, users, sessions, workspaces, workspaceMembers };
+  return {
+    app,
+    identities,
+    users,
+    sessions,
+    projects,
+    workspaces,
+    workspaceMembers
+  };
 }

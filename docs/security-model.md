@@ -159,15 +159,18 @@ rejected until a safe transfer rule exists.
 
 | Capability | OWNER | ADMIN | MEMBER | VIEWER |
 |---|---:|---:|---:|---:|
-| Create project | yes | yes | maybe | no |
-| Update project | yes | yes | maybe | no |
+| Create project | yes | yes | yes | no |
+| Update project | yes | yes | yes | no |
 | Create task | yes | yes | yes | no |
 | Update task | yes | yes | yes, when allowed | no |
 | Comment | yes | yes | yes | no or maybe |
 | Upload file | yes | yes | yes, when allowed | no |
 | View activity log | yes | yes | maybe | maybe |
 
-Open decisions must be resolved before implementation for `maybe` cells.
+Project creation and update are available to normal collaboration members.
+Project keys remain immutable, and every project query is constrained to the
+caller's proven workspace. Open decisions must be resolved before
+implementation for the remaining `maybe` cells.
 
 ## File Upload Security
 
@@ -240,7 +243,7 @@ See `references/worksync/testing.md` for the detailed testing profile.
 
 ## Open Decisions
 
-- Exact role matrix for project/task/comment/file actions
+- Exact role matrix for task/comment/file actions
 - File type allowlist and size limits
 - Audit log retention
 - Whether viewer can comment or only read
