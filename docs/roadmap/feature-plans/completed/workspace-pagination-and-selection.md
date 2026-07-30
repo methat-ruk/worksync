@@ -99,5 +99,5 @@ and regression-test slice can be reverted together.
 ## Follow-up
 
 [Workspace Authorization Boundary](workspace-authorization-boundary.md) is
-complete. [Project Foundation](../planned/project-foundation.md) is the next
-planned slice.
+complete. [Project Foundation](project-foundation.md) is complete, and
+[Task Foundation](../planned/task-foundation.md) is the next planned slice.

@@ -5,6 +5,7 @@ import { ConfigurationModule } from "./config/configuration.module";
 import { PrismaModule } from "./database/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { ObservabilityModule } from "./observability/observability.module";
+import { ProjectsModule } from "./projects/projects.module";
 import { WorkspacesModule } from "./workspaces/workspaces.module";
 
 @Module({
@@ -14,7 +15,8 @@ import { WorkspacesModule } from "./workspaces/workspaces.module";
     PrismaModule,
     HealthModule,
     AuthModule,
-    WorkspacesModule
+    WorkspacesModule,
+    ProjectsModule
   ]
 })
 export class AppModule {}

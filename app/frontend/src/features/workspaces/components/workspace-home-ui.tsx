@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Building2,
   CheckSquare2,
-  FolderKanban,
   Plus,
   Users
 } from "lucide-react";
@@ -36,12 +35,6 @@ const createButtonClass =
   "workspace-create-button w-full gap-2 rounded-xl shadow-sm transition-all hover:-translate-y-px hover:shadow-md focus-visible:ring-primary/30 md:w-auto";
 
 const upcomingItems = [
-  {
-    icon: FolderKanban,
-    title: "Project foundation",
-    body: "Project routes stay locked until workspace context is selected.",
-    status: "Planned"
-  },
   {
     icon: CheckSquare2,
     title: "Task workflow",

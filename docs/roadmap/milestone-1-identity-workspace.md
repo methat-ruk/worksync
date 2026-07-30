@@ -70,12 +70,12 @@ Delivered:
   and recoverable partial-failure handling
 - reusable trusted workspace actor resolution with transaction participation,
   safe tenant-hiding failures, and downstream module export
+- project role policy and workspace-scoped project isolation evidence
 
 Still required:
 
 - workspace isolation enforcement for every future workspace-scoped query
-- role matrix finalization for project, task, comment, file, and activity
-  actions
+- role matrix finalization for task, comment, file, and activity actions
 
 Feature plan order:
 
@@ -93,7 +93,7 @@ Feature plan order:
 - direct API calls cannot access another workspace: Done for workspace
   foundation and workspace membership management
 - role matrix has backend integration coverage: Done for workspace-level
-  membership; not done for project/task/comment/file actions
+  membership and projects; not done for task/comment/file actions
 - critical auth and workspace flows have contract tests: Auth and workspace
   foundation, workspace foundation, membership management, and frontend
   bootstrap done

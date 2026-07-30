@@ -13,6 +13,7 @@ Swagger/OpenAPI should reflect these rules as implementation is added.
 | Public error shape, correlation IDs, and operational endpoints | [Errors and Operational Endpoints](api-design/errors-and-operational.md) |
 | Password auth, sessions, refresh/logout, Google OAuth, and auth limits | [Authentication](api-design/authentication.md) |
 | Workspace create/read/list contracts and workspace DTO shape | [Workspace Management](api-design/workspaces.md) |
+| Project create/list/read/update contracts and project DTO shape | [Project Management](api-design/projects.md) |
 | Server-side authorization, workspace boundary rules, and realtime event safety | [Authorization and Boundaries](api-design/authorization-boundaries.md) |
 
 ## Ownership Rules

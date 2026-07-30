@@ -14,6 +14,12 @@ vi.mock("../api/workspaces-api", () => ({
   listWorkspaces: vi.fn()
 }));
 
+vi.mock("@/features/projects/components/project-section", () => ({
+  ProjectSection: ({ workspace }: { workspace: PublicWorkspace }) => (
+    <div>Projects for {workspace.name}</div>
+  )
+}));
+
 const user = {
   displayName: "Ada Lovelace"
 };

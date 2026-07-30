@@ -29,6 +29,10 @@ const workspace = {
 };
 
 const apiUrl = (path: string) => `http://localhost:4000${path}`;
+const workspaceCollectionUrl =
+  /^http:\/\/localhost:4000\/api\/workspaces(?:\?.*)?$/;
+const projectCollectionUrl =
+  /^http:\/\/localhost:4000\/api\/workspaces\/[^/]+\/projects(?:\?.*)?$/;
 
 test.beforeEach(async ({ page }) => {
   await page.route(apiUrl("/api/auth/refresh"), (route) =>
@@ -39,6 +43,16 @@ test.beforeEach(async ({ page }) => {
         success: false,
         message: "Authentication required",
         data: { code: "AUTHENTICATION_REQUIRED" }
+      })
+    })
+  );
+  await page.route(projectCollectionUrl, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [], page: 1, pageSize: 20, total: 0 }
       })
     })
   );
@@ -230,7 +244,7 @@ test("keeps protected content hidden and recovers after refresh failure", async 
       body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -293,7 +307,7 @@ test("redirects an existing session away from public auth routes", async ({
       body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -318,7 +332,7 @@ test("uses a safe local next path after login", async ({ page }) => {
       body: JSON.stringify(authBody)
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -349,7 +363,7 @@ test("falls back to the app for unsafe encoded and normalized next paths", async
       body: JSON.stringify(authBody)
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -408,7 +422,7 @@ test("recovers Google callback completion without restarting sign-in", async ({
       body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -438,7 +452,7 @@ test("shows real workspace data for authenticated users", async ({ page }) => {
       body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -463,6 +477,176 @@ test("shows real workspace data for authenticated users", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
   expect(consoleErrors).toEqual([]);
+});
+
+test("creates and displays a project in the selected workspace", async ({
+  page
+}) => {
+  const consoleErrors: string[] = [];
+  let requestBody: Record<string, unknown> | null = null;
+  let createdProject: Record<string, unknown> | null = null;
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(workspaceCollectionUrl, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [workspace], page: 1, pageSize: 20, total: 1 }
+      })
+    })
+  );
+  await page.unroute(projectCollectionUrl);
+  await page.route(projectCollectionUrl, async (route) => {
+    if (route.request().method() === "POST") {
+      requestBody = route.request().postDataJSON() as Record<string, unknown>;
+      createdProject = {
+        id: "project-1",
+        name: "WorkSync",
+        key: "WSYNC",
+        createdAt: "2026-07-30T08:00:00.000Z",
+        updatedAt: "2026-07-30T08:00:00.000Z"
+      };
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          message: "Project created",
+          data: { project: createdProject }
+        })
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: createdProject ? [createdProject] : [],
+          page: 1,
+          pageSize: 20,
+          total: createdProject ? 1 : 0
+        }
+      })
+    });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/app");
+  await expect(page.getByText("No projects in this workspace")).toBeVisible();
+  await page.getByLabel("Project name").fill(" WorkSync ");
+  await page.getByLabel("Project key").fill("wsync");
+  await page.getByRole("button", { name: "Create project" }).click();
+
+  await expect(page.getByText("WorkSync is ready.")).toBeVisible();
+  await expect(page.getByText("WSYNC")).toBeVisible();
+  await expect(page.getByText("1 total").last()).toBeVisible();
+  expect(requestBody).toEqual({ name: "WorkSync", key: "WSYNC" });
+  expect(consoleErrors).toEqual([]);
+});
+
+test("keeps project creation unavailable for viewers", async ({ page }) => {
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(workspaceCollectionUrl, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: [{ ...workspace, membershipRole: "VIEWER" }],
+          page: 1,
+          pageSize: 20,
+          total: 1
+        }
+      })
+    })
+  );
+
+  await page.goto("/app");
+  await expect(
+    page.getByText(/Your VIEWER role is read-only/)
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Create project" })
+  ).not.toBeVisible();
+});
+
+test("recovers when the selected workspace project list fails", async ({
+  page
+}) => {
+  let projectRequests = 0;
+  let projectListAvailable = false;
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
+    })
+  );
+  await page.route(workspaceCollectionUrl, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [workspace], page: 1, pageSize: 20, total: 1 }
+      })
+    })
+  );
+  await page.unroute(projectCollectionUrl);
+  await page.route(projectCollectionUrl, (route) => {
+    projectRequests += 1;
+    if (!projectListAvailable) {
+      return route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: false,
+          message: "Internal server error",
+          data: { code: "INTERNAL_ERROR" }
+        })
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [], page: 1, pageSize: 20, total: 0 }
+      })
+    });
+  });
+
+  await page.goto("/app");
+  await expect(page.getByText("Internal server error")).toBeVisible();
+  projectListAvailable = true;
+  await page.getByRole("button", { name: "Retry projects" }).click();
+
+  await expect(page.getByText("No projects in this workspace")).toBeVisible();
+  expect(projectRequests).toBeGreaterThanOrEqual(2);
 });
 
 test("loads and selects workspaces beyond the first page", async ({ page }) => {
@@ -492,7 +676,7 @@ test("loads and selects workspaces beyond the first page", async ({ page }) => {
       body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) => {
+  await page.route(workspaceCollectionUrl, (route) => {
     const url = new URL(route.request().url());
     const pageNumber = Number(url.searchParams.get("page") ?? "1");
     const pageSize = Number(url.searchParams.get("pageSize") ?? "20");
@@ -556,7 +740,7 @@ test("creates the first workspace from the app empty state", async ({ page }) =>
       body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, async (route) => {
+  await page.route(workspaceCollectionUrl, async (route) => {
     const request = route.request();
     if (request.method() === "POST") {
       createRequestBody = request.postDataJSON() as Record<string, unknown>;
@@ -610,7 +794,7 @@ test("shows workspace loading failure feedback without blanking the app", async 
       body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 500,
       contentType: "application/json",
@@ -649,7 +833,7 @@ test("keeps the authenticated UI visible when logout fails", async ({ page }) =>
       })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -695,7 +879,7 @@ test("logs out successfully and returns to sign in", async ({ page }) => {
       body: JSON.stringify({ success: true, message: "Logged out" })
     })
   );
-  await page.route(`${apiUrl("/api/workspaces")}**`, (route) =>
+  await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",

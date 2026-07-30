@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { ProjectSection } from "@/features/projects/components/project-section";
 
 import { listWorkspaces } from "../api/workspaces-api";
 import { workspaceErrorMessage } from "../model/workspace-error-message";
@@ -439,6 +440,13 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
             </div>
           </aside>
         </section>
+      )}
+
+      {selectedWorkspace && (
+        <ProjectSection
+          key={selectedWorkspace.id}
+          workspace={selectedWorkspace}
+        />
       )}
 
       <UpcomingWorkItems />
