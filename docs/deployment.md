@@ -51,8 +51,10 @@ Required categories:
 - Google OAuth client ID, client secret, exact callback URI, and token-exchange timeout
 - observability settings
 
-See `.env.example`, `.env.local.example`, and `.env.docker.example` for
-initial variable names and local run-mode examples.
+See `app/frontend/.env.local.example`, `app/backend/.env.example`,
+`app/backend/.env.test.example`, and the templates under `docker/` for initial
+variable names and local run-mode examples. The repository root has no active
+`.env` contract.
 
 Production authentication configuration must use independent access and
 refresh secrets of at least 32 bytes. Refresh cookies must be secure in
@@ -86,11 +88,11 @@ Container commands:
 
 ```bash
 docker compose -f docker/compose.yml config
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config --services
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml build
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml up --build -d
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml down
+docker compose --env-file docker/.env.development -f docker/compose.yml -f docker/compose.app.yml config
+docker compose --env-file docker/.env.development -f docker/compose.yml -f docker/compose.app.yml config --services
+docker compose --env-file docker/.env.development -f docker/compose.yml -f docker/compose.app.yml build
+docker compose --env-file docker/.env.development -f docker/compose.yml -f docker/compose.app.yml up --build -d
+docker compose --env-file docker/.env.development -f docker/compose.yml -f docker/compose.app.yml down
 ```
 
 Local run-mode boundaries:
@@ -101,6 +103,9 @@ Local run-mode boundaries:
   `docker/compose.app.yml`. Backend containers use `postgres`, `redis`, and
   `minio` service hostnames. Frontend `NEXT_PUBLIC_*` API/socket URLs still use
   host-reachable localhost values because they execute in the user's browser.
+- Isolated Docker test mode uses `docker/compose.test.yml`, the fixed
+  `worksync-test` project, and a disposable PostgreSQL volume. It is validation
+  infrastructure, not a production deployment definition.
 
 The container definition does not yet implement TLS/ingress, registry
 publishing, production secret injection, automated backups, or deployment

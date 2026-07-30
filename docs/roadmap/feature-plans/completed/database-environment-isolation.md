@@ -5,6 +5,10 @@ Status: Completed
 Plan review: Implemented and post-implementation reviewed on 2026-07-30; no
 blocking findings remain
 
+Environment-layout note: the later Environment Layout and Docker Test Runtime
+plan supersedes this plan's root `.env` ownership statement. Backend
+development and test selection described here remains unchanged.
+
 Intended PR: `feat/database-environment-isolation`
 
 Milestone: Cross-cutting - Runtime and Validation

@@ -36,8 +36,8 @@ independent guarantees into separately named jobs:
   unit/component tests, and production build
 - frontend E2E: Playwright browser coverage for critical frontend auth and
   navigation behavior
-- container topology and images: Compose topology checks and backend/frontend
-  Docker image builds
+- container topology and images: development/test Compose topology,
+  orchestration self-test, and production/test Docker image builds
 - dependency audit: production dependency vulnerability gate
 
 Do not combine jobs merely for convenience when they do not share required
@@ -87,6 +87,9 @@ evidence for important AI behavior.
 - Backend Docker image builds must run Prisma client generation inside the image
   build before `@worksync/backend build`; do not rely on untracked local
   `app/backend/src/generated/prisma` files.
+- Docker test commands must validate `docker/.env.test` before mutation, use
+  the fixed `worksync-test` project without host ports, reject active project
+  reuse, and remove disposable resources after the run.
 - PostgreSQL integration tests require `DATABASE_URL` to select a database whose name ends in `_test` and must pass rather than skip in CI.
 - Local PostgreSQL integration defaults must stay aligned with the Compose
   exposed port documented in `deployment.md`; a connection refusal is a topology

@@ -37,7 +37,8 @@ Docker runs frontend, backend, PostgreSQL, Redis, and MinIO on the same Compose
 network.
 
 ```bash
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml up --build -d
+cp docker/.env.development.example docker/.env.development
+corepack pnpm docker:full:up
 ```
 
 Backend service URLs use Compose hostnames:
@@ -55,10 +56,11 @@ on the host machine, not inside the Compose network.
 | --- | --- |
 | `docker/compose.yml` | infrastructure-only services |
 | `docker/compose.app.yml` | frontend/backend overlay for full Docker mode |
-| `Dockerfile` | multi-target frontend and backend image builds |
-| `.env.local.example` | root environment template for hybrid mode |
-| `.env.docker.example` | root environment template for full Docker mode |
-| `app/frontend/.env.example` | frontend environment template |
+| `docker/compose.test.yml` | isolated, disposable container test topology |
+| `Dockerfile` | multi-target production and test image builds |
+| `docker/.env.development.example` | full Docker development template |
+| `docker/.env.test.example` | guarded isolated Docker test template |
+| `app/frontend/.env.local.example` | frontend local environment template |
 | `app/backend/.env.example` | backend environment template |
 
 ## Build Flow
@@ -84,14 +86,17 @@ corepack pnpm docker:infra:config
 corepack pnpm docker:full:config
 corepack pnpm docker:full:services
 corepack pnpm docker:full:build
+corepack pnpm docker:images:prepare
+corepack pnpm docker:test:config
+corepack pnpm test:docker-orchestration
 ```
 
 For manual Compose checks:
 
 ```bash
 docker compose -f docker/compose.yml config
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config --services
+docker compose --env-file docker/.env.development -f docker/compose.yml -f docker/compose.app.yml config
+WORKSYNC_DOCKER_TEST_ENV_FILE=.env.test.example docker compose --project-name worksync-test --env-file docker/.env.test.example -f docker/compose.test.yml config --services
 ```
 
 Avoid sharing full config output when real secrets are present.
@@ -107,6 +112,29 @@ Avoid sharing full config output when real secrets are present.
   was skipped.
 - Frontend cannot reach backend because browser-facing URLs point at internal
   Compose hostnames.
+- Docker tests refuse to start because `docker/.env.test` is missing, its
+  database does not end in `_test`, or the fixed `worksync-test` project is
+  already active.
+
+## Isolated Test Runners
+
+Create `docker/.env.test` from its tracked example, then select the smallest
+scope:
+
+```bash
+corepack pnpm docker:test:backend
+corepack pnpm docker:test:frontend
+corepack pnpm docker:test:e2e
+corepack pnpm docker:test
+```
+
+The orchestrator validates the actual test env before Docker mutations,
+acquires an atomic machine-local lock before Compose inspection, uses only
+Compose service hostnames inside containers, stops at the first failed scope,
+and removes the test containers and disposable PostgreSQL volume. It never
+reads a root `.env`. If an external interruption prevents normal cleanup,
+`corepack pnpm docker:test:down` refuses a live lock owner and must acquire the
+same lock before removing stale Compose resources.
 
 ## Related Docs
 

@@ -3,7 +3,6 @@ const { join, resolve } = require("node:path");
 
 const repositoryRoot = resolve(__dirname, "..");
 const backendRoot = join(repositoryRoot, "app", "backend");
-const dotenv = require(join(backendRoot, "node_modules", "dotenv"));
 
 const LOCAL_TEST_DATABASE_FALLBACK =
   "postgresql://worksync:worksync@localhost:5433/worksync_test?schema=public";
@@ -20,6 +19,7 @@ function loadBackendEnvironment(
   fileName,
   { override = false, required = false } = {}
 ) {
+  const dotenv = require(join(backendRoot, "node_modules", "dotenv"));
   const path = join(backendRoot, fileName);
   if (required && !existsSync(path)) {
     throw new Error(`${fileName} is required for this database command`);

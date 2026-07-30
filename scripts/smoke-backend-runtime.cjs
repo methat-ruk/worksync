@@ -78,6 +78,7 @@ async function main() {
       FRONTEND_URL: process.env.FRONTEND_URL ?? "http://localhost:3000",
       CORS_ORIGIN: process.env.CORS_ORIGIN ?? "http://localhost:3000",
       DATABASE_URL: databaseUrl,
+      REDIS_URL: process.env.TEST_REDIS_URL ?? "redis://localhost:6379/1",
       LOG_LEVEL: "silent",
       JWT_ACCESS_SECRET:
         process.env.JWT_ACCESS_SECRET ??

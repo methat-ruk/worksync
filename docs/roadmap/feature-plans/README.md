@@ -62,6 +62,7 @@ reconstructing every historical implementation detail.
 | [Workspace Authorization Boundary](completed/workspace-authorization-boundary.md) | Done |
 | [Project Foundation](completed/project-foundation.md) | Done |
 | [Database Environment Isolation](completed/database-environment-isolation.md) | Done |
+| [Environment Layout and Docker Test Runtime](completed/environment-layout-docker-test-runtime.md) | Done |
 
 ## Feature Plan Template
 

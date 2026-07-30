@@ -94,8 +94,7 @@ corepack pnpm playwright:install:with-deps
 Create local environment files for the recommended hybrid development mode:
 
 ```bash
-cp .env.local.example .env
-cp app/frontend/.env.example app/frontend/.env.local
+cp app/frontend/.env.local.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
 cp app/backend/.env.test.example app/backend/.env.test
 ```
@@ -103,8 +102,7 @@ cp app/backend/.env.test.example app/backend/.env.test
 On Windows PowerShell:
 
 ```powershell
-Copy-Item .env.local.example .env
-Copy-Item app/frontend/.env.example app/frontend/.env.local
+Copy-Item app/frontend/.env.local.example app/frontend/.env.local
 Copy-Item app/backend/.env.example app/backend/.env
 Copy-Item app/backend/.env.test.example app/backend/.env.test
 ```
@@ -149,7 +147,6 @@ services, while Next.js and NestJS run locally through pnpm for faster feedback
 and easier debugging.
 
 ```bash
-cp .env.local.example .env
 corepack pnpm install --frozen-lockfile
 docker compose -f docker/compose.yml up -d
 corepack pnpm dev
@@ -177,8 +174,8 @@ network. The backend uses service hostnames such as `postgres`, `redis`, and
 browser runs on the host machine.
 
 ```bash
-cp .env.docker.example .env
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml up --build -d
+cp docker/.env.development.example docker/.env.development
+corepack pnpm docker:full:up
 ```
 
 Full Docker URLs exposed to the host:
@@ -234,6 +231,13 @@ staging, production-like, or internet-exposed environment.
 | `pnpm docker:full:build` | Build frontend and backend Docker targets |
 | `pnpm docker:full:up` | Build and start frontend, backend, PostgreSQL, Redis, and MinIO |
 | `pnpm docker:full:down` | Stop the complete container stack |
+| `pnpm docker:images:prepare` | Pull infrastructure images and build all WorkSync images without creating containers |
+| `pnpm docker:test:config` | Validate the isolated test environment and Compose topology |
+| `pnpm docker:test:backend` | Run migrations and backend validation in isolated containers |
+| `pnpm docker:test:frontend` | Run frontend validation in an isolated container |
+| `pnpm docker:test:e2e` | Run migrations and both frontend E2E suites in isolated containers |
+| `pnpm docker:test` | Run all isolated container validation scopes |
+| `pnpm docker:test:down` | Remove the fixed test Compose project and its disposable database volume |
 | `pnpm docker:up` | Backward-compatible alias for `pnpm docker:infra:up` |
 | `pnpm docker:app:up` | Backward-compatible alias for `pnpm docker:full:up` |
 
@@ -241,14 +245,15 @@ staging, production-like, or internet-exposed environment.
 
 Use the environment examples as non-secret templates:
 
-- `.env.example` explains the available run modes and shared defaults.
-- `.env.local.example` is the root template for hybrid development.
-- `.env.docker.example` is the root template for full Docker development.
-- `app/frontend/.env.example` contains browser-safe frontend variables.
+- `app/frontend/.env.local.example` supplies browser-safe local frontend values.
 - `app/backend/.env.example` is the development backend template.
 - `app/backend/.env.test.example` is the isolated test backend template.
+- `docker/.env.development.example` is the full Docker development template.
+- `docker/.env.test.example` is the isolated Docker test template.
 
 Do not commit real `.env` files or secrets.
+The repository root has no active `.env` contract; obsolete ignored root env
+files are not loaded by repository scripts and can be removed manually.
 
 `DATABASE_URL` is the only database connection key. The selected backend
 environment supplies its value: `.env` for development, `.env.test` for local
@@ -289,8 +294,8 @@ Docker Compose validation should be rerun on machines with Docker installed:
 
 ```bash
 docker compose -f docker/compose.yml config
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config
-docker compose --env-file .env -f docker/compose.yml -f docker/compose.app.yml config --services
+docker compose --env-file docker/.env.development -f docker/compose.yml -f docker/compose.app.yml config
+WORKSYNC_DOCKER_TEST_ENV_FILE=.env.test.example docker compose --project-name worksync-test --env-file docker/.env.test.example -f docker/compose.test.yml config --services
 ```
 
 ## Documentation
