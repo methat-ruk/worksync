@@ -39,12 +39,6 @@ tenant-isolation evidence exist.
 | 5 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
 | 6 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
 
-## Maintenance Plans
-
-| Plan | Status |
-|---|---|
-| [Environment Layout and Docker Test Runtime](planned/environment-layout-docker-test-runtime.md) | Second review fix applied; awaiting CI rerun |
-
 ## Completed Feature Summaries
 
 Completed summaries are intentionally lighter than planned feature plans. They
@@ -68,6 +62,7 @@ reconstructing every historical implementation detail.
 | [Workspace Authorization Boundary](completed/workspace-authorization-boundary.md) | Done |
 | [Project Foundation](completed/project-foundation.md) | Done |
 | [Database Environment Isolation](completed/database-environment-isolation.md) | Done |
+| [Environment Layout and Docker Test Runtime](completed/environment-layout-docker-test-runtime.md) | Done |
 
 ## Feature Plan Template
 

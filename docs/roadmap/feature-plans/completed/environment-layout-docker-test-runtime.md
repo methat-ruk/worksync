@@ -1,12 +1,10 @@
 # Feature Plan: Environment Layout and Docker Test Runtime
 
-Status: Implemented and second follow-up review fix applied; awaiting CI rerun
+Status: Completed
 
-Plan review: approved before implementation; the first CI run passed, then a
-follow-up PR review found a concurrent-start race in the test orchestrator.
-The first lock fix passed CI, then re-review found that manual recovery did not
-participate in lock ownership. The guarded recovery fix is implemented locally
-on 2026-07-30.
+Plan review: approved before implementation; implementation, two focused
+review-fix passes, and final CI validation completed on 2026-07-30 with no
+remaining blocking findings.
 
 Approved extension: normalize WorkSync-built image and development-container
 names, add a no-container image preparation command, replace all local Docker
@@ -458,8 +456,9 @@ corrected root-env/recovery documentation; all six CI jobs passed again on
 commit `754e487`. Re-review then found that `docker:test:down` could clear a
 new run's lock while recovery was in progress. The second focused fix makes
 recovery refuse a live owner, take ownership before Compose cleanup, and fail
-without mutation if a competing run wins. Keep the plan in `planned` until the
-CI rerun for this fix passes, then move it to `completed`.
+without mutation if a competing run wins. All six jobs passed for commit
+`400df16` in GitHub Actions run `30529029822`; the closeout condition is
+satisfied and this plan is complete.
 
 ## Follow-up
 
