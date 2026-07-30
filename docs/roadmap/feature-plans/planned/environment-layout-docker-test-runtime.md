@@ -1,10 +1,10 @@
 # Feature Plan: Environment Layout and Docker Test Runtime
 
-Status: Implemented locally and post-implementation reviewed; awaiting commit,
-push, and CI validation
+Status: Implemented and follow-up review fixes applied; awaiting CI rerun
 
-Plan review: approved before implementation; post-implementation review found
-no remaining blocking issues on 2026-07-30
+Plan review: approved before implementation; the first CI run passed, then a
+follow-up PR review found a concurrent-start race in the test orchestrator.
+The focused lock and documentation fixes are implemented locally on 2026-07-30.
 
 Approved extension: normalize WorkSync-built image and development-container
 names, add a no-container image preparation command, replace all local Docker
@@ -110,9 +110,10 @@ Production Docker configuration is deferred to
   explicit `container_name`, and test-only project-scoped volumes
 - omit MinIO because the current backend, frontend, and Playwright CI evidence
   does not require it
-- use a fixed Compose project name `worksync-test`; concurrent test runs fail
-  clearly rather than sharing resources
-- before a run, inspect the fixed project:
+- use a fixed Compose project name `worksync-test`
+- acquire an atomic machine-local lock before Compose inspection so concurrent
+  test commands fail clearly rather than sharing resources
+- after acquiring the lock, inspect the fixed project:
   - fail if it has running containers
   - otherwise remove stale stopped containers, networks, and disposable
     volumes before creating the new test runtime
@@ -162,6 +163,8 @@ Production Docker configuration is deferred to
   the appropriate exit code
 - make cleanup single-flight so signal handling and `finally` cannot race or
   run destructive lifecycle commands twice
+- release only the lock owned by the current process in `finally`; an older
+  process must not remove a replacement lock created during manual recovery
 - always run `down --volumes --remove-orphans` in `finally`; render cleanup
   with the tracked `.env.test.example` so recovery still works when the local
   file is missing, deleted, or malformed
@@ -317,8 +320,10 @@ Final validation includes:
 - missing env file: fail before Compose starts and print the required
   template-copy command
 - unsafe test database target: fail before any container or migration action
-- active `worksync-test` project: fail without cleanup so a concurrent run is
-  never terminated by another process
+- concurrent Docker test command: fail on the atomic machine-local lock before
+  Compose inspection or mutation
+- active `worksync-test` project: fail without cleanup so stale or externally
+  managed runtime resources are never terminated implicitly
 - stale but stopped `worksync-test` project: remove only its disposable
   resources before starting
 - test/build failure: preserve the first failure code, perform test-project
@@ -328,9 +333,10 @@ Final validation includes:
 - stale root `.env`: ignored and unused; documentation explains manual removal
 - implementation regression: revert the source commit and restore old tracked
   template/script paths; ignored local files remain recoverable and untouched
-- cleanup recovery: `pnpm docker:test:down` uses the tracked test example to
-  render the model and removes only the fixed `worksync-test` project and its
-  disposable volumes
+- cleanup recovery: after confirming no Docker test command is active,
+  `pnpm docker:test:down` uses the tracked test example to render the model and
+  removes only the fixed `worksync-test` project, its disposable volumes, and
+  the stale recovery lock
 
 ## Alternatives and Decision
 
@@ -443,8 +449,12 @@ development requires `docker/.env.development`; this preserves the existing
 hybrid quick-start contract without creating a meaningless env-file
 dependency.
 
-GitHub Actions remain not run until this branch is pushed. Keep the plan in
-`planned` until those checks pass, then move it to `completed`.
+GitHub Actions passed all six jobs on commit `912ecf2`. A follow-up PR review
+then demonstrated that two invocations could both pass the non-atomic
+active-project check before either started containers. The focused fix adds an
+atomic machine-local lock, owner-token-safe release, regression coverage, and
+corrected root-env/recovery documentation. Keep the plan in `planned` until
+the CI rerun for this fix passes, then move it to `completed`.
 
 ## Follow-up
 

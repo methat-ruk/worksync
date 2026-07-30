@@ -91,7 +91,8 @@ The local Compose topology provides:
 
 If `localhost:5433` is already occupied by another local service, change
 the host port in `docker/compose.yml` and update the matching uncommitted
-localhost database URLs in `.env`, `app/backend/.env`, and any shell exports.
+localhost database URLs in `app/backend/.env`, `app/backend/.env.test`, and
+any shell exports.
 
 Docker Compose creates the `worksync` database. For a fresh PostgreSQL volume,
 check whether the test database exists:
@@ -341,10 +342,13 @@ corepack pnpm docker:test
 ```
 
 The fixed `worksync-test` Compose project has no host ports or named
-containers. It rejects non-test database names and an active project before
-any mutation, then removes its disposable database volume after success,
-failure, or interruption. Use `corepack pnpm docker:test:down` for manual
-recovery. Production Docker topology is not defined by this test runner.
+containers. An atomic machine-local lock rejects concurrent invocations before
+Compose inspection or mutation; the active-project check then protects stale
+runtime resources. The orchestrator removes its disposable database volume
+after success, failure, or interruption. After confirming no Docker test
+command is active, use `corepack pnpm docker:test:down` to remove stale
+resources and the recovery lock. Production Docker topology is not defined by
+this test runner.
 - The Google callback must exactly match the external backend callback, such
   as `https://api.example.com/api/auth/google/callback`.
 - The Compose overlay is local/staging-like: it does not provide TLS, ingress,

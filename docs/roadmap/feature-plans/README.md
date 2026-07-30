@@ -43,7 +43,7 @@ tenant-isolation evidence exist.
 
 | Plan | Status |
 |---|---|
-| [Environment Layout and Docker Test Runtime](planned/environment-layout-docker-test-runtime.md) | Implemented locally; awaiting commit and CI |
+| [Environment Layout and Docker Test Runtime](planned/environment-layout-docker-test-runtime.md) | Follow-up review fixes applied; awaiting CI rerun |
 
 ## Completed Feature Summaries
 

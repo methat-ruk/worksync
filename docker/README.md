@@ -81,6 +81,8 @@ The test orchestrator:
 
 - requires `docker/.env.test` and a PostgreSQL URL targeting the `postgres`
   service and a database whose name ends in `_test`
+- acquires an atomic machine-local lock before Compose inspection so concurrent
+  commands fail without sharing or deleting each other's resources
 - uses the fixed `worksync-test` Compose project without host ports or explicit
   container names
 - refuses to replace an active test project
@@ -95,5 +97,6 @@ If an external failure prevents normal cleanup, run:
 corepack pnpm docker:test:down
 ```
 
-This recovery command renders the test model with the tracked example and
-removes only the fixed test project and its disposable volumes.
+After confirming no Docker test command is active, this recovery command
+renders the test model with the tracked example and removes only the fixed test
+project, its disposable volumes, and the stale recovery lock.

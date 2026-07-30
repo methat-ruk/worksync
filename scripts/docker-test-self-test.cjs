@@ -5,6 +5,8 @@ const { join } = require("node:path");
 
 const {
   COMPOSE_PROJECT_NAME,
+  acquireDockerTestLock,
+  clearDockerTestLock,
   createSignalHandler,
   createSingleFlight,
   createScopePlan,
@@ -106,6 +108,60 @@ function testScopeSelection() {
     run: ["migration-test", "frontend-e2e"]
   });
   assert.throws(() => createScopePlan("unknown"), /Unknown Docker test scope/);
+}
+
+function testCrossProcessLock() {
+  const temporaryDirectory = mkdtempSync(
+    join(tmpdir(), "worksync-docker-lock-test-")
+  );
+  const lockFile = join(temporaryDirectory, "lock");
+
+  try {
+    const releaseFirst = acquireDockerTestLock({
+      file: lockFile,
+      ownerPid: 101,
+      ownerToken: "first"
+    });
+
+    assert.throws(
+      () =>
+        acquireDockerTestLock({
+          file: lockFile,
+          ownerPid: 202,
+          ownerToken: "second"
+        }),
+      new RegExp(`already owns ${COMPOSE_PROJECT_NAME} \\(owner pid 101\\)`)
+    );
+
+    clearDockerTestLock(lockFile);
+    const releaseSecond = acquireDockerTestLock({
+      file: lockFile,
+      ownerPid: 202,
+      ownerToken: "second"
+    });
+
+    releaseFirst();
+    assert.throws(
+      () =>
+        acquireDockerTestLock({
+          file: lockFile,
+          ownerPid: 303,
+          ownerToken: "third"
+        }),
+      new RegExp(`already owns ${COMPOSE_PROJECT_NAME} \\(owner pid 202\\)`)
+    );
+
+    releaseSecond();
+    const releaseThird = acquireDockerTestLock({
+      file: lockFile,
+      ownerPid: 303,
+      ownerToken: "third"
+    });
+    releaseThird();
+    releaseThird();
+  } finally {
+    rmSync(temporaryDirectory, { force: true, recursive: true });
+  }
 }
 
 async function testSuccessfulLifecycle() {
@@ -293,6 +349,7 @@ async function testSignalWaitsBeforeCleanup() {
 async function main() {
   await testEnvironmentValidation();
   testScopeSelection();
+  testCrossProcessLock();
   await testSuccessfulLifecycle();
   await testActiveProjectProtection();
   await testFirstFailureStopsExecution();

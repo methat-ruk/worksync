@@ -128,11 +128,13 @@ corepack pnpm docker:test:e2e
 corepack pnpm docker:test
 ```
 
-The orchestrator validates the actual test env before Docker mutations, uses
-only Compose service hostnames inside containers, stops at the first failed
-scope, and removes the test containers and disposable PostgreSQL volume. It
-never reads a root `.env`. `corepack pnpm docker:test:down` is the recovery
-command if an external interruption prevents normal cleanup.
+The orchestrator validates the actual test env before Docker mutations,
+acquires an atomic machine-local lock before Compose inspection, uses only
+Compose service hostnames inside containers, stops at the first failed scope,
+and removes the test containers and disposable PostgreSQL volume. It never
+reads a root `.env`. After confirming no Docker test command is active,
+`corepack pnpm docker:test:down` removes stale Compose resources and the
+recovery lock if an external interruption prevents normal cleanup.
 
 ## Related Docs
 

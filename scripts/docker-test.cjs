@@ -1,5 +1,12 @@
 const { spawn } = require("node:child_process");
-const { existsSync, readFileSync } = require("node:fs");
+const { randomUUID } = require("node:crypto");
+const {
+  existsSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} = require("node:fs");
+const { tmpdir } = require("node:os");
 const { join, relative } = require("node:path");
 const { parseEnv } = require("node:util");
 
@@ -14,6 +21,7 @@ const composeFile = join(dockerRoot, "compose.test.yml");
 const localEnvironmentFile = join(dockerRoot, ".env.test");
 const exampleEnvironmentFile = join(dockerRoot, ".env.test.example");
 const environmentSelectorName = "WORKSYNC_DOCKER_TEST_ENV_FILE";
+const dockerTestLockFile = join(tmpdir(), "worksync-docker-test.lock");
 
 const scopePlans = Object.freeze({
   backend: {
@@ -120,6 +128,59 @@ function createScopePlan(scope) {
     dependencies: [...plan.dependencies],
     run: [...plan.run]
   };
+}
+
+function acquireDockerTestLock({
+  file = dockerTestLockFile,
+  ownerPid = process.pid,
+  ownerToken = randomUUID()
+} = {}) {
+  try {
+    writeFileSync(
+      file,
+      `${JSON.stringify({ pid: ownerPid, token: ownerToken })}\n`,
+      { flag: "wx" }
+    );
+  } catch (error) {
+    if (error.code !== "EEXIST") {
+      throw error;
+    }
+
+    let ownerDetail = "";
+    try {
+      const owner = JSON.parse(readFileSync(file, "utf8"));
+      if (Number.isInteger(owner.pid)) {
+        ownerDetail = ` (owner pid ${owner.pid})`;
+      }
+    } catch {
+      // A missing or damaged owner record must still fail closed.
+    }
+
+    throw new Error(
+      `Another Docker test run already owns ${COMPOSE_PROJECT_NAME}${ownerDetail}; wait for it to finish or run docker:test:down after confirming it stopped`
+    );
+  }
+
+  let released = false;
+  return () => {
+    if (released) {
+      return;
+    }
+    released = true;
+
+    try {
+      const owner = JSON.parse(readFileSync(file, "utf8"));
+      if (owner.token === ownerToken) {
+        rmSync(file, { force: true });
+      }
+    } catch {
+      // Manual recovery may already have removed or replaced this lock.
+    }
+  };
+}
+
+function clearDockerTestLock(file = dockerTestLockFile) {
+  rmSync(file, { force: true });
 }
 
 function createComposeArguments(environmentFile, ...arguments_) {
@@ -320,6 +381,7 @@ async function run(scope = process.argv[2]) {
       ),
       { environmentFile: exampleEnvironmentFile }
     );
+    clearDockerTestLock();
     return;
   }
 
@@ -404,38 +466,43 @@ async function run(scope = process.argv[2]) {
   const handleSigint = () => void handleSignal("SIGINT").catch(() => {});
   const handleSigterm = () => void handleSignal("SIGTERM").catch(() => {});
 
+  const releaseDockerTestLock = acquireDockerTestLock();
   process.on("SIGINT", handleSigint);
   process.on("SIGTERM", handleSigterm);
 
-  let primaryError;
   try {
-    await runWithCleanup({
-      operation: () =>
-        runDockerTestLifecycle({
-          executeDocker,
-          plan,
-          onCleanupAuthorized() {
-            cleanupAuthorized = true;
-          }
-        }),
-      cleanup
-    });
-  } catch (error) {
-    primaryError = error;
-  } finally {
-    process.removeListener("SIGINT", handleSigint);
-    process.removeListener("SIGTERM", handleSigterm);
-  }
-
-  if (interruptedSignal) {
-    if (primaryError && cleanupAuthorized) {
-      console.error(primaryError.message);
+    let primaryError;
+    try {
+      await runWithCleanup({
+        operation: () =>
+          runDockerTestLifecycle({
+            executeDocker,
+            plan,
+            onCleanupAuthorized() {
+              cleanupAuthorized = true;
+            }
+          }),
+        cleanup
+      });
+    } catch (error) {
+      primaryError = error;
+    } finally {
+      process.removeListener("SIGINT", handleSigint);
+      process.removeListener("SIGTERM", handleSigterm);
     }
-    process.exitCode = signalExitCode(interruptedSignal);
-    return;
-  }
-  if (primaryError) {
-    throw primaryError;
+
+    if (interruptedSignal) {
+      if (primaryError && cleanupAuthorized) {
+        console.error(primaryError.message);
+      }
+      process.exitCode = signalExitCode(interruptedSignal);
+      return;
+    }
+    if (primaryError) {
+      throw primaryError;
+    }
+  } finally {
+    releaseDockerTestLock();
   }
 }
 
@@ -448,6 +515,8 @@ if (require.main === module) {
 
 module.exports = {
   COMPOSE_PROJECT_NAME,
+  acquireDockerTestLock,
+  clearDockerTestLock,
   createSignalHandler,
   createSingleFlight,
   createScopePlan,
