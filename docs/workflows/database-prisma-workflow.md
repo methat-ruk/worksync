@@ -64,8 +64,8 @@ Database reset is destructive and development-only. Preview the sanitized
 target with:
 
 ```bash
-corepack pnpm prisma:reset:dev -- --check
-corepack pnpm prisma:reset:test -- --check
+corepack pnpm prisma:reset:dev --check
+corepack pnpm prisma:reset:test --check
 ```
 
 Run the matching command without `--check` only when all data in that local

@@ -29,8 +29,8 @@ following `docs/project-setup.md`.
 | Backend artifact | `pnpm validate:backend:artifact` | Require `dist/main.js` and compiled Prisma client while rejecting tests and nested source output |
 | Test migration deploy | `pnpm prisma:migrate:deploy:test` | Apply committed migrations using the guarded `DATABASE_URL` selected for tests |
 | Test migration status | `pnpm prisma:migrate:status:test` | Verify `worksync_test` has every committed migration using the guarded test environment |
-| Development reset target | `pnpm prisma:reset:dev -- --check` | Validate the local `worksync` reset target without changing data |
-| Test reset target | `pnpm prisma:reset:test -- --check` | Validate the local `_test` reset target without changing data |
+| Development reset target | `pnpm prisma:reset:dev --check` | Validate the local `worksync` reset target without changing data |
+| Test reset target | `pnpm prisma:reset:test --check` | Validate the local `_test` reset target without changing data |
 | Backend runtime smoke | `pnpm smoke:backend:runtime` | Start the built backend against `worksync_test` and verify health, Swagger, disabled Google OAuth, and refresh failure contracts |
 | Typecheck | `pnpm typecheck` | Validate TypeScript contracts across workspaces |
 | Lint | `pnpm lint` | Enforce static quality and framework rules across backend source, backend tests, and frontend source |

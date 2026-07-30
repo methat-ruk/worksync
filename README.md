@@ -256,8 +256,8 @@ tests, and `.env.production` or an injected secret for production. Test-only
 commands reject database names that do not end in `_test`.
 
 Database reset commands are local, interactive, and destructive. Preview a
-target with `pnpm prisma:reset:dev -- --check` or
-`pnpm prisma:reset:test -- --check` before running the corresponding command.
+target with `pnpm prisma:reset:dev --check` or
+`pnpm prisma:reset:test --check` before running the corresponding command.
 They never run in CI/CD, do not accept `--force`, and do not seed automatically.
 
 Auth seed commands are local-first safety tools. They refuse `NODE_ENV=production`

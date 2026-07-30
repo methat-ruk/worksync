@@ -140,8 +140,8 @@ Reset deletes all data in the selected database and reapplies committed
 migrations. Check the sanitized target first:
 
 ```bash
-corepack pnpm prisma:reset:dev -- --check
-corepack pnpm prisma:reset:test -- --check
+corepack pnpm prisma:reset:dev --check
+corepack pnpm prisma:reset:test --check
 ```
 
 Then run only the intended interactive command:
