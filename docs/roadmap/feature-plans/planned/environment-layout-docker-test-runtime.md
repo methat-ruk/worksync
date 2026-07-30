@@ -1,10 +1,12 @@
 # Feature Plan: Environment Layout and Docker Test Runtime
 
-Status: Implemented and follow-up review fixes applied; awaiting CI rerun
+Status: Implemented and second follow-up review fix applied; awaiting CI rerun
 
 Plan review: approved before implementation; the first CI run passed, then a
 follow-up PR review found a concurrent-start race in the test orchestrator.
-The focused lock and documentation fixes are implemented locally on 2026-07-30.
+The first lock fix passed CI, then re-review found that manual recovery did not
+participate in lock ownership. The guarded recovery fix is implemented locally
+on 2026-07-30.
 
 Approved extension: normalize WorkSync-built image and development-container
 names, add a no-container image preparation command, replace all local Docker
@@ -333,10 +335,9 @@ Final validation includes:
 - stale root `.env`: ignored and unused; documentation explains manual removal
 - implementation regression: revert the source commit and restore old tracked
   template/script paths; ignored local files remain recoverable and untouched
-- cleanup recovery: after confirming no Docker test command is active,
-  `pnpm docker:test:down` uses the tracked test example to render the model and
-  removes only the fixed `worksync-test` project, its disposable volumes, and
-  the stale recovery lock
+- cleanup recovery: `pnpm docker:test:down` verifies the recorded owner is no
+  longer running, reacquires the same lock before Compose mutation, and aborts
+  if a new run wins the recovery race
 
 ## Alternatives and Decision
 
@@ -453,8 +454,12 @@ GitHub Actions passed all six jobs on commit `912ecf2`. A follow-up PR review
 then demonstrated that two invocations could both pass the non-atomic
 active-project check before either started containers. The focused fix adds an
 atomic machine-local lock, owner-token-safe release, regression coverage, and
-corrected root-env/recovery documentation. Keep the plan in `planned` until
-the CI rerun for this fix passes, then move it to `completed`.
+corrected root-env/recovery documentation; all six CI jobs passed again on
+commit `754e487`. Re-review then found that `docker:test:down` could clear a
+new run's lock while recovery was in progress. The second focused fix makes
+recovery refuse a live owner, take ownership before Compose cleanup, and fail
+without mutation if a competing run wins. Keep the plan in `planned` until the
+CI rerun for this fix passes, then move it to `completed`.
 
 ## Follow-up
 

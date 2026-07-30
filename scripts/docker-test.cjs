@@ -130,6 +130,32 @@ function createScopePlan(scope) {
   };
 }
 
+function readDockerTestLockOwner(file = dockerTestLockFile) {
+  let owner;
+  try {
+    owner = JSON.parse(readFileSync(file, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return undefined;
+    }
+    throw new Error(
+      "Docker test lock owner cannot be verified; confirm no test command is active before removing the lock manually"
+    );
+  }
+
+  if (
+    !Number.isInteger(owner.pid) ||
+    owner.pid <= 0 ||
+    typeof owner.token !== "string" ||
+    owner.token === ""
+  ) {
+    throw new Error(
+      "Docker test lock owner is invalid; confirm no test command is active before removing the lock manually"
+    );
+  }
+  return owner;
+}
+
 function acquireDockerTestLock({
   file = dockerTestLockFile,
   ownerPid = process.pid,
@@ -148,17 +174,19 @@ function acquireDockerTestLock({
 
     let ownerDetail = "";
     try {
-      const owner = JSON.parse(readFileSync(file, "utf8"));
-      if (Number.isInteger(owner.pid)) {
+      const owner = readDockerTestLockOwner(file);
+      if (owner) {
         ownerDetail = ` (owner pid ${owner.pid})`;
       }
     } catch {
       // A missing or damaged owner record must still fail closed.
     }
 
-    throw new Error(
-      `Another Docker test run already owns ${COMPOSE_PROJECT_NAME}${ownerDetail}; wait for it to finish or run docker:test:down after confirming it stopped`
+    const lockError = new Error(
+      `Another Docker test run already owns ${COMPOSE_PROJECT_NAME}${ownerDetail}; wait for it to finish or use docker:test:down for verified stale recovery`
     );
+    lockError.code = "WORKSYNC_DOCKER_TEST_LOCKED";
+    throw lockError;
   }
 
   let released = false;
@@ -169,8 +197,8 @@ function acquireDockerTestLock({
     released = true;
 
     try {
-      const owner = JSON.parse(readFileSync(file, "utf8"));
-      if (owner.token === ownerToken) {
+      const owner = readDockerTestLockOwner(file);
+      if (owner?.token === ownerToken) {
         rmSync(file, { force: true });
       }
     } catch {
@@ -179,8 +207,72 @@ function acquireDockerTestLock({
   };
 }
 
-function clearDockerTestLock(file = dockerTestLockFile) {
-  rmSync(file, { force: true });
+function isProcessRunning(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error.code === "ESRCH") {
+      return false;
+    }
+    if (error.code === "EPERM") {
+      return true;
+    }
+    throw error;
+  }
+}
+
+function removeDockerTestLock(file, expectedOwnerToken) {
+  const owner = readDockerTestLockOwner(file);
+  if (!owner) {
+    return;
+  }
+  if (owner.token !== expectedOwnerToken) {
+    throw new Error(
+      "Docker test lock owner changed during recovery; no cleanup was performed"
+    );
+  }
+  rmSync(file);
+}
+
+function acquireDockerTestRecoveryLock({
+  file = dockerTestLockFile,
+  ownerPid = process.pid,
+  ownerToken = randomUUID(),
+  processIsRunning = isProcessRunning,
+  onStaleLockRemoved = () => {}
+} = {}) {
+  try {
+    return acquireDockerTestLock({ file, ownerPid, ownerToken });
+  } catch (error) {
+    if (error.code !== "WORKSYNC_DOCKER_TEST_LOCKED") {
+      throw error;
+    }
+  }
+
+  const staleOwner = readDockerTestLockOwner(file);
+  if (!staleOwner) {
+    return acquireDockerTestLock({ file, ownerPid, ownerToken });
+  }
+  if (processIsRunning(staleOwner.pid)) {
+    throw new Error(
+      `Docker test run owned by pid ${staleOwner.pid} is still active; recovery cleanup was not started`
+    );
+  }
+
+  removeDockerTestLock(file, staleOwner.token);
+  onStaleLockRemoved();
+
+  try {
+    return acquireDockerTestLock({ file, ownerPid, ownerToken });
+  } catch (error) {
+    if (error.code === "WORKSYNC_DOCKER_TEST_LOCKED") {
+      throw new Error(
+        "Another Docker test run started during stale-lock recovery; no cleanup was performed"
+      );
+    }
+    throw error;
+  }
 }
 
 function createComposeArguments(environmentFile, ...arguments_) {
@@ -371,17 +463,21 @@ function signalExitCode(signal) {
 
 async function run(scope = process.argv[2]) {
   if (scope === "down") {
+    const releaseDockerTestLock = acquireDockerTestRecoveryLock();
     const executeDocker = createDockerExecutor();
-    await executeDocker(
-      createComposeArguments(
-        exampleEnvironmentFile,
-        "down",
-        "--volumes",
-        "--remove-orphans"
-      ),
-      { environmentFile: exampleEnvironmentFile }
-    );
-    clearDockerTestLock();
+    try {
+      await executeDocker(
+        createComposeArguments(
+          exampleEnvironmentFile,
+          "down",
+          "--volumes",
+          "--remove-orphans"
+        ),
+        { environmentFile: exampleEnvironmentFile }
+      );
+    } finally {
+      releaseDockerTestLock();
+    }
     return;
   }
 
@@ -516,7 +612,7 @@ if (require.main === module) {
 module.exports = {
   COMPOSE_PROJECT_NAME,
   acquireDockerTestLock,
-  clearDockerTestLock,
+  acquireDockerTestRecoveryLock,
   createSignalHandler,
   createSingleFlight,
   createScopePlan,

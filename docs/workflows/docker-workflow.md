@@ -132,9 +132,9 @@ The orchestrator validates the actual test env before Docker mutations,
 acquires an atomic machine-local lock before Compose inspection, uses only
 Compose service hostnames inside containers, stops at the first failed scope,
 and removes the test containers and disposable PostgreSQL volume. It never
-reads a root `.env`. After confirming no Docker test command is active,
-`corepack pnpm docker:test:down` removes stale Compose resources and the
-recovery lock if an external interruption prevents normal cleanup.
+reads a root `.env`. If an external interruption prevents normal cleanup,
+`corepack pnpm docker:test:down` refuses a live lock owner and must acquire the
+same lock before removing stale Compose resources.
 
 ## Related Docs
 

@@ -6,7 +6,7 @@ const { join } = require("node:path");
 const {
   COMPOSE_PROJECT_NAME,
   acquireDockerTestLock,
-  clearDockerTestLock,
+  acquireDockerTestRecoveryLock,
   createSignalHandler,
   createSingleFlight,
   createScopePlan,
@@ -133,11 +133,22 @@ function testCrossProcessLock() {
       new RegExp(`already owns ${COMPOSE_PROJECT_NAME} \\(owner pid 101\\)`)
     );
 
-    clearDockerTestLock(lockFile);
-    const releaseSecond = acquireDockerTestLock({
+    assert.throws(
+      () =>
+        acquireDockerTestRecoveryLock({
+          file: lockFile,
+          ownerPid: 202,
+          ownerToken: "second",
+          processIsRunning: () => true
+        }),
+      /pid 101 is still active/
+    );
+
+    const releaseSecond = acquireDockerTestRecoveryLock({
       file: lockFile,
       ownerPid: 202,
-      ownerToken: "second"
+      ownerToken: "second",
+      processIsRunning: () => false
     });
 
     releaseFirst();
@@ -159,6 +170,41 @@ function testCrossProcessLock() {
     });
     releaseThird();
     releaseThird();
+
+    const releaseStale = acquireDockerTestLock({
+      file: lockFile,
+      ownerPid: 404,
+      ownerToken: "stale"
+    });
+    let releaseCompetingRun;
+    assert.throws(
+      () =>
+        acquireDockerTestRecoveryLock({
+          file: lockFile,
+          ownerPid: 505,
+          ownerToken: "recovery",
+          processIsRunning: () => false,
+          onStaleLockRemoved() {
+            releaseCompetingRun = acquireDockerTestLock({
+              file: lockFile,
+              ownerPid: 606,
+              ownerToken: "competing"
+            });
+          }
+        }),
+      /Another Docker test run started during stale-lock recovery/
+    );
+    assert.throws(
+      () =>
+        acquireDockerTestLock({
+          file: lockFile,
+          ownerPid: 707,
+          ownerToken: "late"
+        }),
+      new RegExp(`already owns ${COMPOSE_PROJECT_NAME} \\(owner pid 606\\)`)
+    );
+    releaseStale();
+    releaseCompetingRun();
   } finally {
     rmSync(temporaryDirectory, { force: true, recursive: true });
   }
