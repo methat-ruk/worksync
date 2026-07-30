@@ -38,6 +38,7 @@ plan before execution.
 corepack pnpm prisma:validate
 corepack pnpm prisma:generate
 corepack pnpm prisma:migrate
+corepack pnpm prisma:migrate:deploy:test
 corepack pnpm prisma:migrate:status:test
 corepack pnpm validate:backend
 ```
@@ -48,11 +49,31 @@ Use a real PostgreSQL test database for persistence-critical evidence.
 
 - Hybrid local PostgreSQL is exposed on `localhost:5433`.
 - CI service containers commonly expose PostgreSQL on `localhost:5432`.
-- `TEST_DATABASE_URL` must point to the disposable test database used by
-  integration, contract, and security tests.
+- `DATABASE_URL` is the only database connection key.
+- Development commands load it from `app/backend/.env`; test commands load it
+  from `app/backend/.env.test` or the injected CI environment; production
+  commands use `app/backend/.env.production` or an injected runtime secret.
+- Test commands require the selected database name to end in `_test`.
 
-When a database-backed suite skips because the test database is unavailable,
-validation is incomplete.
+When the test database is unavailable, database-backed suites fail closed.
+Validation remains incomplete until they pass against the test target.
+
+## Local Database Reset
+
+Database reset is destructive and development-only. Preview the sanitized
+target with:
+
+```bash
+corepack pnpm prisma:reset:dev --check
+corepack pnpm prisma:reset:test --check
+```
+
+Run the matching command without `--check` only when all data in that local
+database may be deleted. The development command accepts only `worksync`; the
+test command accepts only a database ending in `_test`. Both keep Prisma's
+interactive confirmation, reject CI/CD and non-local hosts, never pass
+`--force`, and never seed. Run an explicit seed command after reset when
+needed. Production reset is not supported.
 
 ## Generated Client Discipline
 

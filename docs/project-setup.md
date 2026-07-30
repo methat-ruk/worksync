@@ -48,6 +48,7 @@ macOS or Linux:
 cp .env.local.example .env
 cp app/frontend/.env.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
+cp app/backend/.env.test.example app/backend/.env.test
 ```
 
 Windows PowerShell:
@@ -56,12 +57,13 @@ Windows PowerShell:
 Copy-Item .env.local.example .env
 Copy-Item app/frontend/.env.example app/frontend/.env.local
 Copy-Item app/backend/.env.example app/backend/.env
+Copy-Item app/backend/.env.test.example app/backend/.env.test
 ```
 
 Replace example JWT values with two different local secrets of at least 32
 bytes. Keep `COOKIE_SECURE=false` only for local HTTP development.
 
-Never commit `.env` or `.env.local` files.
+Never commit local `.env`, `.env.test`, or `.env.production` files.
 
 Google OAuth is disabled by default for local development. Follow
 `docs/google-oauth-setup.md` when enabling it.
@@ -119,22 +121,42 @@ Apply local development migrations:
 corepack pnpm prisma:migrate
 ```
 
-Apply the same migrations to the test database:
-
-macOS or Linux:
+Apply the same migrations to the test database selected by
+`app/backend/.env.test`:
 
 ```bash
-DATABASE_URL="postgresql://worksync:worksync@localhost:5433/worksync_test?schema=public" \
-  corepack pnpm --filter @worksync/backend prisma:migrate:deploy
+corepack pnpm prisma:migrate:deploy:test
 ```
 
-Windows PowerShell:
+`DATABASE_URL` is the only database connection key. Development commands load
+it from `app/backend/.env`, test commands load it from
+`app/backend/.env.test`, and production commands use
+`app/backend/.env.production` or an injected runtime secret. Test commands
+reject a database name that does not end in `_test`.
 
-```powershell
-$env:DATABASE_URL = "postgresql://worksync:worksync@localhost:5433/worksync_test?schema=public"
-corepack pnpm --filter @worksync/backend prisma:migrate:deploy
-Remove-Item Env:DATABASE_URL
+### Reset a local database
+
+Reset deletes all data in the selected database and reapplies committed
+migrations. Check the sanitized target first:
+
+```bash
+corepack pnpm prisma:reset:dev --check
+corepack pnpm prisma:reset:test --check
 ```
+
+Then run only the intended interactive command:
+
+```bash
+corepack pnpm prisma:reset:dev
+corepack pnpm prisma:reset:test
+```
+
+The development command accepts only the local database named `worksync`; the
+test command accepts only a local database whose name ends in `_test`. Both
+commands are disabled in CI/CD, retain Prisma's confirmation prompt, do not
+accept `--force`, and never seed automatically. Run the matching seed command
+separately after a reset when seed data is needed. There is no production reset
+command.
 
 ## 6. Seed a Local Login User
 
@@ -222,9 +244,10 @@ On Linux, containers, or CI-like hosts missing system libraries:
 corepack pnpm playwright:install:with-deps
 ```
 
-The PostgreSQL-backed integration and security evidence requires
-`TEST_DATABASE_URL` from `app/backend/.env`. Required database-backed suites
-must not be accepted as complete when skipped.
+The PostgreSQL-backed integration and security evidence uses `DATABASE_URL`
+from `app/backend/.env.test` or the injected CI environment. Required
+database-backed suites must fail rather than connect to development or be
+accepted as skipped.
 
 ## Run Modes
 
@@ -326,11 +349,14 @@ Container constraints:
 | `corepack pnpm playwright:install` | Install local Chromium for frontend browser checks |
 | `corepack pnpm playwright:install:with-deps` | Install Chromium plus OS dependencies on Linux, containers, or CI-like hosts |
 | `corepack pnpm test:e2e:frontend` | Run frontend browser E2E tests |
-| `corepack pnpm prisma:migrate:status:test` | Verify migration status against `TEST_DATABASE_URL` |
+| `corepack pnpm prisma:migrate:deploy:test` | Apply committed migrations to the guarded test database |
+| `corepack pnpm prisma:migrate:status:test` | Verify migration status against the guarded test database |
+| `corepack pnpm prisma:reset:dev` | Interactively reset only the local `worksync` development database |
+| `corepack pnpm prisma:reset:test` | Interactively reset only a local database whose name ends in `_test` |
 | `corepack pnpm docker:infra:up` | Run PostgreSQL, Redis, and MinIO only |
 | `corepack pnpm docker:full:build` | Build application Docker images |
 | `corepack pnpm docker:full:up` | Run infrastructure and application containers |
-| `corepack pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
+| `corepack pnpm smoke:backend:runtime` | Smoke-test the built backend against the guarded test database |
 | `corepack pnpm docker:infra:down` | Stop local infrastructure |
 | `corepack pnpm --filter @worksync/backend test:integration` | Run PostgreSQL integration tests |
 | `corepack pnpm --filter @worksync/backend test:contract` | Run API and Swagger contract tests |
@@ -359,7 +385,8 @@ docker compose -f docker/compose.yml ps
 docker exec worksync-postgres psql -U worksync -d worksync_test -c "SELECT 1;"
 ```
 
-Confirm `TEST_DATABASE_URL` exists in `app/backend/.env`.
+Confirm `DATABASE_URL` exists in `app/backend/.env.test` and its database name
+ends in `_test`.
 
 ### Backend fails environment validation
 

@@ -1,18 +1,12 @@
-const path = require("node:path");
-
-require("dotenv").config({
-  path: path.resolve(__dirname, "../.env"),
-  override: false,
-  quiet: true
-});
+const {
+  loadTestDatabaseUrl
+} = require("../../../scripts/database-environment.cjs");
 
 process.env.NODE_ENV = "test";
 process.env.PORT = "4001";
 process.env.FRONTEND_URL = "http://localhost:3000";
 process.env.CORS_ORIGIN = "http://localhost:3000";
-process.env.DATABASE_URL =
-  process.env.TEST_DATABASE_URL ??
-  "postgresql://worksync:worksync@localhost:5433/worksync_test?schema=public";
+process.env.DATABASE_URL = loadTestDatabaseUrl({ allowDefault: true });
 process.env.REDIS_URL =
   process.env.TEST_REDIS_URL ?? "redis://localhost:6379/1";
 process.env.LOG_LEVEL = "silent";

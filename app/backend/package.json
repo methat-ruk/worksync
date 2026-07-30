@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "dotenv -e .env -- nest start --watch",
     "build": "nest build",
-    "start": "dotenv -e .env -- node dist/main.js",
+    "start": "dotenv -e .env.production -- node dist/main.js",
     "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"prisma.config.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "node --disable-warning=ExperimentalWarning --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
@@ -17,10 +17,13 @@
     "prisma:generate": "dotenv -e .env.example -- prisma generate",
     "prisma:validate": "dotenv -e .env.example -- prisma validate",
     "prisma:migrate": "dotenv -e .env -- prisma migrate dev",
-    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:deploy": "dotenv -e .env.production -- prisma migrate deploy",
+    "prisma:migrate:deploy:test": "node ../../scripts/prisma-test-migrate-deploy.cjs",
     "prisma:migrate:status:test": "node ../../scripts/prisma-test-migration-status.cjs",
+    "prisma:reset:dev": "node ../../scripts/prisma-reset.cjs development",
+    "prisma:reset:test": "node ../../scripts/prisma-reset.cjs test",
     "seed:auth-user": "dotenv -e .env -- node -r ts-node/register -r tsconfig-paths/register prisma/seed-auth-user.ts",
-    "seed:auth-user:test": "dotenv -e .env -- node -r ts-node/register -r tsconfig-paths/register prisma/seed-auth-user.ts --test",
+    "seed:auth-user:test": "dotenv -e .env.test -o -- node -r ts-node/register -r tsconfig-paths/register prisma/seed-auth-user.ts --test",
     "smoke:runtime": "node ../../scripts/smoke-backend-runtime.cjs"
   },
   "dependencies": {

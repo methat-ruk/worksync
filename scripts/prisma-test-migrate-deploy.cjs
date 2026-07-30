@@ -17,7 +17,7 @@ const result = spawnSync(
   [
     prismaCli,
     "migrate",
-    "status",
+    "deploy",
     "--config",
     join(backendRoot, "prisma.config.ts")
   ],

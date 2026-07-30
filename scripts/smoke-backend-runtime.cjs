@@ -6,13 +6,9 @@ const { join, resolve } = require("node:path");
 const repositoryRoot = resolve(__dirname, "..");
 const backendRoot = join(repositoryRoot, "app", "backend");
 const runtimeEntry = join(backendRoot, "dist", "main.js");
-const dotenv = require(join(backendRoot, "node_modules", "dotenv"));
-
-dotenv.config({
-  path: join(backendRoot, ".env"),
-  override: false,
-  quiet: true
-});
+const {
+  loadTestDatabaseUrl
+} = require("./database-environment.cjs");
 
 function freePort() {
   return new Promise((resolvePort, reject) => {
@@ -69,9 +65,7 @@ async function main() {
       "Backend runtime artifact is missing; run the backend build first"
     );
   }
-  if (!process.env.TEST_DATABASE_URL) {
-    throw new Error("TEST_DATABASE_URL is required for backend runtime smoke");
-  }
+  const databaseUrl = loadTestDatabaseUrl();
 
   const port = await freePort();
   const baseUrl = `http://127.0.0.1:${port}`;
@@ -83,7 +77,7 @@ async function main() {
       PORT: String(port),
       FRONTEND_URL: process.env.FRONTEND_URL ?? "http://localhost:3000",
       CORS_ORIGIN: process.env.CORS_ORIGIN ?? "http://localhost:3000",
-      DATABASE_URL: process.env.TEST_DATABASE_URL,
+      DATABASE_URL: databaseUrl,
       LOG_LEVEL: "silent",
       JWT_ACCESS_SECRET:
         process.env.JWT_ACCESS_SECRET ??

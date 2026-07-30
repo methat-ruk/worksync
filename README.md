@@ -97,6 +97,7 @@ Create local environment files for the recommended hybrid development mode:
 cp .env.local.example .env
 cp app/frontend/.env.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
+cp app/backend/.env.test.example app/backend/.env.test
 ```
 
 On Windows PowerShell:
@@ -105,6 +106,7 @@ On Windows PowerShell:
 Copy-Item .env.local.example .env
 Copy-Item app/frontend/.env.example app/frontend/.env.local
 Copy-Item app/backend/.env.example app/backend/.env
+Copy-Item app/backend/.env.test.example app/backend/.env.test
 ```
 
 Start local services and prepare Prisma:
@@ -211,12 +213,15 @@ staging, production-like, or internet-exposed environment.
 | `pnpm prisma:validate` | Validate the Prisma schema |
 | `pnpm prisma:generate` | Generate Prisma Client |
 | `pnpm prisma:migrate` | Apply local Prisma migrations |
-| `pnpm prisma:migrate:status:test` | Verify committed migrations against `TEST_DATABASE_URL` |
+| `pnpm prisma:migrate:deploy:test` | Apply committed migrations to the guarded test database |
+| `pnpm prisma:migrate:status:test` | Verify committed migrations against the guarded test database |
+| `pnpm prisma:reset:dev` | Interactively reset only the local `worksync` development database |
+| `pnpm prisma:reset:test` | Interactively reset only a local database whose name ends in `_test` |
 | `pnpm seed:auth-user` | Upsert the local development password-login seed user |
-| `pnpm seed:auth-user:test` | Upsert the password-login seed user in `TEST_DATABASE_URL` |
+| `pnpm seed:auth-user:test` | Upsert the password-login seed user in the guarded test database |
 | `pnpm validate:backend` | Run complete backend validation including artifact checks |
 | `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
-| `pnpm smoke:backend:runtime` | Smoke-test the built backend against `TEST_DATABASE_URL` |
+| `pnpm smoke:backend:runtime` | Smoke-test the built backend against the guarded test database |
 | `pnpm playwright:install` | Install local Chromium for frontend E2E and browser-visible checks |
 | `pnpm playwright:install:with-deps` | Install Chromium plus OS dependencies on Linux, containers, or CI-like hosts |
 | `pnpm test:e2e:frontend` | Run frontend browser E2E tests |
@@ -240,9 +245,20 @@ Use the environment examples as non-secret templates:
 - `.env.local.example` is the root template for hybrid development.
 - `.env.docker.example` is the root template for full Docker development.
 - `app/frontend/.env.example` contains browser-safe frontend variables.
-- `app/backend/.env.example` contains backend-only variables such as database, cache, queue, token, storage, email, realtime, observability, and test-service configuration.
+- `app/backend/.env.example` is the development backend template.
+- `app/backend/.env.test.example` is the isolated test backend template.
 
 Do not commit real `.env` files or secrets.
+
+`DATABASE_URL` is the only database connection key. The selected backend
+environment supplies its value: `.env` for development, `.env.test` for local
+tests, and `.env.production` or an injected secret for production. Test-only
+commands reject database names that do not end in `_test`.
+
+Database reset commands are local, interactive, and destructive. Preview a
+target with `pnpm prisma:reset:dev --check` or
+`pnpm prisma:reset:test --check` before running the corresponding command.
+They never run in CI/CD, do not accept `--force`, and do not seed automatically.
 
 Auth seed commands are local-first safety tools. They refuse `NODE_ENV=production`
 and refuse non-local database hosts unless explicitly overridden with a custom
@@ -263,9 +279,11 @@ pnpm prisma:generate
 pnpm check
 ```
 
-Backend tests are configured with Jest. PostgreSQL integration tests use
-`TEST_DATABASE_URL`. Database-backed integration and security evidence is
-incomplete when the required test database is unavailable or a suite skips.
+Backend tests are configured with Jest. PostgreSQL integration tests load
+`DATABASE_URL` from `app/backend/.env.test` or the injected CI environment and
+reject a database name that does not end in `_test`. Database-backed
+integration and security evidence is incomplete when the required test
+database is unavailable.
 
 Docker Compose validation should be rerun on machines with Docker installed:
 
