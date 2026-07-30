@@ -70,7 +70,7 @@ workspace membership or an equivalent authorization proof.
 
 Before running database-backed validation, confirm:
 
-- `app/backend/.env` exists and defines `TEST_DATABASE_URL`
+- `app/backend/.env.test` exists and defines `DATABASE_URL`
 - local PostgreSQL infrastructure is running
 - the `worksync_test` database exists
 - committed migrations are applied to `worksync_test`

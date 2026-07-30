@@ -7,10 +7,6 @@ import { AuthRateLimiterService } from "../../src/auth/services/auth-rate-limit.
 import { PrismaService } from "../../src/database/prisma.service";
 import { configureApplication } from "../../src/main";
 
-const describeWithDatabase = process.env.TEST_DATABASE_URL
-  ? describe
-  : describe.skip;
-
 async function signUp(
   app: INestApplication,
   email: string
@@ -29,14 +25,13 @@ async function signUp(
   };
 }
 
-describeWithDatabase("project PostgreSQL integration", () => {
+describe("project PostgreSQL integration", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   const runId = `${Date.now()}`;
   const prefix = `project-${runId}`;
 
   beforeAll(async () => {
-    process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule]
     })

@@ -1,4 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,14 +23,14 @@ const playwrightCli = path.join(
   "test",
   "cli.js"
 );
-const databaseUrl = process.env.TEST_DATABASE_URL;
+const require = createRequire(import.meta.url);
+const { loadTestDatabaseUrl } = require(
+  path.join(workspaceRoot, "scripts", "database-environment.cjs")
+);
+const databaseUrl = loadTestDatabaseUrl();
 const startupTimeoutMs = 120_000;
 const children = [];
 const childFailures = new WeakMap();
-
-if (!databaseUrl) {
-  throw new Error("TEST_DATABASE_URL is required for live auth E2E");
-}
 
 async function isReady(url) {
   try {

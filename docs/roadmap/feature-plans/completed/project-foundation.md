@@ -394,7 +394,7 @@ frontend E2E, container image regression, and dependency audit.
 Environment prerequisites:
 
 - Node.js 22, as required by the repository engine and `.nvmrc`
-- PostgreSQL test database reachable through `TEST_DATABASE_URL` with all
+- PostgreSQL test database reachable through the test environment's `DATABASE_URL` with all
   committed migrations applied
 - Redis available where the complete existing backend suite enables the
   Redis-backed auth limiter

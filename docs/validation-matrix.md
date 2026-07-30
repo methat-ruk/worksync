@@ -10,6 +10,7 @@ corepack pnpm install --frozen-lockfile
 cp .env.local.example .env
 cp app/frontend/.env.example app/frontend/.env.local
 cp app/backend/.env.example app/backend/.env
+cp app/backend/.env.test.example app/backend/.env.test
 pnpm docker:infra:up
 pnpm prisma:validate
 pnpm prisma:generate
@@ -26,7 +27,10 @@ following `docs/project-setup.md`.
 |---|---|---|
 | Complete backend validation | `pnpm validate:backend` | Validate Prisma, backend static checks, all backend test projects, build output, and runtime artifact shape |
 | Backend artifact | `pnpm validate:backend:artifact` | Require `dist/main.js` and compiled Prisma client while rejecting tests and nested source output |
-| Test migration status | `pnpm prisma:migrate:status:test` | Verify `worksync_test` has every committed migration using `TEST_DATABASE_URL` |
+| Test migration deploy | `pnpm prisma:migrate:deploy:test` | Apply committed migrations using the guarded `DATABASE_URL` selected for tests |
+| Test migration status | `pnpm prisma:migrate:status:test` | Verify `worksync_test` has every committed migration using the guarded test environment |
+| Development reset target | `pnpm prisma:reset:dev -- --check` | Validate the local `worksync` reset target without changing data |
+| Test reset target | `pnpm prisma:reset:test -- --check` | Validate the local `_test` reset target without changing data |
 | Backend runtime smoke | `pnpm smoke:backend:runtime` | Start the built backend against `worksync_test` and verify health, Swagger, disabled Google OAuth, and refresh failure contracts |
 | Typecheck | `pnpm typecheck` | Validate TypeScript contracts across workspaces |
 | Lint | `pnpm lint` | Enforce static quality and framework rules across backend source, backend tests, and frontend source |
@@ -70,13 +74,15 @@ CI jobs: `Backend validation`, `Frontend validation`, `Frontend E2E`,
   tests, and production build. Playwright authentication E2E runs in the
   separate frontend E2E CI job.
 - Required backend PostgreSQL integration and security evidence is incomplete
-  when `TEST_DATABASE_URL` is unavailable or the database-backed suite skips.
+  when the test `DATABASE_URL` is unavailable or the database-backed suite
+  cannot run.
 - `docker/compose.yml` is the hybrid-development infrastructure topology.
 - `docker/compose.app.yml` is a local/staging-like application overlay for
   full Docker mode; it is not a production deployment manifest.
 
-`pnpm validate:backend` must run with `TEST_DATABASE_URL` in CI so the
-PostgreSQL integration project passes rather than skips.
+`pnpm validate:backend` must run with `DATABASE_URL` targeting the CI test
+database so the PostgreSQL integration project passes rather than connecting
+to development or skipping.
 Auth rate-limit validation must run with Redis configuration available when the
 Redis-backed limiter path is in scope. Use `TEST_REDIS_URL` for isolated test
 Redis databases and never log raw limiter keys, emails, cookies, or tokens.

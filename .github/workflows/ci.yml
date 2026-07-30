@@ -64,7 +64,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      TEST_DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
+      DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
       TEST_REDIS_URL: redis://localhost:6379/1
       AUTH_RATE_LIMIT_ENABLED: "true"
       AUTH_RATE_LIMIT_KEY_SECRET: ci-rate-limit-secret-at-least-32-bytes
@@ -91,9 +91,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Apply Prisma migrations
-        env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
-        run: pnpm --filter @worksync/backend prisma:migrate:deploy
+        run: pnpm prisma:migrate:deploy:test
 
       - name: Validate backend
         run: pnpm validate:backend
@@ -159,7 +157,7 @@ jobs:
     env:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
       NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
-      TEST_DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
+      DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -197,9 +195,7 @@ jobs:
         run: pnpm --filter @worksync/frontend test:e2e
 
       - name: Apply Prisma migrations for live auth E2E
-        env:
-          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
-        run: pnpm --filter @worksync/backend prisma:migrate:deploy
+        run: pnpm prisma:migrate:deploy:test
 
       - name: Run live auth concurrency end-to-end tests
         run: pnpm --filter @worksync/frontend test:e2e:live

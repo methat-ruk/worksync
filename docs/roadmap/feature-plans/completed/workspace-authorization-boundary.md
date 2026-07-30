@@ -412,7 +412,7 @@ git diff --check
 Environment prerequisites:
 
 - PostgreSQL test service reachable through the repository's Compose topology
-- `TEST_DATABASE_URL` set to the test database; the documented local default is
+- the test environment's `DATABASE_URL` set to the test database; the documented local default is
   `postgresql://worksync:worksync@localhost:5433/worksync_test?schema=public`
 - current migrations applied to the test database before integration evidence
 - Redis available for the complete backend gate where existing auth/rate-limit

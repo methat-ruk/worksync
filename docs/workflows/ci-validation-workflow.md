@@ -63,8 +63,8 @@ pipeline change, run the closest local equivalent for every affected CI job.
   `@worksync/auth-policy/*`.
 - Docker image build fails because Prisma Client was not generated inside the
   image before backend compilation.
-- Database-backed tests skip or fail because `TEST_DATABASE_URL` is missing or
-  points at the wrong port.
+- Database-backed tests fail because `DATABASE_URL` is missing, points at the
+  wrong port, or does not select a database whose name ends in `_test`.
 - Compose config output is pasted into logs with real resolved secrets.
 - Branch protection expects old CI job names after workflow jobs are renamed.
 

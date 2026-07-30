@@ -61,6 +61,7 @@ reconstructing every historical implementation detail.
 | [Workspace Pagination and Selection](completed/workspace-pagination-and-selection.md) | Done |
 | [Workspace Authorization Boundary](completed/workspace-authorization-boundary.md) | Done |
 | [Project Foundation](completed/project-foundation.md) | Done |
+| [Database Environment Isolation](completed/database-environment-isolation.md) | Done |
 
 ## Feature Plan Template
 

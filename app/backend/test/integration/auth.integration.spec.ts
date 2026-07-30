@@ -14,9 +14,6 @@ import { AuthProvider } from "../../src/generated/prisma/client";
 import { configureApplication } from "../../src/main";
 import { createGoogleOAuthTestHarness } from "../helpers/google-oauth-test-harness";
 
-const describeWithDatabase = process.env.TEST_DATABASE_URL
-  ? describe
-  : describe.skip;
 const CONCURRENCY_STRESS_TEST_TIMEOUT_MS = 30_000;
 
 function refreshCookie(response: request.Response): string {
@@ -49,7 +46,7 @@ function googleTransaction(response: request.Response): {
   };
 }
 
-describeWithDatabase("authentication PostgreSQL integration", () => {
+describe("authentication PostgreSQL integration", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let googleIdentities: GoogleIdentityService;
@@ -65,7 +62,6 @@ describeWithDatabase("authentication PostgreSQL integration", () => {
   }
 
   beforeAll(async () => {
-    process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule]
     })

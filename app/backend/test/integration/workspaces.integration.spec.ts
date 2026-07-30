@@ -8,16 +8,12 @@ import { PrismaService } from "../../src/database/prisma.service";
 import { configureApplication } from "../../src/main";
 import { WorkspaceAuthorizationService } from "../../src/workspaces/workspace-authorization.service";
 
-const describeWithDatabase = process.env.TEST_DATABASE_URL
-  ? describe
-  : describe.skip;
-
 type SignedUpUser = {
   accessToken: string;
   userId: string;
 };
 
-describeWithDatabase("workspace PostgreSQL integration", () => {
+describe("workspace PostgreSQL integration", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let workspaceAuthorization: WorkspaceAuthorizationService;
@@ -41,7 +37,6 @@ describeWithDatabase("workspace PostgreSQL integration", () => {
   }
 
   beforeAll(async () => {
-    process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule]
     })

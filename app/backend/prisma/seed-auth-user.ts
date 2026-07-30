@@ -73,18 +73,34 @@ function parseOptions(argv: string[]): SeedOptions {
 }
 
 function connectionString(options: SeedOptions): string {
-  if (options.useTestDatabase) {
-    const testDatabaseUrl = process.env.TEST_DATABASE_URL;
-    if (!testDatabaseUrl) {
-      throw new Error("TEST_DATABASE_URL is required when using --test");
-    }
-    return testDatabaseUrl;
-  }
-
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is required");
   }
+
+  if (options.useTestDatabase) {
+    let parsedDatabaseUrl: URL;
+    try {
+      parsedDatabaseUrl = new URL(databaseUrl);
+    } catch {
+      throw new Error("DATABASE_URL must be a valid PostgreSQL URL");
+    }
+    if (
+      parsedDatabaseUrl.protocol !== "postgresql:" &&
+      parsedDatabaseUrl.protocol !== "postgres:"
+    ) {
+      throw new Error("DATABASE_URL must use the PostgreSQL protocol");
+    }
+    const databaseName = decodeURIComponent(
+      parsedDatabaseUrl.pathname.replace(/^\/+/, "")
+    );
+    if (!databaseName.endsWith("_test")) {
+      throw new Error(
+        "DATABASE_URL must target a test database whose name ends in _test"
+      );
+    }
+  }
+
   return databaseUrl;
 }
 
