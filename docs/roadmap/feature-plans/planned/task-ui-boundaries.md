@@ -1,32 +1,27 @@
-# Feature Plan: Task Maintainability Boundaries
+# Feature Plan: Task UI Boundaries
 
 Status: Planned
 
-Intended PR: `refactor/task-maintainability-boundaries`
+Intended PR: `refactor/task-ui-boundaries`
 
 Milestone: 2 - Projects and Tasks remediation before Milestone 3
 
-Impact: Material task-feature refactor with behavior preservation
+Impact: Material task frontend refactor with behavior preservation
 
 ## Goal
 
 Make the delivered task feature easier to understand, test, and extend before
-comments are added by separating frontend responsibilities, clarifying
-pagination reconciliation semantics, correcting task-assignee accessibility,
-and removing misleading dead policy abstractions without changing the task
-product or authorization contract.
+comments are added by separating frontend responsibilities and correcting
+task-assignee accessibility without changing the task product, API, or
+authorization contract.
 
 ## Verified Problem
 
 - `task-section.tsx` owns assignee search, form state, task cards, sheet
   behavior, filtering, mutation orchestration, and section rendering in one
   large module.
-- Project, task, assignee, and workspace pagination each implement similar but
-  not identical collection replacement/append behavior.
 - The assignee combobox can expose `aria-controls` and expanded state while its
   listbox is absent during loading, empty, or error states.
-- A task read-policy abstraction is not used by production authorization and
-  obscures the actual membership-based read guarantee.
 - The comments plan needs a clear task-detail host boundary before adding a
   discussion surface.
 
@@ -36,30 +31,18 @@ product or authorization contract.
   replaces the old one.
 - Existing task create, edit, filter, assignment auto-search, pagination, and
   status behavior remains unchanged.
-- A small pure pagination reconciliation contract is shared only where all
-  consumers have the same semantics; feature-specific selection and mutation
-  rules stay local.
-- Shared utility names, parameter types, and return types state their behavior;
-  no `any`, avoidable `unknown`, or mixed parser/transformer/validator behavior
-  is introduced.
 - Assignee search has correct combobox/listbox relationships for loading,
   results, empty, error, retry, closed, and keyboard navigation states.
 - The task-detail host for the next comments slice is explicitly selected as an
   existing Sheet or a separately planned route. A new route is not hidden in
   this refactor.
-- Dead authorization abstractions are removed or justified by a real caller and
-  a documented contract.
 - Existing critical live task workflow evidence remains green.
 
 ## Scope
 
 - split task-section responsibilities into cohesive task feature components and
   hooks without moving ownership outside the task feature unnecessarily
-- inventory pagination consumers and extract one pure generic reconciliation
-  utility only for identical page/append semantics
-- preserve workspace selection and mutation reconciliation as local behavior
 - correct assignee combobox ARIA and focus behavior across all states
-- clarify or remove production-dead task read-policy code
 - decide and document the task-detail host assumed by comments
 - add focused unit/component/browser regression evidence
 - reconcile affected feature-plan and architecture documentation after the
@@ -68,6 +51,8 @@ product or authorization contract.
 ## Out of Scope
 
 - task API, authorization, lifecycle, or database changes
+- shared project/task/assignee/workspace pagination reconciliation
+- backend task policy cleanup
 - new state-management or query-cache library
 - a generic data-access or pagination framework
 - visual redesign
@@ -77,19 +62,14 @@ product or authorization contract.
 ## Affected Surfaces
 
 - task feature components and hooks
-- project/task/assignee page reconciliation helpers
-- workspace page reconciliation only if semantics are proven identical
-- shared frontend utility boundary
-- task policy code and tests
 - component, accessibility, and browser tests
 
 ## Security and Data Boundary
 
-This is a behavior-preserving refactor. Task reads remain authorized by current
-workspace membership through the production service boundary, and task writes
-retain their existing role matrix. Removing an unused policy helper must not
-weaken tenant hiding, introduce client-authoritative roles, or change API
-responses. Existing real-database task isolation evidence remains required.
+This is a frontend behavior-preserving refactor. Task reads and writes retain
+their existing backend authorization, tenant-hiding, and response contracts.
+Frontend component boundaries must not make hidden actions available or trust
+client state as authorization.
 
 ## Design Constraints
 
@@ -100,28 +80,6 @@ responses. Existing real-database task isolation evidence remains required.
   whose props express the minimum required contract.
 - Extract hooks only when they own coherent state/effects; do not trade one
   large component for hidden cross-hook coupling.
-
-### Pagination reconciliation
-
-Use an explicit contract such as:
-
-```ts
-type PaginatedCollection<T> = {
-  items: T[];
-  total: number;
-};
-
-function reconcilePaginatedCollection<T>(input: {
-  current: PaginatedCollection<T>;
-  page: PaginatedCollection<T>;
-  mode: "replace" | "append";
-  getId: (item: T) => string;
-}): PaginatedCollection<T>;
-```
-
-The exact name may change during implementation, but Name, Return Type, and
-Behavior must remain aligned. The utility reconciles collections; it does not
-validate API payloads, manage selection, fetch data, or mutate feature state.
 
 ## Engineering Improvement Review
 
@@ -140,21 +98,18 @@ validate API payloads, manage selection, fetch data, or mutate feature state.
 - Keep server state ownership within existing feature patterns.
 - Avoid a new global cache/state dependency for a refactor-only slice.
 - Memoize or abstract only where profiling or render behavior warrants it.
-- Prevent effects from hiding request cancellation or mutation reconciliation.
+- Prevent effects from hiding request cancellation or mutation state.
 
 ### Code Quality and API Design
 
-- Separate parser, transformer, validator, and state-reducer responsibilities.
 - Prefer discriminated unions for state that can be loading, ready, empty,
   error, or retrying.
-- Keep pure collection reconciliation deterministic and independently tested.
-- Delete unused policy abstractions rather than preserving speculative reuse.
+- Keep component props and hook return types explicit and aligned with their
+  behavior.
 
 ### Testing
 
 - Characterize current behavior before moving code.
-- Test the shared collection contract with replacement, append, duplicate ID,
-  updated item, empty page, and total-count cases.
 - Pair component tests with real browser keyboard and live task workflow
   evidence.
 
@@ -164,44 +119,34 @@ validate API payloads, manage selection, fetch data, or mutate feature state.
    assignee search, cancellation, empty/error/retry, and sheet focus behavior.
 2. Decide whether comments will attach to the current task Sheet. If a dedicated
    route is required, stop and create a prerequisite PR-sized plan.
-3. Inventory the four page reconciliation implementations; document identical
-   and intentionally different semantics.
-4. Introduce the smallest pure, typed reconciliation utility for proven common
-   behavior and migrate consumers one at a time.
-5. Split AssigneePicker, TaskFormSheet, TaskCard, and orchestration into cohesive
+3. Split AssigneePicker, TaskFormSheet, TaskCard, and orchestration into cohesive
    modules while preserving public feature behavior.
-6. Correct combobox/listbox ARIA, async announcements, keyboard navigation, and
+4. Correct combobox/listbox ARIA, async announcements, keyboard navigation, and
    focus management across every state.
-7. Remove or justify the unused task read-policy abstraction and keep the real
-   membership-based authorization semantics explicit.
-8. Update affected tests and architecture/roadmap documentation.
-9. Run the post-implementation review gate before final validation.
+5. Update affected tests and architecture/roadmap documentation.
+6. Run the post-implementation review gate before final validation.
 
 ## Validation Contract
 
 | Guarantee | Required evidence |
 |---|---|
 | Task behavior is preserved | unit/component tests and critical live task E2E |
-| Shared reconciliation is deterministic | focused pure unit tests for every mode and edge case |
-| Consumers retain local semantics | project, task, assignee, and workspace regression tests as affected |
+| Component boundaries remain explicit | typecheck, lint, focused component contracts, and import review |
 | Assignee picker is accessible | accessibility assertions plus real-browser keyboard/IME/focus flow |
 | Request races remain controlled | fake-timer/unit evidence plus browser stale-response scenario |
-| Authorization contract is unchanged | backend policy/unit and task integration/security regression gates |
 | Refactor has no dependency drift | typecheck, lint, build, and lockfile inspection |
 
 ## Post-Implementation Review Gate
 
 Review the complete diff for behavior drift, circular imports, prop drilling,
-hidden side effects, over-generalized utilities, ARIA references to absent
-elements, lost abort/debounce behavior, and test doubles without live-boundary
-evidence. Resolve in-scope findings and rerun affected validation.
+hidden side effects, ARIA references to absent elements, lost abort/debounce
+behavior, and test doubles without live-boundary evidence. Resolve in-scope
+findings and rerun affected validation.
 
 ## Rollback and Forward Fix
 
 - Migrate one responsibility/consumer at a time so changes can be reverted
   without reverting unrelated task behavior.
-- If common pagination semantics cannot be proven, keep explicit feature-local
-  helpers rather than forcing reuse.
 - If the task-detail route decision expands scope, stop this plan at the current
   Sheet boundary and plan the route separately.
 
@@ -215,13 +160,12 @@ evidence. Resolve in-scope findings and rerun affected validation.
 
 - task API or authorization behavior must change
 - a new route or state-management dependency is required
-- pagination consumers require materially different contracts
+- shared pagination or backend policy cleanup enters the current diff
 - refactor reveals a user-visible behavior defect whose fix expands acceptance
   criteria
 
 ## Follow-up
 
+- [Frontend Pagination Reconciliation](frontend-pagination-reconciliation.md)
+- [Task Authorization Policy Cleanup](task-authorization-policy-cleanup.md)
 - [Comments and Mentions Foundation](comments-mentions-foundation.md)
-- revisit workspace membership-removal lifecycle orchestration only before a
-  second downstream resource needs a distinct cleanup policy; do not create a
-  generic lifecycle framework in this slice

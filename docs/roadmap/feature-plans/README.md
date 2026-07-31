@@ -23,9 +23,12 @@ Prioritize planned work by:
 For the current roadmap, this means:
 
 1. restore the frontend UI runtime compatibility contract
-2. clarify task maintainability boundaries before adding the discussion surface
-3. deliver comments and mentions
-4. add notifications, files, jobs, and production readiness in dependency order
+2. correct frontend recovery and app-shell copy
+3. clarify task UI boundaries before adding the discussion surface
+4. reconcile shared frontend pagination semantics
+5. remove misleading task authorization policy abstractions
+6. deliver comments and mentions
+7. add notifications, files, jobs, and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -35,12 +38,15 @@ tenant-isolation evidence exist.
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
 | 1 | [Frontend UI Runtime Compatibility](planned/frontend-ui-runtime-compatibility.md) | Cross-cutting | Next |
-| 2 | [Task Maintainability Boundaries](planned/task-maintainability-boundaries.md) | 2 remediation | Planned |
-| 3 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 4 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 5 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 6 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 7 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 2 | [Frontend Recovery and App-Shell Copy Consistency](planned/frontend-recovery-app-shell-copy-consistency.md) | Cross-cutting | Planned |
+| 3 | [Task UI Boundaries](planned/task-ui-boundaries.md) | 2 remediation | Planned |
+| 4 | [Frontend Pagination Reconciliation](planned/frontend-pagination-reconciliation.md) | Cross-cutting | Planned |
+| 5 | [Task Authorization Policy Cleanup](planned/task-authorization-policy-cleanup.md) | 2 remediation | Planned |
+| 6 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 7 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 8 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 9 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 10 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
 If the approved file-upload policy requires asynchronous malware scanning
 before attachments can be made available, replace the default File/Jobs order
@@ -58,8 +64,9 @@ Review outcome:
 
 - all 17 completed feature summaries remain completed historical records; no
   planned feature was treated as delivered
-- two remediation plans were added for the verified frontend runtime mismatch
-  and task frontend boundary/accessibility debt
+- five PR-sized remediation plans were added for the verified frontend runtime
+  mismatch, recovery/app-shell copy, task UI/accessibility, shared pagination,
+  and task policy semantics findings
 - all five existing planned plans now define acceptance criteria, current-scope
   Engineering Improvement Review, ordered implementation, mapped validation,
   post-implementation review, rollback/forward-fix, and re-plan conditions
@@ -70,6 +77,8 @@ Review outcome:
   required, avoiding a circular dependency
 - local plan links, required headings, dependency direction, and docs-only scope
   were re-reviewed after revision
+- runtime/copy and task UI/pagination/policy work were separated where their
+  validation and rollback boundaries are independent
 
 Implementation remains unapproved. Each plan's unresolved decisions and scope
 must be reviewed before its implementation starts.
