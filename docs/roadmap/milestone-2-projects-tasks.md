@@ -33,6 +33,9 @@ track status, and see task activity inside the correct workspace boundary.
 
 ## Still Required
 
+- frontend UI runtime compatibility remediation before extending shared
+  primitives into the collaboration workflow
+- task maintainability/accessibility remediation before adding comments
 - board view
 - activity log model and write path
 - frontend project update workflow
@@ -41,6 +44,8 @@ Feature plan order:
 
 1. [Project Foundation](feature-plans/completed/project-foundation.md)
 2. [Task Foundation](feature-plans/completed/task-foundation.md)
+3. [Frontend UI Runtime Compatibility](feature-plans/planned/frontend-ui-runtime-compatibility.md)
+4. [Task Maintainability Boundaries](feature-plans/planned/task-maintainability-boundaries.md)
 
 ## Exit Criteria
 

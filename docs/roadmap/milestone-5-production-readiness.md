@@ -30,7 +30,7 @@ evidence rather than best-effort manual confidence.
   pooling, and failure behavior
 - production-grade observability for critical journeys
 - incident-response automation/runbooks
-- backup and restore evidence
+- provider-backed backup ownership and isolated restore-drill evidence
 - post-deploy verification against a real environment
 - release rollback or containment rehearsal
 

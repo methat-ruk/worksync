@@ -24,7 +24,7 @@ weakening workspace isolation, storage safety, or job reliability.
 - email jobs
 - reminder jobs
 - daily summary jobs
-- BullMQ integration
+- selected BullMQ/Redis integration
 - worker runtime and deployment topology
 - retry, idempotency, and poison-message handling
 
@@ -32,6 +32,12 @@ Feature plan order:
 
 1. [File Upload Foundation](feature-plans/planned/file-upload-foundation.md)
 2. [Background Jobs Foundation](feature-plans/planned/background-jobs-foundation.md)
+
+This order is conditional. If the approved upload policy requires asynchronous
+malware scanning before availability, split the work into attachment
+metadata/storage lifecycle, Background Jobs scanning worker, and final upload
+availability/UI integration slices. Do not make the two foundation plans depend
+on each other as whole units.
 
 ## Exit Criteria
 

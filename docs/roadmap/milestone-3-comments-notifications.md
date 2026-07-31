@@ -30,6 +30,9 @@ Feature plan order:
 1. [Comments and Mentions Foundation](feature-plans/planned/comments-mentions-foundation.md)
 2. [Notifications Foundation](feature-plans/planned/notifications-foundation.md)
 
+Comments begin after the cross-cutting frontend runtime compatibility and task
+maintainability remediation plans are complete.
+
 ## Exit Criteria
 
 - mention and notification rules are tested: Not done

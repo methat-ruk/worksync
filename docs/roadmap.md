@@ -9,7 +9,9 @@ Last updated: 2026-07-31
 ## Current Snapshot
 
 WorkSync has completed the project and task foundation slices in Milestone 2.
-The next collaboration slice is comments and mentions.
+Repository health review found a frontend runtime/component compatibility gap
+and task maintainability debt that should be resolved before the next
+collaboration slice. The next product capability remains comments and mentions.
 
 Done:
 
@@ -38,6 +40,8 @@ Done:
 
 Still missing before the collaboration MVP works:
 
+- a coherent, browser-verified Tailwind/shadcn runtime contract
+- maintainable and accessible task boundaries for the discussion host
 - workspace-scoped authorization for comment, file, and activity resources
 - comments, mentions, notifications, realtime, files, jobs, and production
   readiness
@@ -55,11 +59,20 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
+1. [Frontend UI Runtime Compatibility](roadmap/feature-plans/planned/frontend-ui-runtime-compatibility.md)
+   - restore a coherent Tailwind/shadcn compilation contract and browser-verify
+     shared primitives, auth recovery, and app-shell copy.
+2. [Task Maintainability Boundaries](roadmap/feature-plans/planned/task-maintainability-boundaries.md)
+   - separate task UI responsibilities, clarify collection reconciliation, and
+     correct assignee-search accessibility before comments extend the surface.
+3. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
    - build the first task discussion workflow inside the proven workspace/task
      authorization boundary.
-2. Add notifications, files, jobs, activity, and production readiness in
-   dependency order.
+4. Add notifications, files, jobs, activity, and production readiness in
+   dependency order. If attachments require asynchronous scanning, split the
+   work around the attachment lifecycle contract, scan worker, and final
+   availability/UI integration rather than creating a file/job dependency
+   cycle.
 
 ## Guiding Principles
 
@@ -98,7 +111,8 @@ access is scoped to the correct workspace.
 
 - Invitation flow: email invite only, link invite, direct member add, or a
   staged combination?
-- Viewer behavior: read-only only, or can viewers comment?
+- Viewer comment behavior: keep read-only as recommended for consistency, or
+  approve a collaboration-policy change?
 - File upload: direct-to-storage upload or backend proxy?
 - File policy: allowed types, maximum size, preview rules, and malware scanning
   hook?

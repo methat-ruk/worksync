@@ -22,8 +22,10 @@ Prioritize planned work by:
 
 For the current roadmap, this means:
 
-1. comments and mentions
-2. notifications, files, jobs, and production readiness
+1. restore the frontend UI runtime compatibility contract
+2. clarify task maintainability boundaries before adding the discussion surface
+3. deliver comments and mentions
+4. add notifications, files, jobs, and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -32,11 +34,45 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Next |
-| 2 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 3 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 4 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 5 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Planned |
+| 1 | [Frontend UI Runtime Compatibility](planned/frontend-ui-runtime-compatibility.md) | Cross-cutting | Next |
+| 2 | [Task Maintainability Boundaries](planned/task-maintainability-boundaries.md) | 2 remediation | Planned |
+| 3 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 4 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 5 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 6 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 7 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+
+If the approved file-upload policy requires asynchronous malware scanning
+before attachments can be made available, replace the default File/Jobs order
+with reviewed PR slices: attachment metadata/storage lifecycle first, the
+Background Jobs scanning worker second, and upload availability/UI integration
+third. Do not create a File Upload <-> Background Jobs dependency cycle.
+
+## Plan Set Review - 2026-07-31
+
+Evidence baseline: repository commit
+`6fbf0fd296ca9c8b2e797faea3b44d31186c2d5d` plus read-only rendered-browser
+inspection performed for the repository health review.
+
+Review outcome:
+
+- all 17 completed feature summaries remain completed historical records; no
+  planned feature was treated as delivered
+- two remediation plans were added for the verified frontend runtime mismatch
+  and task frontend boundary/accessibility debt
+- all five existing planned plans now define acceptance criteria, current-scope
+  Engineering Improvement Review, ordered implementation, mapped validation,
+  post-implementation review, rollback/forward-fix, and re-plan conditions
+- the Production Deployment plan is explicitly blocked on a named target and
+  must be split into target-specific PR plans before implementation
+- file/job ordering is conditional on the approved malware-scanning policy and
+  must be split around the attachment lifecycle contract when scanning is
+  required, avoiding a circular dependency
+- local plan links, required headings, dependency direction, and docs-only scope
+  were re-reviewed after revision
+
+Implementation remains unapproved. Each plan's unresolved decisions and scope
+must be reviewed before its implementation starts.
 
 ## Completed Feature Summaries
 
@@ -74,8 +110,15 @@ Use this shape for future plans:
 Status:
 Intended PR:
 Milestone:
+Impact:
 
 ## Goal
+
+## Existing Foundation
+
+## Acceptance Criteria
+
+## Required Decisions Before Implementation
 
 ## Scope
 
@@ -85,11 +128,19 @@ Milestone:
 
 ## Security and Data Boundary
 
-## Required Evidence
+## Engineering Improvement Review
 
-## Done Criteria
+## Ordered Implementation Plan
+
+## Validation Contract
+
+## Post-Implementation Review Gate
+
+## Rollback and Forward Fix
 
 ## Dependencies
+
+## Re-plan Conditions
 
 ## Follow-up
 ```
