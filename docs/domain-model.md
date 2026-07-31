@@ -60,20 +60,24 @@ This document captures business meaning and invariants. It is not a database sch
 
 ## Task Lifecycle
 
-Initial proposed task states:
+Task statuses are fixed for the MVP task foundation:
 
 ```text
 BACKLOG -> IN_PROGRESS -> DONE
 BACKLOG -> CANCELED
 IN_PROGRESS -> CANCELED
-DONE -> IN_PROGRESS when reopen is allowed
+DONE -> IN_PROGRESS
 ```
 
-Open questions:
-
-- Are task statuses fixed globally or configurable per project?
-- Is task archival separate from completion?
-- Who may reopen a completed task?
+- `OWNER`, `ADMIN`, and `MEMBER` may create, edit, assign, transition, and
+  reopen tasks.
+- `VIEWER` is read-only.
+- `CANCELED` is terminal.
+- Task archival, hard deletion, and configurable project workflows are outside
+  the current contract.
+- A task assignee must be an active member of the task's workspace.
+- Removing a member and clearing that member's task assignments must be atomic
+  with respect to concurrent assignment.
 
 ## Membership Lifecycle
 

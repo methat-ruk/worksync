@@ -13,7 +13,9 @@ const config = {
         foreground: "var(--foreground)",
         primary: {
           DEFAULT: "var(--primary)",
-          foreground: "var(--primary-foreground)"
+          emphasis: "var(--primary-emphasis)",
+          foreground: "var(--primary-foreground)",
+          hover: "var(--primary-hover)"
         },
         secondary: {
           DEFAULT: "var(--secondary)",
@@ -21,7 +23,21 @@ const config = {
         },
         destructive: {
           DEFAULT: "var(--destructive)",
-          foreground: "var(--destructive-foreground)"
+          emphasis: "var(--destructive-emphasis)",
+          foreground: "var(--destructive-foreground)",
+          hover: "var(--destructive-hover)"
+        },
+        success: {
+          DEFAULT: "var(--success)",
+          emphasis: "var(--success-emphasis)",
+          foreground: "var(--success-foreground)",
+          hover: "var(--success-hover)"
+        },
+        warning: {
+          DEFAULT: "var(--warning)",
+          emphasis: "var(--warning-emphasis)",
+          foreground: "var(--warning-foreground)",
+          hover: "var(--warning-hover)"
         },
         muted: {
           DEFAULT: "var(--muted)",

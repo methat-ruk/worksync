@@ -161,15 +161,19 @@ rejected until a safe transfer rule exists.
 |---|---:|---:|---:|---:|
 | Create project | yes | yes | yes | no |
 | Update project | yes | yes | yes | no |
+| List, filter, and read tasks | yes | yes | yes | yes |
+| Search task assignees | yes | yes | yes | yes |
 | Create task | yes | yes | yes | no |
-| Update task | yes | yes | yes, when allowed | no |
+| Update, assign, and transition task | yes | yes | yes | no |
 | Comment | yes | yes | yes | no or maybe |
 | Upload file | yes | yes | yes, when allowed | no |
 | View activity log | yes | yes | maybe | maybe |
 
-Project creation and update are available to normal collaboration members.
-Project keys remain immutable, and every project query is constrained to the
-caller's proven workspace. Open decisions must be resolved before
+Project and task mutations are available to normal collaboration members.
+Project keys remain immutable. Every project and task query is constrained to
+the caller's proven workspace, and cross-workspace task identifiers use safe
+not-found behavior. Task assignee search returns only the minimum identity
+fields required for assignment. Open decisions must be resolved before
 implementation for the remaining `maybe` cells.
 
 ## File Upload Security

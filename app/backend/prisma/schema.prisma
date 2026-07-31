@@ -117,6 +117,7 @@ model Task {
   title       String
   description String?
   status      TaskStatus @default(BACKLOG)
+  dueDate     DateTime?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)

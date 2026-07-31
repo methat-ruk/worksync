@@ -21,30 +21,33 @@ track status, and see task activity inside the correct workspace boundary.
 - project key normalization, immutability, and workspace-local uniqueness
 - frontend selected-workspace project list/create workflow
 - project unit, contract, integration, security, component, and browser evidence
+- task create, list, read, update, and status-transition APIs
+- fixed `BACKLOG`, `IN_PROGRESS`, `DONE`, and `CANCELED` lifecycle rules
+- task assignment, due dates, bounded filters, and assignee search
+- workspace/project-scoped task authorization and safe tenant isolation
+- atomic member removal and task unassignment under concurrent assignment
+- frontend task list, create/edit, assignment auto-search, filters, and status
+  workflow
+- task unit, contract, integration, security, component, mocked browser, and
+  live browser evidence
 
 ## Still Required
 
-- task CRUD APIs
-- task status transition rules
-- assignment and due date support
-- task list view
 - board view
 - activity log model and write path
-- workspace-scoped authorization for all task routes
-- frontend project update and task workflows
-- task API contract, integration, and security tests
+- frontend project update workflow
 
 Feature plan order:
 
 1. [Project Foundation](feature-plans/completed/project-foundation.md)
-2. [Task Foundation](feature-plans/planned/task-foundation.md)
+2. [Task Foundation](feature-plans/completed/task-foundation.md)
 
 ## Exit Criteria
 
-- task lifecycle invariants are documented: Partial
-- task APIs follow response and error conventions: Not done
+- task lifecycle invariants are documented: Done
+- task APIs follow response and error conventions: Done
 - frontend covers loading, empty, error, and success states: Done for project
-  list/create; not done for tasks
+  list/create and the task workflow
 
 ## Related Docs
 

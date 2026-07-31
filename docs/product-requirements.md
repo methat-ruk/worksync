@@ -64,6 +64,9 @@ Role behavior must be enforced by trusted backend logic. Frontend visibility is 
 - assign task
 - set due date
 - list and filter tasks
+- use the fixed MVP states `BACKLOG`, `IN_PROGRESS`, `DONE`, and `CANCELED`
+- allow `OWNER`, `ADMIN`, and `MEMBER` to mutate tasks while `VIEWER` remains
+  read-only
 
 ### Comments and Mentions
 
@@ -122,7 +125,6 @@ MVP is successful when:
 
 ## Open Product Questions
 
-- Can task status values be customized per project?
 - Can a workspace have multiple owners?
 - What happens when the final owner tries to leave?
 - Are comments editable or deletable after posting?

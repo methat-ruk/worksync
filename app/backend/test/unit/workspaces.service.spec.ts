@@ -86,6 +86,9 @@ describe("WorkspacesService", () => {
       user: {
         findUnique: jest.Mock;
       };
+      task: {
+        updateMany: jest.Mock;
+      };
     };
     let workspaceAuthorization: {
       requireActor: jest.Mock;
@@ -104,6 +107,9 @@ describe("WorkspacesService", () => {
         },
         user: {
           findUnique: jest.fn()
+        },
+        task: {
+          updateMany: jest.fn().mockResolvedValue({ count: 0 })
         }
       };
       const prisma = {
@@ -208,6 +214,13 @@ describe("WorkspacesService", () => {
         workspaceId,
         transaction
       );
+      expect(transaction.task.updateMany).toHaveBeenCalledWith({
+        where: {
+          assigneeId: "member-user-1",
+          project: { workspaceId }
+        },
+        data: { assigneeId: null }
+      });
       expect(transaction.workspaceMember.delete).toHaveBeenCalledWith({
         where: { id: "membership-1" }
       });

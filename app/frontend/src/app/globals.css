@@ -26,19 +26,31 @@ body {
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.55 0.21 259);
-    --primary-hover: oklch(0.48 0.22 259);
-    --primary-foreground: oklch(0.985 0 0);
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-foreground: #ffffff;
+    --primary-emphasis: #2563eb;
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
     --accent: oklch(0.97 0 0);
     --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
+    --destructive: #dc2626;
+    --destructive-hover: #b91c1c;
+    --destructive-foreground: #ffffff;
+    --destructive-emphasis: #dc2626;
+    --success: #15803d;
+    --success-hover: #166534;
+    --success-foreground: #ffffff;
+    --success-emphasis: #15803d;
+    --warning: #b45309;
+    --warning-hover: #92400e;
+    --warning-foreground: #ffffff;
+    --warning-emphasis: #b45309;
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.62 0.18 259);
+    --ring: oklch(0.55 0.18 259);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -61,19 +73,19 @@ body {
     --card-foreground: oklch(0.985 0.006 255);
     --popover: oklch(0.225 0.032 257);
     --popover-foreground: oklch(0.985 0.006 255);
-    --primary: oklch(0.68 0.18 255);
-    --primary-hover: oklch(0.56 0.19 255);
-    --primary-foreground: oklch(0.985 0.006 255);
+    --primary-emphasis: #93c5fd;
     --secondary: oklch(0.29 0.04 257);
     --secondary-foreground: oklch(0.94 0.012 255);
     --muted: oklch(0.265 0.032 257);
     --muted-foreground: oklch(0.76 0.03 255);
     --accent: oklch(0.32 0.065 257);
     --accent-foreground: oklch(0.985 0.006 255);
-    --destructive: oklch(0.704 0.191 22.216);
+    --destructive-emphasis: #fca5a5;
+    --success-emphasis: #86efac;
+    --warning-emphasis: #fcd34d;
     --border: oklch(0.47 0.05 257 / 42%);
     --input: oklch(0.47 0.05 257 / 48%);
-    --ring: oklch(0.72 0.16 255);
+    --ring: oklch(0.64 0.16 255);
     --chart-1: oklch(0.72 0.16 255);
     --chart-2: oklch(0.74 0.14 184);
     --chart-3: oklch(0.78 0.15 82);
@@ -130,10 +142,6 @@ body {
 
   .auth-form-surface {
     box-shadow: -24px 0 80px rgb(15 23 42 / 0.04);
-  }
-
-  .workspace-create-button.workspace-create-button:hover {
-    background-color: var(--primary-hover) !important;
   }
 
   .bg-sidebar-dark {

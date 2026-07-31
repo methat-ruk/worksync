@@ -12,7 +12,7 @@
     "pretypecheck": "corepack pnpm --filter @worksync/auth-policy build",
     "typecheck": "tsc --noEmit",
     "pretest": "corepack pnpm --filter @worksync/auth-policy build",
-    "test": "vitest run",
+    "test": "vitest run && node --test scripts/health-probe.node-test.mjs",
     "test:watch": "vitest",
     "pretest:e2e": "corepack pnpm --filter @worksync/auth-policy build",
     "test:e2e": "node scripts/run-e2e.mjs",

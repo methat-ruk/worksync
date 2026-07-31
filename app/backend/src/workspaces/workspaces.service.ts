@@ -8,6 +8,10 @@ import { randomBytes } from "node:crypto";
 
 import { API_ERROR_CODE } from "../common/errors/api-error-code";
 import { PrismaService } from "../database/prisma.service";
+import {
+  runSerializableTransaction,
+  SerializableTransactionExhaustedError
+} from "../database/serializable-transaction";
 import { Prisma, WorkspaceRole } from "../generated/prisma/client";
 import type {
   AddWorkspaceMemberRequestDto,
@@ -401,29 +405,51 @@ export class WorkspacesService {
     workspaceId: string,
     memberId: string
   ): Promise<void> {
-    await this.prisma.$transaction(async (transaction) => {
-      const actor = await this.workspaceAuthorization.requireActor(
-        userId,
-        workspaceId,
-        transaction
-      );
-      const target = await this.findWorkspaceMember(
-        transaction,
-        workspaceId,
-        memberId
-      );
-      if (
-        !canRemoveWorkspaceMember(
-          actor.role,
-          target.role,
-          target.userId === userId
-        )
-      ) {
-        throw forbidden();
-      }
+    try {
+      await runSerializableTransaction(
+        this.prisma,
+        async (transaction) => {
+          const actor = await this.workspaceAuthorization.requireActor(
+            userId,
+            workspaceId,
+            transaction
+          );
+          const target = await this.findWorkspaceMember(
+            transaction,
+            workspaceId,
+            memberId
+          );
+          if (
+            !canRemoveWorkspaceMember(
+              actor.role,
+              target.role,
+              target.userId === userId
+            )
+          ) {
+            throw forbidden();
+          }
 
-      await transaction.workspaceMember.delete({ where: { id: target.id } });
-    });
+          await transaction.task.updateMany({
+            where: {
+              assigneeId: target.userId,
+              project: { workspaceId }
+            },
+            data: { assigneeId: null }
+          });
+          await transaction.workspaceMember.delete({
+            where: { id: target.id }
+          });
+        }
+      );
+    } catch (error: unknown) {
+      if (error instanceof SerializableTransactionExhaustedError) {
+        throw new ConflictException({
+          message: "Workspace membership changed concurrently; retry the request",
+          code: API_ERROR_CODE.RESOURCE_CONFLICT
+        });
+      }
+      throw error;
+    }
   }
 
   private async createWithSlug(

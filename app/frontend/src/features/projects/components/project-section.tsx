@@ -31,6 +31,7 @@ import type {
   PublicWorkspace,
   WorkspaceRole
 } from "@/features/workspaces/model/workspace-contract";
+import { TaskSection } from "@/features/tasks/components/task-section";
 
 import { createProject, listProjects } from "../api/projects-api";
 import { projectErrorMessage } from "../model/project-error-message";
@@ -112,11 +113,24 @@ function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
 }
 
-function ProjectCard({ project }: { project: PublicProject }) {
+function ProjectCard({
+  project,
+  selected,
+  onSelect
+}: {
+  project: PublicProject;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   return (
-    <article className="rounded-2xl border border-border/80 bg-background p-4 shadow-sm">
+    <button
+      aria-pressed={selected}
+      className="rounded-2xl border border-border/80 bg-background p-4 text-left shadow-sm transition hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-pressed:border-primary aria-pressed:bg-primary/5"
+      onClick={onSelect}
+      type="button"
+    >
       <div className="flex items-start justify-between gap-3">
-        <span className="grid size-10 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary">
+        <span className="grid size-10 place-items-center rounded-xl border border-primary/15 bg-primary/10 text-primary-emphasis">
           <FolderKanban aria-hidden="true" className="size-4" />
         </span>
         <Badge variant="outline">{project.key}</Badge>
@@ -125,7 +139,7 @@ function ProjectCard({ project }: { project: PublicProject }) {
       <p className="mt-2 text-xs text-muted-foreground">
         Updated {formatDate(project.updatedAt)}
       </p>
-    </article>
+    </button>
   );
 }
 
@@ -285,6 +299,9 @@ export function ProjectSection({
   const [pageError, setPageError] = useState<string | null>(null);
   const [pagePending, setPagePending] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null
+  );
   const requestPendingRef = useRef(false);
   const controllerRef = useRef<AbortController | null>(null);
 
@@ -301,6 +318,11 @@ export function ProjectSection({
       });
       if (!controller.signal.aborted) {
         setCollection(collectionFromPage(data));
+        setSelectedProjectId((current) =>
+          current && data.items.some((project) => project.id === current)
+            ? current
+            : data.items[0]?.id ?? null
+        );
         setLoadState("success");
       }
     } catch (error: unknown) {
@@ -368,6 +390,7 @@ export function ProjectSection({
       };
     });
     setNotice(`${project.name} is ready.`);
+    setSelectedProjectId(project.id);
   }
 
   if (loadState === "loading") {
@@ -421,6 +444,10 @@ export function ProjectSection({
 
   const canCreate = canMutateProjects(workspace.membershipRole);
   const hasProjects = collection.items.length > 0;
+  const selectedProject =
+    collection.items.find((project) => project.id === selectedProjectId) ??
+    collection.items[0] ??
+    null;
 
   return (
     <section
@@ -456,12 +483,17 @@ export function ProjectSection({
           {hasProjects ? (
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {collection.items.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+                <ProjectCard
+                  key={project.id}
+                  onSelect={() => setSelectedProjectId(project.id)}
+                  project={project}
+                  selected={project.id === selectedProject?.id}
+                />
               ))}
             </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-border p-6">
-              <span className="grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <span className="grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary-emphasis">
                 <FolderKanban aria-hidden="true" className="size-5" />
               </span>
               <h3 className="mt-4 text-base font-semibold">
@@ -558,6 +590,13 @@ export function ProjectSection({
           </Alert>
         )}
       </div>
+      {selectedProject && (
+        <TaskSection
+          key={selectedProject.id}
+          project={selectedProject}
+          workspace={workspace}
+        />
+      )}
     </section>
   );
 }

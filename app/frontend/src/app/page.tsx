@@ -13,19 +13,19 @@ import { OAuthLanding } from "@/features/auth/components/oauth-landing";
 const previewItems = [
   {
     label: "Authentication foundation",
-    accent: "border-emerald-200/80 bg-emerald-50/55 text-emerald-700"
+    accent: "border-success/20 bg-success/10 text-success-emphasis"
   },
   {
     label: "Google sign-in",
-    accent: "border-blue-200/80 bg-blue-50/55 text-blue-700"
+    accent: "border-primary/20 bg-primary/10 text-primary-emphasis"
   },
   {
     label: "Session lifecycle",
-    accent: "border-violet-200/80 bg-violet-50/55 text-violet-700"
+    accent: "border-primary/20 bg-primary/10 text-primary-emphasis"
   },
   {
     label: "Shared password policy",
-    accent: "border-amber-200/80 bg-amber-50/55 text-amber-700"
+    accent: "border-warning/20 bg-warning/10 text-warning-emphasis"
   }
 ];
 
@@ -42,8 +42,8 @@ function LandingContent() {
         <div className="ml-auto flex items-center gap-2">
           <Link
             className={cn(
-              buttonVariants({ variant: "ghost" }),
-              "h-9 bg-blue-50/80 px-3 leading-none text-blue-700 hover:-translate-y-0.5 hover:bg-blue-100 hover:text-blue-800 hover:shadow-md hover:shadow-blue-600/10 dark:bg-blue-500/20 dark:text-blue-50 dark:hover:bg-blue-500/25 dark:hover:text-white"
+              buttonVariants({ variant: "secondary" }),
+              "h-9 px-3 leading-none hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/10"
             )}
             href="/login"
           >
@@ -52,7 +52,7 @@ function LandingContent() {
           <Link
             className={cn(
               buttonVariants({ variant: "default" }),
-              "h-9 px-3 leading-none hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25"
+              "h-9 px-3 leading-none hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/25"
             )}
             href="/signup"
           >
@@ -62,7 +62,7 @@ function LandingContent() {
       </header>
       <section className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-20 pt-20 md:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-28">
         <div className="relative z-10">
-          <p className="w-fit rounded-full border bg-background/70 px-3 py-1 text-sm font-medium text-primary shadow-sm shadow-primary/5">
+          <p className="w-fit rounded-full border bg-background/70 px-3 py-1 text-sm font-medium text-primary-emphasis shadow-sm shadow-primary/5">
             One calm place for collaborative work
           </p>
           <h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-foreground md:text-7xl">
@@ -76,7 +76,7 @@ function LandingContent() {
             <Link
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "h-11 px-5 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25"
+                "h-11 px-5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/25"
               )}
               href="/signup"
             >
@@ -85,8 +85,8 @@ function LandingContent() {
             </Link>
             <Link
               className={cn(
-                buttonVariants({ size: "lg", variant: "outline" }),
-                "h-11 border-blue-200/80 bg-blue-50/80 px-5 text-blue-700 hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-100 hover:text-blue-800 hover:shadow-lg hover:shadow-blue-600/10 dark:border-blue-300/35 dark:bg-blue-500/20 dark:text-blue-50 dark:hover:border-blue-300/50 dark:hover:bg-blue-500/25 dark:hover:text-white"
+                buttonVariants({ size: "lg", variant: "secondary" }),
+                "h-11 px-5 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10"
               )}
               href="/login"
             >
@@ -102,9 +102,9 @@ function LandingContent() {
           <div className="relative rounded-3xl border bg-background/65 p-3 shadow-xl shadow-primary/5 backdrop-blur">
             <div className="rounded-2xl border bg-card/95 p-6 shadow-sm shadow-slate-950/5">
               <div className="flex items-center gap-3 border-b pb-5">
-                <span className="size-3 rounded-full bg-rose-300" />
-                <span className="size-3 rounded-full bg-amber-300" />
-                <span className="size-3 rounded-full bg-emerald-300" />
+                <span className="size-3 rounded-full bg-destructive/60" />
+                <span className="size-3 rounded-full bg-warning/60" />
+                <span className="size-3 rounded-full bg-success/60" />
                 <span className="ml-auto rounded-full border bg-muted/45 px-2.5 py-1 text-xs font-medium text-muted-foreground">
                   Auth system
                 </span>

@@ -72,7 +72,7 @@ export function PasswordStrength({
               key={key}
               className={cn(
                 "flex items-start gap-2 transition-colors motion-reduce:transition-none",
-                complete && "text-emerald-700"
+                complete && "text-success-emphasis"
               )}
             >
               {complete ? (
