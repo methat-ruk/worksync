@@ -4,12 +4,12 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-07-30
+Last updated: 2026-07-31
 
 ## Current Snapshot
 
-WorkSync has completed the project foundation slice in Milestone 2 and is ready
-to begin the task workflow.
+WorkSync has completed the project and task foundation slices in Milestone 2.
+The next collaboration slice is comments and mentions.
 
 Done:
 
@@ -27,14 +27,18 @@ Done:
 - reusable trusted workspace actor boundary for downstream resources
 - workspace-scoped project create/list/read/update APIs, project authorization
   and tenant-isolation evidence, and frontend project list/create workflow
+- workspace/project-scoped task create/list/read/update/status APIs, fixed task
+  lifecycle, assignment and due dates, viewer read-only access, membership
+  removal concurrency protection, and task authorization/isolation evidence
+- frontend task list, filters, create/edit/status workflow, assignee auto-search,
+  semantic action colors, and concise authentication errors
 - Docker hybrid and full run modes
 - backend/frontend validation commands and CI structure
 - project setup, workflow, API, security, deployment, and roadmap docs
 
 Still missing before the collaboration MVP works:
 
-- task APIs and frontend workflow
-- workspace-scoped authorization for task, comment, file, and activity resources
+- workspace-scoped authorization for comment, file, and activity resources
 - comments, mentions, notifications, realtime, files, jobs, and production
   readiness
 
@@ -44,17 +48,18 @@ Still missing before the collaboration MVP works:
 |---|---|---|---|
 | 0 Foundation | Done | App skeleton, auth foundation, CI, Docker, validation, and docs are in place. | [Milestone 0](roadmap/milestone-0-foundation.md) |
 | 1 Identity and Workspace | Partial | Auth, workspace APIs, membership/RBAC, frontend workspace bootstrap, and the reusable actor boundary are in place; remaining downstream resource policy and scoping continue by feature. | [Milestone 1](roadmap/milestone-1-identity-workspace.md) |
-| 2 Projects and Tasks | Partial | Project API, authorization, UI, and evidence are complete; Task Foundation remains. | [Milestone 2](roadmap/milestone-2-projects-tasks.md) |
+| 2 Projects and Tasks | Partial | Project and task foundations, authorization, UI, and evidence are complete; board view, project update UI, and activity logging remain. | [Milestone 2](roadmap/milestone-2-projects-tasks.md) |
 | 3 Comments, Mentions, and Notifications | Partial foundation only | Comment model exists; mentions, notifications, and realtime are not implemented. | [Milestone 3](roadmap/milestone-3-comments-notifications.md) |
 | 4 File Uploads and Background Jobs | Planned | MinIO and Redis local services exist; storage and job features are not implemented. | [Milestone 4](roadmap/milestone-4-files-jobs.md) |
 | 5 Production Readiness | Partial | CI, Docker, artifact checks, and docs exist; deployment target and production ops are not ready. | [Milestone 5](roadmap/milestone-5-production-readiness.md) |
 
 ## Current Priorities
 
-1. [Task Foundation](roadmap/feature-plans/planned/task-foundation.md)
-   - build the first task workflow inside the workspace/project boundary.
-2. Add activity, comments, notifications, files, jobs, and production readiness
-   only after workspace-scoped project/task authorization evidence exists.
+1. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
+   - build the first task discussion workflow inside the proven workspace/task
+     authorization boundary.
+2. Add notifications, files, jobs, activity, and production readiness in
+   dependency order.
 
 ## Guiding Principles
 
@@ -93,8 +98,6 @@ access is scoped to the correct workspace.
 
 - Invitation flow: email invite only, link invite, direct member add, or a
   staged combination?
-- Task workflow: fixed status model or configurable statuses?
-- Task permission matrix: which roles can create, assign, and transition tasks?
 - Viewer behavior: read-only only, or can viewers comment?
 - File upload: direct-to-storage upload or backend proxy?
 - File policy: allowed types, maximum size, preview rules, and malware scanning

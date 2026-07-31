@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const apiBaseUrl = "http://localhost:4000";
 
-test("creates a workspace and project through the real application boundary", async ({
+test("creates a workspace, project, and task through the real application boundary", async ({
   browser
 }) => {
   const context = await browser.newContext();
@@ -48,12 +48,45 @@ test("creates a workspace and project through the real application boundary", as
     await expect(page.getByText("WorkSync Live is ready.")).toBeVisible();
     await expect(page.getByText("WSLIVE")).toBeVisible();
     await expect(page.getByText("1 total").last()).toBeVisible();
+    await expect(page.getByText("No matching tasks")).toBeVisible();
 
-    await page.reload();
-    await expect(page.getByText("WorkSync Live")).toBeVisible({
+    await page.getByRole("button", { name: "Create task" }).click();
+    const taskDialog = page.getByRole("dialog");
+    await taskDialog.getByLabel("Title").fill("Live task workflow");
+    await taskDialog
+      .getByLabel("Description")
+      .fill("Created through the real browser and API boundary.");
+    await taskDialog
+      .getByLabel("Due date")
+      .fill("2026-08-07T10:00");
+    const assigneeSearch = taskDialog.getByRole("combobox", {
+      name: "Assignee"
+    });
+    await assigneeSearch.fill(`Project Live ${runId}`);
+    await taskDialog
+      .getByRole("option", { name: new RegExp(`Project Live ${runId}`) })
+      .click();
+    await taskDialog.getByRole("button", { name: "Create task" }).click();
+
+    await expect(page.getByText("Live task workflow")).toBeVisible({
       timeout: 20_000
     });
+    await expect(page.getByText("Backlog").last()).toBeVisible();
+    await page.getByRole("button", { name: "Start" }).click();
+    await expect(page.getByText("In progress").last()).toBeVisible();
+    await page.getByRole("button", { name: "Complete" }).click();
+    await expect(page.getByText("Done").last()).toBeVisible();
+    await page.getByLabel("Status filter").selectOption("DONE");
+    await expect(page.getByText("Live task workflow")).toBeVisible();
+
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: /WSLIVE WorkSync Live/ })
+    ).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("WSLIVE")).toBeVisible();
+    await expect(page.getByText("Live task workflow")).toBeVisible({
+      timeout: 20_000
+    });
     expect(projectStatuses).toContain(200);
     expect(projectStatuses).toContain(201);
     expect(

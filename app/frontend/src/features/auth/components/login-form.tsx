@@ -84,7 +84,7 @@ export function LoginForm() {
           </Field>
         </FieldGroup>
         <Button
-          className="h-10 w-full bg-blue-600 text-white hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
+          className="h-10 w-full hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/20"
           disabled={form.formState.isSubmitting}
           type="submit"
         >
@@ -96,7 +96,7 @@ export function LoginForm() {
       </form>
       <p className="text-center text-sm text-muted-foreground">
         New to WorkSync?{" "}
-        <Link className="font-medium text-primary hover:underline" href="/signup">
+        <Link className="font-medium text-primary-emphasis hover:underline" href="/signup">
           Create an account
         </Link>
       </p>

@@ -18,6 +18,8 @@ import {
   type AuthProvider,
   type AuthSession,
   type Project,
+  type Task,
+  type TaskStatus,
   type User,
   type Workspace,
   type WorkspaceMember,
@@ -31,6 +33,7 @@ import { createGoogleOAuthTestHarness } from "./google-oauth-test-harness";
 
 type StoredUser = User;
 type StoredProject = Project;
+type StoredTask = Task;
 type StoredWorkspace = Workspace;
 type StoredWorkspaceMember = WorkspaceMember;
 
@@ -50,6 +53,7 @@ export type AuthTestContext = {
   users: Map<string, StoredUser>;
   sessions: Map<string, AuthSession>;
   projects: Map<string, StoredProject>;
+  tasks: Map<string, StoredTask>;
   workspaces: Map<string, StoredWorkspace>;
   workspaceMembers: Map<string, StoredWorkspaceMember>;
 };
@@ -67,6 +71,7 @@ export async function createAuthTestApp(
   const users = new Map<string, StoredUser>();
   const sessions = new Map<string, AuthSession>();
   const projects = new Map<string, StoredProject>();
+  const tasks = new Map<string, StoredTask>();
   const workspaces = new Map<string, StoredWorkspace>();
   const workspaceMembers = new Map<string, StoredWorkspaceMember>();
   let sequence = 0;
@@ -98,7 +103,7 @@ export async function createAuthTestApp(
   function selectedWorkspaceMember(
     member: StoredWorkspaceMember
   ): StoredWorkspaceMember & {
-    user: { email: string; displayName: string };
+    user: { id: string; email: string; displayName: string };
   } {
     const user = users.get(member.userId);
     if (!user) {
@@ -107,6 +112,7 @@ export async function createAuthTestApp(
     return {
       ...member,
       user: {
+        id: user.id,
         email: user.email,
         displayName: user.displayName
       }
@@ -120,6 +126,33 @@ export async function createAuthTestApp(
       key: project.key,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt
+    };
+  }
+
+  function selectedTask(task: StoredTask) {
+    const creator = users.get(task.creatorId);
+    const assignee = task.assigneeId
+      ? users.get(task.assigneeId) ?? null
+      : null;
+    if (!creator) {
+      throw new Error("Task creator not found");
+    }
+    return {
+      id: task.id,
+      projectId: task.projectId,
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      dueDate: task.dueDate,
+      creator: {
+        id: creator.id,
+        displayName: creator.displayName
+      },
+      assignee: assignee
+        ? { id: assignee.id, displayName: assignee.displayName }
+        : null,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt
     };
   }
 
@@ -462,11 +495,27 @@ export async function createAuthTestApp(
         }: {
           where?: {
             workspaceId?: string;
+            user?: {
+              displayName?: {
+                contains?: string;
+              };
+            };
           };
         }) =>
           [...workspaceMembers.values()].filter(
-            (member) =>
-              !where?.workspaceId || member.workspaceId === where.workspaceId
+            (member) => {
+              const user = users.get(member.userId);
+              return (
+                (!where?.workspaceId ||
+                  member.workspaceId === where.workspaceId) &&
+                (!where?.user?.displayName?.contains ||
+                  user?.displayName
+                    .toLocaleLowerCase()
+                    .includes(
+                      where.user.displayName.contains.toLocaleLowerCase()
+                    ))
+              );
+            }
           ).length
       ),
       findMany: jest.fn(
@@ -477,16 +526,38 @@ export async function createAuthTestApp(
         }: {
           where?: {
             workspaceId?: string;
+            user?: {
+              displayName?: {
+                contains?: string;
+              };
+            };
           };
           skip?: number;
           take?: number;
         }) =>
           [...workspaceMembers.values()]
-            .filter(
-              (member) =>
-                !where?.workspaceId || member.workspaceId === where.workspaceId
-            )
+            .filter((member) => {
+              const user = users.get(member.userId);
+              return (
+                (!where?.workspaceId ||
+                  member.workspaceId === where.workspaceId) &&
+                (!where?.user?.displayName?.contains ||
+                  user?.displayName
+                    .toLocaleLowerCase()
+                    .includes(
+                      where.user.displayName.contains.toLocaleLowerCase()
+                    ))
+              );
+            })
             .sort((left, right) => {
+              if (where?.user) {
+                const leftName = users.get(left.userId)?.displayName ?? "";
+                const rightName = users.get(right.userId)?.displayName ?? "";
+                return (
+                  leftName.localeCompare(rightName) ||
+                  left.userId.localeCompare(right.userId)
+                );
+              }
               const createdAtDelta =
                 left.createdAt.getTime() - right.createdAt.getTime();
               return createdAtDelta || left.id.localeCompare(right.id);
@@ -706,6 +777,184 @@ export async function createAuthTestApp(
         }
       )
     },
+    task: {
+      create: jest.fn(
+        ({
+          data
+        }: {
+          data: {
+            projectId: string;
+            creatorId: string;
+            assigneeId: string | null;
+            title: string;
+            description: string | null;
+            status: TaskStatus;
+            dueDate: Date | null;
+          };
+        }) => {
+          const now = new Date(
+            Date.UTC(2026, 6, 31, 10, 0, 0, sequence)
+          );
+          const task: StoredTask = {
+            id: `task-${++sequence}`,
+            projectId: data.projectId,
+            creatorId: data.creatorId,
+            assigneeId: data.assigneeId,
+            title: data.title,
+            description: data.description,
+            status: data.status,
+            dueDate: data.dueDate,
+            createdAt: now,
+            updatedAt: now
+          };
+          tasks.set(task.id, task);
+          return selectedTask(task);
+        }
+      ),
+      count: jest.fn(
+        ({
+          where
+        }: {
+          where: {
+            projectId: string;
+            status?: TaskStatus;
+            assigneeId?: string | null;
+          };
+        }) =>
+          [...tasks.values()].filter(
+            (task) =>
+              task.projectId === where.projectId &&
+              (!where.status || task.status === where.status) &&
+              (where.assigneeId === undefined ||
+                task.assigneeId === where.assigneeId)
+          ).length
+      ),
+      findMany: jest.fn(
+        ({
+          where,
+          skip = 0,
+          take
+        }: {
+          where: {
+            projectId: string;
+            status?: TaskStatus;
+            assigneeId?: string | null;
+          };
+          skip?: number;
+          take?: number;
+        }) =>
+          [...tasks.values()]
+            .filter(
+              (task) =>
+                task.projectId === where.projectId &&
+                (!where.status || task.status === where.status) &&
+                (where.assigneeId === undefined ||
+                  task.assigneeId === where.assigneeId)
+            )
+            .sort((left, right) => {
+              const updatedAtDelta =
+                right.updatedAt.getTime() - left.updatedAt.getTime();
+              return updatedAtDelta || left.id.localeCompare(right.id);
+            })
+            .slice(skip, take ? skip + take : undefined)
+            .map(selectedTask)
+      ),
+      findFirst: jest.fn(
+        ({
+          where
+        }: {
+          where: {
+            id: string;
+            projectId: string;
+          };
+        }) => {
+          const task = tasks.get(where.id);
+          return task?.projectId === where.projectId
+            ? selectedTask(task)
+            : null;
+        }
+      ),
+      update: jest.fn(
+        ({
+          where,
+          data
+        }: {
+          where: { id: string };
+          data: {
+            title?: string;
+            description?: string | null;
+            dueDate?: Date | null;
+            assignee?: {
+              connect?: { id: string };
+              disconnect?: boolean;
+            };
+          };
+        }) => {
+          const task = tasks.get(where.id);
+          if (!task) {
+            throw new Error("Task not found");
+          }
+          const updated: StoredTask = {
+            ...task,
+            ...(data.title !== undefined ? { title: data.title } : {}),
+            ...(data.description !== undefined
+              ? { description: data.description }
+              : {}),
+            ...(data.dueDate !== undefined
+              ? { dueDate: data.dueDate }
+              : {}),
+            ...(data.assignee?.connect
+              ? { assigneeId: data.assignee.connect.id }
+              : {}),
+            ...(data.assignee?.disconnect ? { assigneeId: null } : {}),
+            updatedAt: new Date(task.updatedAt.getTime() + 1)
+          };
+          tasks.set(updated.id, updated);
+          return selectedTask(updated);
+        }
+      ),
+      updateMany: jest.fn(
+        ({
+          where,
+          data
+        }: {
+          where: {
+            id?: string;
+            projectId?: string;
+            status?: TaskStatus;
+            assigneeId?: string;
+            project?: { workspaceId: string };
+          };
+          data: {
+            status?: TaskStatus;
+            assigneeId?: null;
+          };
+        }) => {
+          let count = 0;
+          for (const [id, task] of tasks) {
+            const project = projects.get(task.projectId);
+            if (
+              (where.id && task.id !== where.id) ||
+              (where.projectId && task.projectId !== where.projectId) ||
+              (where.status && task.status !== where.status) ||
+              (where.assigneeId && task.assigneeId !== where.assigneeId) ||
+              (where.project?.workspaceId &&
+                project?.workspaceId !== where.project.workspaceId)
+            ) {
+              continue;
+            }
+            tasks.set(id, {
+              ...task,
+              ...(data.status ? { status: data.status } : {}),
+              ...(data.assigneeId === null ? { assigneeId: null } : {}),
+              updatedAt: new Date(task.updatedAt.getTime() + 1)
+            });
+            count += 1;
+          }
+          return { count };
+        }
+      )
+    },
     user: {
       create: jest.fn(
         ({
@@ -822,6 +1071,7 @@ export async function createAuthTestApp(
     users,
     sessions,
     projects,
+    tasks,
     workspaces,
     workspaceMembers
   };

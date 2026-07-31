@@ -65,6 +65,8 @@ Use for:
 - confirm-password exclusion from API requests
 - permission-based action visibility
 - task board/list interaction
+- task assignee auto-search debounce, IME composition, stale-response
+  suppression, keyboard interaction, and pagination
 - comment and mention UI
 - notification surfaces
 
@@ -84,7 +86,7 @@ Use Playwright for:
 - create workspace
 - invite or add member
 - create project
-- create/update/move task
+- create, assign, update, move, filter, and complete task
 - comment and mention
 - notification appears
 - restricted action fails for lower-privilege role
@@ -94,6 +96,11 @@ Local Playwright runs require the frontend Chromium browser. Install it once
 with `corepack pnpm playwright:install`; use `corepack pnpm
 playwright:install:with-deps` on Linux, containers, or CI-like hosts when
 system dependencies are missing.
+
+The live E2E runner must stop the frontend and backend processes it starts on
+success, failure, and interruption, then confirm their health endpoints are
+unavailable. Leaving ports `3000` or `4000` listening from runner-owned
+processes is a failed cleanup, not a successful test run.
 
 ### Security Tests
 

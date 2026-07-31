@@ -243,6 +243,10 @@ export class WorkspacesController {
     description: "The caller cannot remove the requested member",
     type: ApiErrorResponseDto
   })
+  @ApiConflictResponse({
+    description: "Concurrent assignment or membership change; retry safely",
+    type: ApiErrorResponseDto
+  })
   @ApiNotFoundResponse({
     description: "Workspace or member is missing or not visible to the caller",
     type: ApiErrorResponseDto

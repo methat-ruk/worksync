@@ -62,7 +62,7 @@ following `docs/project-setup.md`.
 | Pre-push hook | `pnpm validate:push` | Typecheck, lint, and backend unit tests |
 | CI backend job | Pull requests and pushes to `main` | PostgreSQL and Redis-backed backend validation, migrations, build, and artifact checks |
 | CI frontend job | Pull requests and pushes to `main` | Shared auth policy tests, frontend typecheck, lint, tests, and production build |
-| CI frontend E2E job | Pull requests and pushes to `main` | Playwright browser evidence for critical frontend auth and navigation behavior |
+| CI frontend E2E job | Pull requests and pushes to `main` | Mocked and live Playwright browser evidence for critical auth, navigation, project, and task behavior |
 | CI container job | Pull requests and pushes to `main` | Development/test Compose topology, orchestration self-test, and production/test image target builds |
 | CI security job | Pull requests and pushes to `main` | Production dependency audit |
 
@@ -94,6 +94,6 @@ Redis databases and never log raw limiter keys, emails, cookies, or tokens.
 
 ## Next Validation Upgrades
 
-1. Extend Playwright coverage as workspace and task flows are implemented.
-3. Add security isolation tests for workspace boundaries and RBAC.
-4. Add registry publishing, SBOM/provenance, and immutable image promotion.
+1. Extend Playwright coverage as comments, notifications, files, and jobs are
+   implemented.
+2. Add registry publishing, SBOM/provenance, and immutable image promotion.

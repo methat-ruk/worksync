@@ -139,7 +139,7 @@ function Sidebar() {
       </nav>
       <div className="mt-auto overflow-hidden rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-2xl shadow-black/10">
         <div className="mb-3 flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-lg bg-primary/20 text-blue-100">
+          <span className="grid size-7 place-items-center rounded-lg bg-primary/20 text-primary-foreground">
             <ShieldCheck aria-hidden="true" className="size-3.5" />
           </span>
           <p className="text-xs font-semibold text-white/86">Auth secured</p>
@@ -313,12 +313,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               }
             >
               <span className="relative">
-                <Avatar className="size-8 border bg-blue-50 dark:border-blue-300/20 dark:bg-blue-500/15" size="default">
-                  <AvatarFallback className="bg-blue-50 text-[11px] font-semibold text-primary dark:bg-blue-500/15 dark:text-blue-100">
+                <Avatar className="size-8 border border-primary/20 bg-primary/10" size="default">
+                  <AvatarFallback className="bg-primary/10 text-[11px] font-semibold text-primary-emphasis">
                     {initials(user.displayName)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background bg-emerald-500" />
+                <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background bg-success" />
               </span>
               <span className="hidden min-w-0 text-left sm:block">
                 <span className="block max-w-40 truncate text-sm font-semibold">
@@ -335,8 +335,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="rounded-xl p-0">
                   <div className="flex items-center gap-2">
-                    <Avatar className="size-8 border bg-blue-50 dark:border-blue-300/20 dark:bg-blue-500/15" size="default">
-                      <AvatarFallback className="bg-blue-50 text-[11px] font-semibold text-primary dark:bg-blue-500/15 dark:text-blue-100">
+                    <Avatar className="size-8 border border-primary/20 bg-primary/10" size="default">
+                      <AvatarFallback className="bg-primary/10 text-[11px] font-semibold text-primary-emphasis">
                         {initials(user.displayName)}
                       </AvatarFallback>
                     </Avatar>
@@ -347,8 +347,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                       <span className="block truncate text-[11px] font-normal text-muted-foreground">
                         {user.email}
                       </span>
-                      <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                      <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success-emphasis">
+                        <span className="size-1.5 rounded-full bg-success" />
                         Active session
                       </span>
                     </span>

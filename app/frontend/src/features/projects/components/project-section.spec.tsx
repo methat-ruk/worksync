@@ -15,6 +15,12 @@ vi.mock("../api/projects-api", () => ({
   listProjects: vi.fn()
 }));
 
+vi.mock("@/features/tasks/components/task-section", () => ({
+  TaskSection: ({ project }: { project: PublicProject }) => (
+    <div>Tasks for {project.name}</div>
+  )
+}));
+
 const workspace: PublicWorkspace = {
   id: "workspace-1",
   name: "Product Team",

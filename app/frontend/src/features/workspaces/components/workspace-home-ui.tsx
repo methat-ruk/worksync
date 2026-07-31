@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
   Building2,
-  CheckSquare2,
+  MessageSquare,
   Plus,
   Users
 } from "lucide-react";
@@ -25,21 +25,21 @@ import {
 export const surfaceClass =
   "rounded-2xl border border-border/80 bg-card shadow-sm shadow-slate-950/5 dark:border-primary/20 dark:shadow-black/25";
 export const featureBadgeClass =
-  "rounded-full border border-primary/20 bg-primary/10 px-2.5 text-primary dark:bg-primary/15";
+  "rounded-full border border-primary/20 bg-primary/10 px-2.5 text-primary-emphasis dark:bg-primary/15";
 export const statusBadgeClass =
-  "rounded-full border border-primary/20 bg-primary/10 px-2.5 text-primary dark:bg-primary/15";
+  "rounded-full border border-primary/20 bg-primary/10 px-2.5 text-primary-emphasis dark:bg-primary/15";
 
 const iconTileClass =
-  "grid place-items-center border border-primary/15 bg-primary/10 text-primary dark:bg-primary/15";
+  "grid place-items-center border border-primary/15 bg-primary/10 text-primary-emphasis dark:bg-primary/15";
 const createButtonClass =
-  "workspace-create-button w-full gap-2 rounded-xl shadow-sm transition-all hover:-translate-y-px hover:shadow-md focus-visible:ring-primary/30 md:w-auto";
+  "w-full gap-2 rounded-xl shadow-sm transition-all hover:-translate-y-px hover:shadow-md focus-visible:ring-primary/30 md:w-auto";
 
 const upcomingItems = [
   {
-    icon: CheckSquare2,
-    title: "Task workflow",
-    body: "Tasks will arrive after project ownership and workspace scope are ready.",
-    status: "Queued"
+    icon: MessageSquare,
+    title: "Comments and mentions",
+    body: "Task discussions and teammate mentions are the next collaboration slice.",
+    status: "Next"
   }
 ];
 

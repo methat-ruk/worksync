@@ -100,4 +100,4 @@ and regression-test slice can be reverted together.
 
 [Workspace Authorization Boundary](workspace-authorization-boundary.md) is
 complete. [Project Foundation](project-foundation.md) is complete, and
-[Task Foundation](../planned/task-foundation.md) is the next planned slice.
+[Task Foundation](task-foundation.md) was the next completed slice.

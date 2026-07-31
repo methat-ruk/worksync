@@ -29,8 +29,11 @@ const { loadTestDatabaseUrl } = require(
 );
 const databaseUrl = loadTestDatabaseUrl();
 const startupTimeoutMs = 120_000;
+const cleanupTimeoutMs = 10_000;
 const children = [];
 const childFailures = new WeakMap();
+const stoppingChildren = new WeakSet();
+let cleanupPromise;
 
 async function isReady(url) {
   try {
@@ -67,16 +70,30 @@ async function waitForBackendPortToBeFree() {
   throw new Error("Port 4000 must be free for live auth E2E");
 }
 
-function start(command, args, options) {
+function forwardChildOutput(child, label) {
+  child.stdout?.on("data", (chunk) => {
+    process.stdout.write(`[${label}] ${chunk}`);
+  });
+  child.stderr?.on("data", (chunk) => {
+    process.stderr.write(`[${label}] ${chunk}`);
+  });
+}
+
+function start(label, command, args, options, healthUrl) {
   const child = spawn(command, args, {
     ...options,
-    detached: true,
-    stdio: "inherit"
+    detached: process.platform !== "win32",
+    stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true
   });
+  forwardChildOutput(child, label);
   child.once("error", (error) => {
     childFailures.set(child, `failed to start: ${error.message}`);
   });
   child.once("exit", (code, signal) => {
+    if (stoppingChildren.has(child)) {
+      return;
+    }
     childFailures.set(
       child,
       signal
@@ -84,8 +101,7 @@ function start(command, args, options) {
         : `exited before becoming ready (code ${code ?? "unknown"})`
     );
   });
-  child.unref();
-  children.push(child);
+  children.push({ child, label, healthUrl });
   return child;
 }
 
@@ -102,18 +118,107 @@ function runOrThrow(label, command, args, options) {
   }
 }
 
-function stop(child) {
-  if (!child.pid || child.exitCode !== null) {
-    return;
+function waitForChildExit(child) {
+  if (child.exitCode !== null) {
+    return Promise.resolve(true);
   }
-  if (process.platform === "win32") {
-    spawnSync("taskkill", ["/pid", String(child.pid), "/t", "/f"], {
-      stdio: "ignore",
-      windowsHide: true
-    });
-  } else {
-    process.kill(-child.pid, "SIGTERM");
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (exited) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      child.off("exit", onExit);
+      resolve(exited);
+    };
+    const onExit = () => finish(true);
+    const timer = setTimeout(() => finish(false), cleanupTimeoutMs);
+    child.once("exit", onExit);
+  });
+}
+
+async function waitForUnavailable(url) {
+  const deadline = Date.now() + cleanupTimeoutMs;
+  while (Date.now() < deadline) {
+    if (!(await isReady(url))) {
+      return true;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
+  return false;
+}
+
+async function stop({ child, label, healthUrl }) {
+  const errors = [];
+  if (child.pid && child.exitCode === null) {
+    stoppingChildren.add(child);
+    if (process.platform === "win32") {
+      const result = spawnSync(
+        "taskkill",
+        ["/pid", String(child.pid), "/t", "/f"],
+        {
+          encoding: "utf8",
+          windowsHide: true
+        }
+      );
+      if (result.error || result.status !== 0) {
+        const detail =
+          result.error?.message ||
+          result.stderr?.trim() ||
+          `exit code ${result.status ?? "unknown"}`;
+        errors.push(`${label} process-tree cleanup failed: ${detail}`);
+        child.kill();
+      }
+    } else {
+      try {
+        process.kill(-child.pid, "SIGTERM");
+      } catch (error) {
+        errors.push(
+          `${label} process-group cleanup failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        );
+        child.kill("SIGTERM");
+      }
+    }
+
+    if (!(await waitForChildExit(child))) {
+      errors.push(`${label} did not exit within ${cleanupTimeoutMs}ms`);
+    }
+  }
+  if (healthUrl && !(await waitForUnavailable(healthUrl))) {
+    errors.push(
+      `${label} health endpoint remained available after cleanup: ${healthUrl}`
+    );
+  }
+
+  child.stdout?.destroy();
+  child.stderr?.destroy();
+  child.unref();
+  return errors;
+}
+
+function stopChildren() {
+  if (cleanupPromise) {
+    return cleanupPromise;
+  }
+  cleanupPromise = (async () => {
+    const errors = [];
+    for (const entry of [...children].reverse()) {
+      errors.push(...(await stop(entry)));
+    }
+    if (errors.length > 0) {
+      process.stderr.write(
+        `Live E2E cleanup failed:\n${errors
+          .map((error) => `- ${error}`)
+          .join("\n")}\n`
+      );
+      process.exitCode = 1;
+    }
+  })();
+  return cleanupPromise;
 }
 
 async function main() {
@@ -136,33 +241,40 @@ async function main() {
     cwd: backendRoot
   });
 
-  const backend = start(process.execPath, [backendEntry], {
-    cwd: backendRoot,
-    env: {
-      ...process.env,
-      NODE_ENV: "development",
-      PORT: "4000",
-      FRONTEND_URL: "http://localhost:3000",
-      CORS_ORIGIN: "http://localhost:3000",
-      DATABASE_URL: databaseUrl,
-      REDIS_URL: process.env.TEST_REDIS_URL ?? "redis://localhost:6379/1",
-      LOG_LEVEL: "silent",
-      AUTH_RATE_LIMIT_ENABLED: "false",
-      TRUST_PROXY: "false",
-      JWT_ACCESS_SECRET: "live-e2e-access-secret-at-least-32-bytes",
-      JWT_ACCESS_EXPIRES_IN: "15m",
-      JWT_REFRESH_SECRET: "live-e2e-refresh-secret-at-least-32-bytes",
-      JWT_REFRESH_EXPIRES_IN: "30d",
-      COOKIE_SECURE: "false",
-      COOKIE_DOMAIN: "",
-      GOOGLE_OAUTH_ENABLED: "false",
-      EMAIL_PROVIDER: "disabled"
-    }
-  });
+  const backend = start(
+    "backend",
+    process.execPath,
+    [backendEntry],
+    {
+      cwd: backendRoot,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+        PORT: "4000",
+        FRONTEND_URL: "http://localhost:3000",
+        CORS_ORIGIN: "http://localhost:3000",
+        DATABASE_URL: databaseUrl,
+        REDIS_URL: process.env.TEST_REDIS_URL ?? "redis://localhost:6379/1",
+        LOG_LEVEL: "silent",
+        AUTH_RATE_LIMIT_ENABLED: "false",
+        TRUST_PROXY: "false",
+        JWT_ACCESS_SECRET: "live-e2e-access-secret-at-least-32-bytes",
+        JWT_ACCESS_EXPIRES_IN: "15m",
+        JWT_REFRESH_SECRET: "live-e2e-refresh-secret-at-least-32-bytes",
+        JWT_REFRESH_EXPIRES_IN: "30d",
+        COOKIE_SECURE: "false",
+        COOKIE_DOMAIN: "",
+        GOOGLE_OAUTH_ENABLED: "false",
+        EMAIL_PROVIDER: "disabled"
+      }
+    },
+    "http://localhost:4000/health/live"
+  );
   await waitFor("http://localhost:4000/health/live", "Backend", backend);
 
   if (!reuseFrontend) {
     const frontend = start(
+      "frontend",
       process.execPath,
       [nextCli, "dev", "--port", "3000"],
       {
@@ -172,7 +284,8 @@ async function main() {
           NEXT_PUBLIC_API_BASE_URL: "http://localhost:4000",
           NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
         }
-      }
+      },
+      "http://localhost:3000"
     );
     await waitFor("http://localhost:3000", "Frontend", frontend);
   }
@@ -185,17 +298,17 @@ async function main() {
   process.exitCode = result.status ?? 1;
 }
 
-process.once("SIGINT", () => {
-  children.reverse().forEach(stop);
-  process.exit(0);
-});
-process.once("SIGTERM", () => {
-  children.reverse().forEach(stop);
-  process.exit(0);
-});
+async function shutdown(exitCode) {
+  process.exitCode = exitCode;
+  await stopChildren();
+  process.exit(process.exitCode ?? exitCode);
+}
+
+process.once("SIGINT", () => void shutdown(130));
+process.once("SIGTERM", () => void shutdown(143));
 
 try {
   await main();
 } finally {
-  children.reverse().forEach(stop);
+  await stopChildren();
 }

@@ -20,7 +20,7 @@ export function AuthLayout({
             <BrandMark />
           </Link>
           <div className="relative z-10 my-auto max-w-lg">
-            <p className="mb-5 w-fit rounded-full border bg-background/65 px-3 py-1 text-xs font-medium text-primary shadow-sm shadow-primary/5">
+            <p className="mb-5 w-fit rounded-full border bg-background/65 px-3 py-1 text-xs font-medium text-primary-emphasis shadow-sm shadow-primary/5">
               Enterprise-ready team operations
             </p>
             <p className="text-4xl font-semibold leading-tight tracking-[-0.035em] text-foreground xl:text-5xl">

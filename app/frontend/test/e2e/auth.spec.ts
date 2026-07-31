@@ -167,6 +167,9 @@ test("shows login failure feedback without navigating", async ({ page }) => {
   await page.getByRole("button", { name: "Sign in" }).click();
 
   await expect(page.getByText("Invalid email or password.")).toBeVisible();
+  await expect(
+    page.getByText("We couldn't complete that request")
+  ).toHaveCount(0);
   await expect(page).toHaveURL(/\/login$/);
 });
 

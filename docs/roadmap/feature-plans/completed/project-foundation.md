@@ -572,7 +572,7 @@ Approval outcome:
 
 ## Follow-up
 
-- [Task Foundation](../planned/task-foundation.md)
+- [Task Foundation](task-foundation.md)
 - project archive/delete lifecycle when product behavior is approved
 - dedicated project navigation/shared workspace state when project/task
   journeys justify it
