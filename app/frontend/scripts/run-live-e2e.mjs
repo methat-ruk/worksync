@@ -3,6 +3,8 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isHttpEndpointReady } from "./health-probe.mjs";
+
 const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const workspaceRoot = path.resolve(frontendRoot, "..", "..");
 const backendRoot = path.join(workspaceRoot, "app", "backend");
@@ -35,14 +37,6 @@ const childFailures = new WeakMap();
 const stoppingChildren = new WeakSet();
 let cleanupPromise;
 
-async function isReady(url) {
-  try {
-    return (await fetch(url)).ok;
-  } catch {
-    return false;
-  }
-}
-
 async function waitFor(url, label, child) {
   const deadline = Date.now() + startupTimeoutMs;
   while (Date.now() < deadline) {
@@ -50,7 +44,7 @@ async function waitFor(url, label, child) {
     if (failure) {
       throw new Error(`${label} ${failure}`);
     }
-    if (await isReady(url)) {
+    if (await isHttpEndpointReady(url)) {
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -61,7 +55,9 @@ async function waitFor(url, label, child) {
 async function waitForBackendPortToBeFree() {
   const deadline = Date.now() + 45_000;
   while (Date.now() < deadline) {
-    const backendReady = await isReady("http://localhost:4000/health/live");
+    const backendReady = await isHttpEndpointReady(
+      "http://localhost:4000/health/live"
+    );
     if (!backendReady) {
       return;
     }
@@ -142,7 +138,7 @@ function waitForChildExit(child) {
 async function waitForUnavailable(url) {
   const deadline = Date.now() + cleanupTimeoutMs;
   while (Date.now() < deadline) {
-    if (!(await isReady(url))) {
+    if (!(await isHttpEndpointReady(url))) {
       return true;
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -223,7 +219,7 @@ function stopChildren() {
 
 async function main() {
   await waitForBackendPortToBeFree();
-  const reuseFrontend = await isReady("http://localhost:3000");
+  const reuseFrontend = await isHttpEndpointReady("http://localhost:3000");
 
   runOrThrow(
     "Prisma client generation",

@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -25,6 +26,7 @@ import {
 } from "../api/tasks-api";
 import type {
   PublicTask,
+  PublicTaskUser,
   TaskListData
 } from "../model/task-contract";
 import { AssigneePicker, TaskSection } from "./task-section";
@@ -67,12 +69,12 @@ const task: PublicTask = {
   updatedAt: new Date("2026-07-31T10:00:00.000Z")
 };
 
-function page(items: PublicTask[]): TaskListData {
+function page(items: PublicTask[], total = items.length): TaskListData {
   return {
     items,
     page: 1,
     pageSize: 20,
-    total: items.length
+    total
   };
 }
 
@@ -156,6 +158,49 @@ describe("TaskSection", () => {
         expect.any(AbortSignal)
       )
     );
+  });
+
+  it("clears the load-more pending state when a filter reload aborts it", async () => {
+    const user = userEvent.setup();
+    let loadMoreSignal: AbortSignal | undefined;
+    vi.mocked(listTasks).mockImplementation(
+      (_workspaceId, _projectId, options) => {
+        if (options?.page === 2) {
+          loadMoreSignal = options.signal;
+          return new Promise((_resolve, reject) => {
+            options.signal?.addEventListener(
+              "abort",
+              () =>
+                reject(
+                  new DOMException("The request was aborted.", "AbortError")
+                ),
+              { once: true }
+            );
+          });
+        }
+        return Promise.resolve(page([task], 2));
+      }
+    );
+
+    render(<TaskSection project={project} workspace={workspace} />);
+
+    const loadMoreButton = await screen.findByRole("button", {
+      name: "Load more tasks"
+    });
+    await user.click(loadMoreButton);
+    expect(
+      screen.getByRole("button", { name: "Loading..." })
+    ).toBeDisabled();
+
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Status filter" }),
+      "IN_PROGRESS"
+    );
+
+    await waitFor(() => expect(loadMoreSignal?.aborted).toBe(true));
+    expect(
+      await screen.findByRole("button", { name: "Load more tasks" })
+    ).toBeEnabled();
   });
 });
 
@@ -263,5 +308,50 @@ describe("AssigneePicker auto-search", () => {
 
     fireEvent.compositionStart(input);
     expect(requestSignal?.aborted).toBe(true);
+  });
+
+  it("visually tracks keyboard navigation and selects the active candidate", async () => {
+    vi.useFakeTimers();
+    const candidates: PublicTaskUser[] = [
+      { id: "user-1", displayName: "Alice Example" },
+      { id: "user-2", displayName: "Bob Example" }
+    ];
+    const onSelect = vi.fn();
+    vi.mocked(searchTaskAssignees).mockResolvedValue({
+      items: candidates,
+      page: 1,
+      pageSize: 20,
+      total: candidates.length
+    });
+
+    render(
+      <AssigneePicker
+        onSelect={onSelect}
+        selected={null}
+        workspaceId={workspace.id}
+      />
+    );
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    const alice = screen.getByRole("option", {
+      name: /Alice Example/
+    });
+    const bob = screen.getByRole("option", { name: /Bob Example/ });
+    expect(alice).toHaveClass("bg-muted");
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(alice).not.toHaveClass("bg-muted");
+    expect(bob).toHaveClass("bg-muted");
+    expect(input).toHaveAttribute("aria-activedescendant", bob.id);
+
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onSelect).toHaveBeenCalledWith(candidates[1]);
+    expect(
+      screen.queryByRole("listbox", { name: "Assignee candidates" })
+    ).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,8 @@
 import { spawn, spawnSync } from "node:child_process";
 import path from "node:path";
 
+import { isHttpEndpointReady } from "./health-probe.mjs";
+
 const frontendRoot = process.cwd();
 const nextCli = path.join(frontendRoot, "node_modules", "next", "dist", "bin", "next");
 const playwrightCli = path.join(
@@ -15,20 +17,15 @@ const startupTimeoutMs = 120_000;
 
 let server;
 let ownsServer = false;
-
-async function isReady() {
-  try {
-    const response = await fetch(serverUrl);
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
+let serverFailure;
 
 async function waitForServer() {
   const deadline = Date.now() + startupTimeoutMs;
   while (Date.now() < deadline) {
-    if (await isReady()) {
+    if (serverFailure) {
+      throw new Error(`Frontend ${serverFailure}`);
+    }
+    if (await isHttpEndpointReady(serverUrl)) {
       return;
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
@@ -61,17 +58,28 @@ function stopServer() {
 }
 
 async function main() {
-  if (!(await isReady())) {
+  if (!(await isHttpEndpointReady(serverUrl))) {
     ownsServer = true;
     server = spawn(process.execPath, [nextCli, "dev", "--port", "3000"], {
       cwd: frontendRoot,
-      detached: true,
+      detached: process.platform !== "win32",
       env: {
         ...process.env,
         NEXT_PUBLIC_API_BASE_URL: "http://localhost:4000",
         NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
       },
-      stdio: "ignore"
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true
+    });
+    server.stdout?.on("data", (chunk) => process.stdout.write(chunk));
+    server.stderr?.on("data", (chunk) => process.stderr.write(chunk));
+    server.once("error", (error) => {
+      serverFailure = `failed to start: ${error.message}`;
+    });
+    server.once("exit", (code, signal) => {
+      serverFailure = signal
+        ? `exited before becoming ready (signal ${signal})`
+        : `exited before becoming ready (code ${code ?? "unknown"})`;
     });
     server.unref();
     await waitForServer();

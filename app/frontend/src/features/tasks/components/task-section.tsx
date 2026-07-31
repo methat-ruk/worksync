@@ -59,6 +59,7 @@ import type {
   PublicWorkspace,
   WorkspaceRole
 } from "@/features/workspaces/model/workspace-contract";
+import { cn } from "@/lib/utils";
 
 import {
   createTask,
@@ -422,7 +423,10 @@ export function AssigneePicker({
               {items.map((user, index) => (
                 <button
                   aria-selected={selected?.id === user.id}
-                  className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    index === activeIndex && "bg-muted text-foreground"
+                  )}
                   id={`${listId}-option-${index}`}
                   key={user.id}
                   onClick={() => select(user)}
@@ -746,6 +750,7 @@ export function TaskSection({
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
+    setPagePending(false);
     setLoadState("loading");
     setLoadError(null);
     setPageError(null);
