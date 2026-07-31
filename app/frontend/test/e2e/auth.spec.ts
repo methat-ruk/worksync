@@ -33,6 +33,8 @@ const workspaceCollectionUrl =
   /^http:\/\/localhost:4000\/api\/workspaces(?:\?.*)?$/;
 const projectCollectionUrl =
   /^http:\/\/localhost:4000\/api\/workspaces\/[^/]+\/projects(?:\?.*)?$/;
+const taskCollectionUrl =
+  /^http:\/\/localhost:4000\/api\/workspaces\/[^/]+\/projects\/[^/]+\/tasks(?:\?.*)?$/;
 
 test.beforeEach(async ({ page }) => {
   await page.route(apiUrl("/api/auth/refresh"), (route) =>
@@ -56,6 +58,19 @@ test.beforeEach(async ({ page }) => {
       })
     })
   );
+  await page.route(taskCollectionUrl, (route) => {
+    if (route.request().method() !== "GET") {
+      return route.fallback();
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [], page: 1, pageSize: 20, total: 0 }
+      })
+    });
+  });
 });
 
 test("keeps landing navigation accessible and centered", async ({ page }) => {
