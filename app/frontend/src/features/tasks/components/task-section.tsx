@@ -93,10 +93,26 @@ type TaskCollection = {
   inconsistent: boolean;
 };
 
+type AssigneeCandidateCollection = {
+  items: PublicTaskUser[];
+  total: number;
+  nextPage: number;
+  exhausted: boolean;
+  inconsistent: boolean;
+};
+
 const initialTaskCollection: TaskCollection = {
   items: [],
   total: 0,
   pageSize: 20,
+  nextPage: 1,
+  exhausted: true,
+  inconsistent: false
+};
+
+const initialAssigneeCandidateCollection: AssigneeCandidateCollection = {
+  items: [],
+  total: 0,
   nextPage: 1,
   exhausted: true,
   inconsistent: false
@@ -210,6 +226,22 @@ function mergeAssignees(
   return [...byId.values()];
 }
 
+function assigneeCandidateCollectionFromPage(
+  data: TaskAssigneeListData,
+  current: PublicTaskUser[] = []
+): AssigneeCandidateCollection {
+  const items = mergeAssignees(current, data.items);
+  const total = Math.max(data.total, items.length);
+  const exhausted = data.page * data.pageSize >= total;
+  return {
+    items,
+    total,
+    nextPage: data.page + 1,
+    exhausted,
+    inconsistent: exhausted && items.length < total
+  };
+}
+
 function formatDate(value: Date): string {
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
@@ -245,9 +277,8 @@ export function AssigneePicker({
   const statusId = `${inputId}-status`;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [items, setItems] = useState<PublicTaskUser[]>([]);
-  const [total, setTotal] = useState(0);
-  const [nextPage, setNextPage] = useState(1);
+  const [candidates, setCandidates] =
+    useState<AssigneeCandidateCollection>(initialAssigneeCandidateCollection);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -276,11 +307,12 @@ export function AssigneePicker({
         ) {
           return;
         }
-        setItems((current) =>
-          append ? mergeAssignees(current, result.items) : result.items
+        setCandidates((current) =>
+          assigneeCandidateCollectionFromPage(
+            result,
+            append ? current.items : []
+          )
         );
-        setTotal(result.total);
-        setNextPage(result.page + 1);
         setActiveIndex(result.items.length > 0 && !append ? 0 : -1);
       } catch (requestError: unknown) {
         if (
@@ -328,9 +360,7 @@ export function AssigneePicker({
     controllerRef.current = null;
     setPending(false);
     setError(null);
-    setItems([]);
-    setTotal(0);
-    setNextPage(1);
+    setCandidates(initialAssigneeCandidateCollection);
     setActiveIndex(-1);
   }
 
@@ -348,14 +378,14 @@ export function AssigneePicker({
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setActiveIndex((current) =>
-        Math.min(current + 1, Math.max(items.length - 1, 0))
+        Math.min(current + 1, Math.max(candidates.items.length - 1, 0))
       );
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActiveIndex((current) => Math.max(current - 1, 0));
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
-      const user = items[activeIndex];
+      const user = candidates.items[activeIndex];
       if (user) {
         select(user);
       }
@@ -377,7 +407,6 @@ export function AssigneePicker({
     setPending(false);
   }
 
-  const loadedAll = items.length >= total;
   const activeId =
     activeIndex >= 0 ? `${listId}-option-${activeIndex}` : undefined;
 
@@ -434,7 +463,7 @@ export function AssigneePicker({
           ? "Searching assignees"
           : error
             ? error
-            : `${total} assignee candidates`}
+            : `${candidates.total} assignee candidates`}
       </p>
       {open && (
         <div className="rounded-xl border bg-popover p-2 shadow-sm">
@@ -450,7 +479,7 @@ export function AssigneePicker({
                 Retry search
               </Button>
             </div>
-          ) : items.length === 0 && !pending ? (
+          ) : candidates.items.length === 0 && !pending ? (
             <p className="p-2 text-sm text-muted-foreground">
               No matching workspace members.
             </p>
@@ -461,7 +490,7 @@ export function AssigneePicker({
               id={listId}
               role="listbox"
             >
-              {items.map((user, index) => (
+              {candidates.items.map((user, index) => (
                 <button
                   aria-selected={selected?.id === user.id}
                   className={cn(
@@ -484,12 +513,14 @@ export function AssigneePicker({
           )}
           <div className="mt-2 flex items-center justify-between gap-2 px-2">
             <span className="text-xs text-muted-foreground">
-              {items.length} of {total}
+              {candidates.items.length} of {candidates.total}
             </span>
-            {!loadedAll && (
+            {!candidates.exhausted && (
               <Button
                 disabled={pending}
-                onClick={() => void runSearch(query.trim(), nextPage, true)}
+                onClick={() =>
+                  void runSearch(query.trim(), candidates.nextPage, true)
+                }
                 size="sm"
                 type="button"
                 variant="outline"
@@ -498,6 +529,23 @@ export function AssigneePicker({
               </Button>
             )}
           </div>
+          {candidates.inconsistent && !error && !pending && (
+            <div className="mt-2 space-y-2 rounded-lg border p-2 text-sm">
+              <p className="text-muted-foreground">
+                The assignee list changed while it was loading. Refresh the
+                candidates to reconcile the results.
+              </p>
+              <Button
+                onClick={() => void runSearch(query.trim(), 1, false)}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <RefreshCw aria-hidden="true" />
+                Refresh candidates
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -372,6 +372,10 @@ describe("AssigneePicker auto-search", () => {
   it("invalidates stale candidates as soon as the query changes", async () => {
     vi.useFakeTimers();
     const onSelect = vi.fn();
+    const initialCandidates = Array.from({ length: 20 }, (_, index) => ({
+      id: `user-${index + 1}`,
+      displayName: index === 0 ? "Alice Example" : `Candidate ${index + 1}`
+    }));
     let staleRequestSignal: AbortSignal | undefined;
     let resolveStaleRequest!: (value: TaskAssigneeListData) => void;
     vi.mocked(searchTaskAssignees).mockImplementation(
@@ -391,10 +395,10 @@ describe("AssigneePicker auto-search", () => {
           });
         }
         return Promise.resolve({
-          items: [{ id: "user-1", displayName: "Alice Example" }],
+          items: initialCandidates,
           page: 1,
           pageSize: 20,
-          total: 2
+          total: 21
         });
       }
     );
@@ -431,7 +435,7 @@ describe("AssigneePicker auto-search", () => {
         items: [{ id: "user-3", displayName: "Stale Example" }],
         page: 2,
         pageSize: 20,
-        total: 2
+        total: 21
       });
       await Promise.resolve();
     });
@@ -445,6 +449,73 @@ describe("AssigneePicker auto-search", () => {
     expect(
       screen.getByRole("option", { name: /Bob Example/ })
     ).toBeInTheDocument();
+  });
+
+  it("offers reconciliation when a later candidate page repeats a user", async () => {
+    vi.useFakeTimers();
+    const firstPage = Array.from({ length: 20 }, (_, index) => ({
+      id: `user-${index + 1}`,
+      displayName: `Candidate ${index + 1}`
+    }));
+    vi.mocked(searchTaskAssignees).mockImplementation(
+      (_workspaceId, options) =>
+        Promise.resolve(
+          options?.page === 2
+            ? {
+                items: [firstPage[19]!],
+                page: 2,
+                pageSize: 20,
+                total: 21
+              }
+            : {
+                items: firstPage,
+                page: 1,
+                pageSize: 20,
+                total: 21
+              }
+        )
+    );
+
+    render(
+      <AssigneePicker
+        onSelect={vi.fn()}
+        selected={null}
+        workspaceId={workspace.id}
+      />
+    );
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+      await Promise.resolve();
+    });
+
+    expect(
+      screen.getByText(/assignee list changed while it was loading/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more" })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Refresh candidates" })
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(searchTaskAssignees).toHaveBeenLastCalledWith(
+      workspace.id,
+      expect.objectContaining({ page: 1, search: "" })
+    );
+    expect(
+      screen.queryByText(/assignee list changed while it was loading/i)
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Load more" })).toBeEnabled();
   });
 
   it("visually tracks keyboard navigation and selects the active candidate", async () => {

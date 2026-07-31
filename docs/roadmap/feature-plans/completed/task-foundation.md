@@ -19,7 +19,7 @@ Implementation completed: 2026-07-31
 - enforced backend task RBAC, safe tenant isolation, and atomic member
   removal/task unassignment under concurrent assignment
 - delivered the `/app` task list, create/edit/status workflow, viewer read-only
-  state, accessible debounced assignee auto-search, and task-list pagination
+  state, accessible debounced assignee auto-search, and task/assignee pagination
   reconciliation
 - required task due dates to include an explicit timezone at the API boundary
 - removed the redundant generic authentication-error heading
@@ -711,7 +711,7 @@ the documented Google SVG fill exception remain allowed.
 | Public request/response/error contract | Nest contract tests through validation, guard, filter, and Swagger |
 | Pagination, ordering, and filters | Contract assertions plus representative multi-row PostgreSQL data |
 | Case-insensitive assignee search | Contract cases with mixed-case names and queries |
-| Assignee auto-search behavior | Fake-timer component tests for 300 ms debounce, IME composition, immediate query-change cancellation, stale-response protection, initial results, and keyboard operation |
+| Assignee auto-search behavior | Fake-timer component tests for 300 ms debounce, IME composition, immediate query-change cancellation, stale-response protection, initial results, pagination reconciliation/recovery, and keyboard operation |
 | Frontend task states and stale requests | Vitest component tests for filter cancellation and pagination reconciliation plus mocked Playwright |
 | Terminal task cancellation | Component and browser confirmation/dismissal tests plus lifecycle contract |
 | Login-specific error message | Shared component regression plus Playwright login failure |
@@ -893,9 +893,8 @@ Recovery and validation review:
 - module-wiring, terminal-cancel confirmation, semantic Badge variants, and
   case-insensitive assignee search now have explicit evidence boundaries
 - assignee auto-search debounce, IME, immediate query-change cancellation,
-  stale-response rejection, initial results, and keyboard behavior have
-  component-test evidence; candidate pagination and recovery remain owned by
-  the component suite but are not claimed as executed evidence here
+  stale-response rejection, initial results, candidate pagination
+  reconciliation/recovery, and keyboard behavior have component-test evidence
 - required suites that skip leave the feature incomplete
 - post-implementation working-tree review and findings fixes precede final
   validation
