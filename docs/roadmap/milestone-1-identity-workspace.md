@@ -75,7 +75,7 @@ Delivered:
 Still required:
 
 - workspace isolation enforcement for every future workspace-scoped query
-- role matrix finalization for task, comment, file, and activity actions
+- role matrix finalization for comment, file, and activity actions
 
 Feature plan order:
 
@@ -93,7 +93,7 @@ Feature plan order:
 - direct API calls cannot access another workspace: Done for workspace
   foundation and workspace membership management
 - role matrix has backend integration coverage: Done for workspace-level
-  membership and projects; not done for task/comment/file actions
+  membership, projects, and tasks; not done for comment/file/activity actions
 - critical auth and workspace flows have contract tests: Auth and workspace
   foundation, workspace foundation, membership management, and frontend
   bootstrap done

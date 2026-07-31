@@ -9,7 +9,10 @@ Last updated: 2026-07-31
 ## Current Snapshot
 
 WorkSync has completed the project and task foundation slices in Milestone 2.
-The next collaboration slice is comments and mentions.
+Repository health review found a frontend runtime/component compatibility gap
+plus frontend copy, task UI, pagination, and policy-semantics debt that should be
+resolved before the next collaboration slice. The next product capability
+remains comments and mentions.
 
 Done:
 
@@ -38,6 +41,10 @@ Done:
 
 Still missing before the collaboration MVP works:
 
+- a coherent, browser-verified Tailwind/shadcn runtime contract
+- accurate auth-recovery and app-shell copy
+- maintainable and accessible task UI boundaries for the discussion host
+- explicit shared pagination and task authorization-policy semantics
 - workspace-scoped authorization for comment, file, and activity resources
 - comments, mentions, notifications, realtime, files, jobs, and production
   readiness
@@ -55,11 +62,28 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
+1. [Frontend UI Runtime Compatibility](roadmap/feature-plans/planned/frontend-ui-runtime-compatibility.md)
+   - restore a coherent Tailwind/shadcn compilation contract and browser-verify
+     shared primitives and Alert layout.
+2. [Frontend Recovery and App-Shell Copy Consistency](roadmap/feature-plans/planned/frontend-recovery-app-shell-copy-consistency.md)
+   - remove speculative/redundant recovery messages and align navigation copy
+     with current workflows and routes.
+3. [Task UI Boundaries](roadmap/feature-plans/planned/task-ui-boundaries.md)
+   - separate task UI responsibilities, establish the discussion host, and
+     correct assignee-search accessibility before comments extend the surface.
+4. [Frontend Pagination Reconciliation](roadmap/feature-plans/planned/frontend-pagination-reconciliation.md)
+   - extract only page-merging semantics proven common across current consumers.
+5. [Task Authorization Policy Cleanup](roadmap/feature-plans/planned/task-authorization-policy-cleanup.md)
+   - remove or justify the production-dead task read-policy abstraction without
+     changing authorization.
+6. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
    - build the first task discussion workflow inside the proven workspace/task
      authorization boundary.
-2. Add notifications, files, jobs, activity, and production readiness in
-   dependency order.
+7. Add notifications, files, jobs, activity, and production readiness in
+   dependency order. If attachments require asynchronous scanning, split the
+   work around the attachment lifecycle contract, scan worker, and final
+   availability/UI integration rather than creating a file/job dependency
+   cycle.
 
 ## Guiding Principles
 
@@ -98,7 +122,8 @@ access is scoped to the correct workspace.
 
 - Invitation flow: email invite only, link invite, direct member add, or a
   staged combination?
-- Viewer behavior: read-only only, or can viewers comment?
+- Viewer comment behavior: keep read-only as recommended for consistency, or
+  approve a collaboration-policy change?
 - File upload: direct-to-storage upload or backend proxy?
 - File policy: allowed types, maximum size, preview rules, and malware scanning
   hook?

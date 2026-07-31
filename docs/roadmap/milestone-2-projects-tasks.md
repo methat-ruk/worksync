@@ -33,6 +33,12 @@ track status, and see task activity inside the correct workspace boundary.
 
 ## Still Required
 
+- frontend UI runtime compatibility remediation before extending shared
+  primitives into the collaboration workflow
+- frontend recovery/app-shell copy correction
+- task UI boundary/accessibility remediation before adding comments
+- shared frontend pagination reconciliation
+- production-dead task authorization policy cleanup
 - board view
 - activity log model and write path
 - frontend project update workflow
@@ -41,6 +47,11 @@ Feature plan order:
 
 1. [Project Foundation](feature-plans/completed/project-foundation.md)
 2. [Task Foundation](feature-plans/completed/task-foundation.md)
+3. [Frontend UI Runtime Compatibility](feature-plans/planned/frontend-ui-runtime-compatibility.md)
+4. [Frontend Recovery and App-Shell Copy Consistency](feature-plans/planned/frontend-recovery-app-shell-copy-consistency.md)
+5. [Task UI Boundaries](feature-plans/planned/task-ui-boundaries.md)
+6. [Frontend Pagination Reconciliation](feature-plans/planned/frontend-pagination-reconciliation.md)
+7. [Task Authorization Policy Cleanup](feature-plans/planned/task-authorization-policy-cleanup.md)
 
 ## Exit Criteria
 
