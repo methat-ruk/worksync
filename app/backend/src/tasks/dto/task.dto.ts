@@ -11,6 +11,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Matches,
   Max,
   MaxLength,
   Min
@@ -20,6 +21,10 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { TaskStatus } from "../../generated/prisma/client";
 
 const MAX_PAGE = 10_000;
+const ISO_DATE_TIME_WITH_TIME_ZONE_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+const ISO_DATE_TIME_WITH_TIME_ZONE_MESSAGE =
+  "dueDate must be an ISO 8601 date-time with an explicit timezone";
 
 function trimString({ value }: { value: unknown }): unknown {
   return typeof value === "string" ? value.trim() : value;
@@ -62,10 +67,14 @@ export class CreateTaskRequestDto {
   @ApiPropertyOptional({
     nullable: true,
     format: "date-time",
+    pattern: ISO_DATE_TIME_WITH_TIME_ZONE_PATTERN.source,
     example: "2026-08-07T10:00:00.000Z"
   })
   @IsOptional()
   @IsISO8601({ strict: true })
+  @Matches(ISO_DATE_TIME_WITH_TIME_ZONE_PATTERN, {
+    message: ISO_DATE_TIME_WITH_TIME_ZONE_MESSAGE
+  })
   dueDate?: string | null;
 }
 
@@ -89,9 +98,17 @@ export class UpdateTaskRequestDto {
   @Length(1, 100)
   assigneeId?: string | null;
 
-  @ApiPropertyOptional({ nullable: true, format: "date-time" })
+  @ApiPropertyOptional({
+    nullable: true,
+    format: "date-time",
+    pattern: ISO_DATE_TIME_WITH_TIME_ZONE_PATTERN.source,
+    example: "2026-08-07T10:00:00.000Z"
+  })
   @IsOptional()
   @IsISO8601({ strict: true })
+  @Matches(ISO_DATE_TIME_WITH_TIME_ZONE_PATTERN, {
+    message: ISO_DATE_TIME_WITH_TIME_ZONE_MESSAGE
+  })
   dueDate?: string | null;
 }
 

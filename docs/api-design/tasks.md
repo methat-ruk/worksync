@@ -27,6 +27,10 @@ The task DTO contains:
 Persistence-only relations and internal membership data are not public task
 fields.
 
+Create and update requests accept `dueDate` as `null` or a complete ISO 8601
+date-time with an explicit `Z` or `±hh:mm` timezone. Date-only and offsetless
+date-time values are rejected so server locale cannot change the stored time.
+
 ## Roles and Isolation
 
 - `OWNER`, `ADMIN`, and `MEMBER` may create, edit, assign, and transition tasks.

@@ -19,12 +19,14 @@ Implementation completed: 2026-07-31
 - enforced backend task RBAC, safe tenant isolation, and atomic member
   removal/task unassignment under concurrent assignment
 - delivered the `/app` task list, create/edit/status workflow, viewer read-only
-  state, and accessible debounced assignee auto-search
+  state, accessible debounced assignee auto-search, and task-list pagination
+  reconciliation
+- required task due dates to include an explicit timezone at the API boundary
 - removed the redundant generic authentication-error heading
 - centralized primary, destructive, success, and warning colors in semantic
   tokens and shared component variants
-- fixed the live Playwright runner so service cleanup is awaited and verified
-  instead of leaving ports `3000` and `4000` listening
+- bounded mocked and live Playwright startup and teardown, with verified service
+  cleanup instead of leaving ports `3000` and `4000` listening
 - added and passed unit, contract, integration, security, component, mocked
   browser, live browser, migration, build, lint, and typecheck evidence
 
@@ -705,12 +707,12 @@ the documented Google SVG fill exception remain allowed.
 | Assignment/removal concurrency | Real PostgreSQL race test proving no removed member remains assigned |
 | Serialization retry exhaustion | Deterministic retry-helper test plus PostgreSQL conflict behavior |
 | Due-date persistence and clearing | Migration apply/status plus real PostgreSQL create/update/read |
-| Concurrent status transition | Conditional-update race test against PostgreSQL |
+| Status transition consistency | Lifecycle decision tables, contract conflict coverage, and PostgreSQL persistence |
 | Public request/response/error contract | Nest contract tests through validation, guard, filter, and Swagger |
 | Pagination, ordering, and filters | Contract assertions plus representative multi-row PostgreSQL data |
 | Case-insensitive assignee search | Contract cases with mixed-case names and queries |
-| Assignee auto-search behavior | Fake-timer component tests for 300 ms debounce, IME composition, abort/stale-response protection, initial results, load more, recovery, and keyboard operation |
-| Frontend task states and stale requests | Vitest component tests plus mocked Playwright |
+| Assignee auto-search behavior | Fake-timer component tests for 300 ms debounce, IME composition, immediate query-change cancellation, stale-response protection, initial results, and keyboard operation |
+| Frontend task states and stale requests | Vitest component tests for filter cancellation and pagination reconciliation plus mocked Playwright |
 | Terminal task cancellation | Component and browser confirmation/dismissal tests plus lifecycle contract |
 | Login-specific error message | Shared component regression plus Playwright login failure |
 | Shared button and status palette | Button/Badge variant and token tests, contrast calculation, and light/dark browser evidence |
@@ -890,8 +892,10 @@ Recovery and validation review:
   evidence map to the boundaries they claim to prove
 - module-wiring, terminal-cancel confirmation, semantic Badge variants, and
   case-insensitive assignee search now have explicit evidence boundaries
-- assignee auto-search debounce, IME, request-cancellation, stale-response,
-  pagination, recovery, and keyboard behavior have component-test ownership
+- assignee auto-search debounce, IME, immediate query-change cancellation,
+  stale-response rejection, initial results, and keyboard behavior have
+  component-test evidence; candidate pagination and recovery remain owned by
+  the component suite but are not claimed as executed evidence here
 - required suites that skip leave the feature incomplete
 - post-implementation working-tree review and findings fixes precede final
   validation

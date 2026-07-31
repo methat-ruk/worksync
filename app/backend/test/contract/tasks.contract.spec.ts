@@ -184,6 +184,38 @@ describe("task API contract", () => {
     expect(result.body.data.items[0]).not.toHaveProperty("role");
   });
 
+  it("rejects due dates that omit an explicit timezone", async () => {
+    const invalidDueDates = ["2026-08-07", "2026-08-07T10:00:00"];
+
+    for (const dueDate of invalidDueDates) {
+      await request(app.getHttpServer())
+        .post(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`)
+        .set("authorization", `Bearer ${ownerToken}`)
+        .send({ title: "Invalid create due date", dueDate })
+        .expect(400);
+    }
+
+    const created = await request(app.getHttpServer())
+      .post(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`)
+      .set("authorization", `Bearer ${ownerToken}`)
+      .send({
+        title: "Due date validation task",
+        dueDate: "2026-08-07T10:00:00+07:00"
+      })
+      .expect(201);
+    const taskId = created.body.data.task.id as string;
+
+    for (const dueDate of invalidDueDates) {
+      await request(app.getHttpServer())
+        .patch(
+          `/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`
+        )
+        .set("authorization", `Bearer ${ownerToken}`)
+        .send({ dueDate })
+        .expect(400);
+    }
+  });
+
   it("rejects protected, empty, conflicting, and invalid transition input", async () => {
     const created = await request(app.getHttpServer())
       .post(`/api/workspaces/${workspaceId}/projects/${projectId}/tasks`)

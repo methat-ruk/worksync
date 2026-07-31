@@ -27,6 +27,7 @@ import {
 import type {
   PublicTask,
   PublicTaskUser,
+  TaskAssigneeListData,
   TaskListData
 } from "../model/task-contract";
 import { AssigneePicker, TaskSection } from "./task-section";
@@ -69,11 +70,16 @@ const task: PublicTask = {
   updatedAt: new Date("2026-07-31T10:00:00.000Z")
 };
 
-function page(items: PublicTask[], total = items.length): TaskListData {
+function page(
+  items: PublicTask[],
+  total = items.length,
+  pageNumber = 1,
+  pageSize = 20
+): TaskListData {
   return {
     items,
-    page: 1,
-    pageSize: 20,
+    page: pageNumber,
+    pageSize,
     total
   };
 }
@@ -178,7 +184,7 @@ describe("TaskSection", () => {
             );
           });
         }
-        return Promise.resolve(page([task], 2));
+        return Promise.resolve(page([task], 2, 1, 1));
       }
     );
 
@@ -201,6 +207,59 @@ describe("TaskSection", () => {
     expect(
       await screen.findByRole("button", { name: "Load more tasks" })
     ).toBeEnabled();
+  });
+
+  it("offers reconciliation when a later page only repeats loaded tasks", async () => {
+    const user = userEvent.setup();
+    vi.mocked(listTasks).mockImplementation(
+      (_workspaceId, _projectId, options) =>
+        Promise.resolve(
+          options?.page === 2
+            ? page([task], 2, 2, 1)
+            : page([task], 2, 1, 1)
+        )
+    );
+
+    render(<TaskSection project={project} workspace={workspace} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Load more tasks" })
+    );
+
+    expect(
+      await screen.findByText(/task list changed while it was loading/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Refresh tasks" })
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Load more tasks" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers reconciliation when the final covered page is empty", async () => {
+    const user = userEvent.setup();
+    vi.mocked(listTasks).mockImplementation(
+      (_workspaceId, _projectId, options) =>
+        Promise.resolve(
+          options?.page === 2
+            ? page([], 2, 2, 1)
+            : page([task], 2, 1, 1)
+        )
+    );
+
+    render(<TaskSection project={project} workspace={workspace} />);
+
+    await user.click(
+      await screen.findByRole("button", { name: "Load more tasks" })
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Refresh tasks" })
+    ).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Load more tasks" })
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -308,6 +367,84 @@ describe("AssigneePicker auto-search", () => {
 
     fireEvent.compositionStart(input);
     expect(requestSignal?.aborted).toBe(true);
+  });
+
+  it("invalidates stale candidates as soon as the query changes", async () => {
+    vi.useFakeTimers();
+    const onSelect = vi.fn();
+    let staleRequestSignal: AbortSignal | undefined;
+    let resolveStaleRequest!: (value: TaskAssigneeListData) => void;
+    vi.mocked(searchTaskAssignees).mockImplementation(
+      (_workspaceId, options) => {
+        if (options?.page === 2) {
+          staleRequestSignal = options.signal;
+          return new Promise((resolve) => {
+            resolveStaleRequest = resolve;
+          });
+        }
+        if (options?.search === "Bob") {
+          return Promise.resolve({
+            items: [{ id: "user-2", displayName: "Bob Example" }],
+            page: 1,
+            pageSize: 20,
+            total: 1
+          });
+        }
+        return Promise.resolve({
+          items: [{ id: "user-1", displayName: "Alice Example" }],
+          page: 1,
+          pageSize: 20,
+          total: 2
+        });
+      }
+    );
+
+    render(
+      <AssigneePicker
+        onSelect={onSelect}
+        selected={null}
+        workspaceId={workspace.id}
+      />
+    );
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    expect(
+      screen.getByRole("option", { name: /Alice Example/ })
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Load more" }));
+    expect(staleRequestSignal?.aborted).toBe(false);
+
+    fireEvent.change(input, { target: { value: "Bob" } });
+    expect(staleRequestSignal?.aborted).toBe(true);
+    expect(
+      screen.queryByRole("option", { name: /Alice Example/ })
+    ).not.toBeInTheDocument();
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onSelect).not.toHaveBeenCalled();
+
+    await act(async () => {
+      resolveStaleRequest({
+        items: [{ id: "user-3", displayName: "Stale Example" }],
+        page: 2,
+        pageSize: 20,
+        total: 2
+      });
+      await Promise.resolve();
+    });
+    expect(
+      screen.queryByRole("option", { name: /Stale Example/ })
+    ).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    expect(
+      screen.getByRole("option", { name: /Bob Example/ })
+    ).toBeInTheDocument();
   });
 
   it("visually tracks keyboard navigation and selects the active candidate", async () => {

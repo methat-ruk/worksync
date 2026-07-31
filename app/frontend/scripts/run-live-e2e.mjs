@@ -148,6 +148,7 @@ async function waitForUnavailable(url) {
 
 async function stop({ child, label, healthUrl }) {
   const errors = [];
+  let processTreeCleanupFailure;
   if (child.pid && child.exitCode === null) {
     stoppingChildren.add(child);
     if (process.platform === "win32") {
@@ -156,6 +157,7 @@ async function stop({ child, label, healthUrl }) {
         ["/pid", String(child.pid), "/t", "/f"],
         {
           encoding: "utf8",
+          timeout: cleanupTimeoutMs,
           windowsHide: true
         }
       );
@@ -164,7 +166,7 @@ async function stop({ child, label, healthUrl }) {
           result.error?.message ||
           result.stderr?.trim() ||
           `exit code ${result.status ?? "unknown"}`;
-        errors.push(`${label} process-tree cleanup failed: ${detail}`);
+        processTreeCleanupFailure = detail;
         child.kill();
       }
     } else {
@@ -181,7 +183,13 @@ async function stop({ child, label, healthUrl }) {
     }
 
     if (!(await waitForChildExit(child))) {
-      errors.push(`${label} did not exit within ${cleanupTimeoutMs}ms`);
+      errors.push(
+        `${label} did not exit within ${cleanupTimeoutMs}ms${
+          processTreeCleanupFailure
+            ? ` after process-tree cleanup failed: ${processTreeCleanupFailure}`
+            : ""
+        }`
+      );
     }
   }
   if (healthUrl && !(await waitForUnavailable(healthUrl))) {
@@ -308,3 +316,5 @@ try {
 } finally {
   await stopChildren();
 }
+
+process.exit(process.exitCode ?? 0);

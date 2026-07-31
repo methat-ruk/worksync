@@ -84,11 +84,22 @@ type AssigneeFilter =
   | { kind: "unassigned" }
   | { kind: "user"; user: PublicTaskUser };
 
-const initialTaskCollection: TaskListData = {
+type TaskCollection = {
+  items: PublicTask[];
+  total: number;
+  pageSize: number;
+  nextPage: number;
+  exhausted: boolean;
+  inconsistent: boolean;
+};
+
+const initialTaskCollection: TaskCollection = {
   items: [],
-  page: 1,
+  total: 0,
   pageSize: 20,
-  total: 0
+  nextPage: 1,
+  exhausted: true,
+  inconsistent: false
 };
 
 const statusLabels: Record<TaskStatus, string> = {
@@ -169,6 +180,23 @@ function mergeTasks(
     byId.set(task.id, task);
   }
   return [...byId.values()];
+}
+
+function taskCollectionFromPage(
+  data: TaskListData,
+  current: PublicTask[] = []
+): TaskCollection {
+  const items = mergeTasks(current, data.items);
+  const total = Math.max(data.total, items.length);
+  const exhausted = data.page * data.pageSize >= total;
+  return {
+    items,
+    total,
+    pageSize: data.pageSize,
+    nextPage: data.page + 1,
+    exhausted,
+    inconsistent: exhausted && items.length < total
+  };
 }
 
 function mergeAssignees(
@@ -294,6 +322,18 @@ export function AssigneePicker({
     []
   );
 
+  function resetSearchResultsForQueryChange() {
+    requestIdentity.current += 1;
+    controllerRef.current?.abort();
+    controllerRef.current = null;
+    setPending(false);
+    setError(null);
+    setItems([]);
+    setTotal(0);
+    setNextPage(1);
+    setActiveIndex(-1);
+  }
+
   function select(user: PublicTaskUser) {
     onSelect(user);
     setOpen(false);
@@ -376,6 +416,7 @@ export function AssigneePicker({
           className="pl-9"
           id={inputId}
           onChange={(event) => {
+            resetSearchResultsForQueryChange();
             setQuery(event.target.value);
             setOpen(true);
           }}
@@ -729,7 +770,7 @@ export function TaskSection({
 }) {
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [collection, setCollection] =
-    useState<TaskListData>(initialTaskCollection);
+    useState<TaskCollection>(initialTaskCollection);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
   const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>({
     kind: "all"
@@ -766,7 +807,7 @@ export function TaskSection({
         signal: controller.signal
       });
       if (!controller.signal.aborted) {
-        setCollection(data);
+        setCollection(taskCollectionFromPage(data));
         setLoadState("success");
       }
     } catch (error: unknown) {
@@ -790,7 +831,7 @@ export function TaskSection({
   );
 
   async function loadMore() {
-    if (pagePending || collection.items.length >= collection.total) {
+    if (pagePending || collection.exhausted) {
       return;
     }
     setPagePending(true);
@@ -799,7 +840,7 @@ export function TaskSection({
     controllerRef.current = controller;
     try {
       const data = await listTasks(workspace.id, project.id, {
-        page: collection.page + 1,
+        page: collection.nextPage,
         pageSize: collection.pageSize,
         ...(statusFilter !== "ALL" ? { status: statusFilter } : {}),
         ...(assigneeFilter.kind === "user"
@@ -811,10 +852,9 @@ export function TaskSection({
         signal: controller.signal
       });
       if (!controller.signal.aborted) {
-        setCollection({
-          ...data,
-          items: mergeTasks(collection.items, data.items)
-        });
+        setCollection((current) =>
+          taskCollectionFromPage(data, current.items)
+        );
       }
     } catch (error: unknown) {
       if (!controller.signal.aborted && !isAbortError(error)) {
@@ -914,8 +954,6 @@ export function TaskSection({
       </section>
     );
   }
-
-  const exhausted = collection.items.length >= collection.total;
 
   return (
     <section
@@ -1064,7 +1102,28 @@ export function TaskSection({
           </AlertDescription>
         </Alert>
       )}
-      {!exhausted && !pageError && (
+      {collection.inconsistent && !pageError && (
+        <Alert className="mt-4">
+          <AlertDescription>
+            <div className="flex flex-col items-start gap-3">
+              <p>
+                The task list changed while it was loading. Refresh the list
+                to reconcile the results.
+              </p>
+              <Button
+                disabled={pagePending}
+                onClick={() => void loadInitial()}
+                type="button"
+                variant="outline"
+              >
+                <RefreshCw aria-hidden="true" />
+                Refresh tasks
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+      {!collection.exhausted && !pageError && (
         <div className="mt-5 flex justify-center">
           <Button
             disabled={pagePending}
