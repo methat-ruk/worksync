@@ -2,7 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./test/compatibility",
-  fullyParallel: true,
+  // Keep each browser project's tests serial so one engine instance cannot
+  // exhaust the software renderer while the three projects still run together.
+  fullyParallel: false,
   workers: 3,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,

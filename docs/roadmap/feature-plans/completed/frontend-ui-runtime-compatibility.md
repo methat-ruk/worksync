@@ -70,6 +70,33 @@ capabilities.
 - Tests can fail when a required shared-component style is missing from the
   compiled CSS or rendered state.
 
+## Reviewed Component, State, and Surface Matrix
+
+The production-build compatibility suite renders the real application routes
+and components; it does not inject Tailwind class probes from test code. This
+prevents a tracked test file from keeping a removed component utility in the
+generated CSS. Each browser test below runs in Playwright Chromium, Firefox,
+and WebKit. Existing component and workflow tests provide the deeper behavior
+checks named in the last column.
+
+| Shared primitives | Assigned rendered states | Shipped surfaces | Evidence owner |
+|---|---|---|---|
+| Button | primary, keyboard focus, disabled | landing, authentication, task | production compatibility plus auth/task E2E |
+| Field, Input | focus, validation, disabled | authentication, task form | production compatibility plus auth/task component tests |
+| Progress | empty and evaluated password strength | signup | production compatibility plus password-policy tests |
+| Tooltip | disabled trigger and open overlay | authentication | production compatibility |
+| Alert | error, retry, light, dark, desktop, mobile wrapping | authentication recovery | production compatibility plus auth E2E |
+| Avatar, Badge, Separator | authenticated data and semantic role presentation | app shell, workspace | production compatibility plus app-shell/workspace tests |
+| DropdownMenu | open, positioned, disabled item | app-shell profile menu | production compatibility plus auth E2E |
+| AlertDialog | open confirmation, destructive action, cancel | app-shell session management | production compatibility plus auth E2E |
+| Skeleton | loading placeholders | auth guard, workspace, project, task | component loading-state tests plus production app bootstrap |
+| Sheet, Textarea | open overlay, keyboard focus, minimum height, mobile width | task create/edit | production compatibility plus task component/E2E |
+
+The authenticated compatibility route loads real app-shell, workspace,
+project, task, dropdown, confirmation, and task-sheet surfaces with
+deterministic API responses. Mocking controls data only; rendering still uses
+the production Next.js build and compiled Tailwind CSS.
+
 ## Approved Browser and Compatibility Decision
 
 Decision approved: 2026-08-10
@@ -248,13 +275,19 @@ requires a wider component rewrite or browser-support change.
 
 ## Rollback and Forward Fix
 
-- Treat dependency, PostCSS, global CSS/theme, `components.json`, migrated
-  utility semantics, shared primitive fixes, and lockfile changes as one atomic
-  compatibility rollback boundary.
+- Treat Tailwind/shadcn dependency changes, PostCSS integration, global
+  CSS/theme, `components.json`, migrated utility semantics, shared primitive
+  fixes, and their lockfile entries as one atomic compatibility rollback
+  boundary.
 - Separate commits are allowed only when every intermediate commit remains
   buildable and uses one coherent Tailwind contract. Otherwise revert the
   reviewed commit range as a unit; never revert dependency/configuration while
   leaving Tailwind CSS 4 source or theme mappings behind.
+- Dependency resolutions added for security remediation are outside the
+  compatibility rollback boundary. Preserve them during a selective rollback,
+  or immediately reapply them in a security-only commit and rerun the
+  dependency audit before merge or deployment. A full commit-range revert is
+  incomplete until those remediations have been restored and verified.
 - If Tailwind CSS 4 fails the approved evergreen-browser contract, revert the
   complete compatibility boundary and re-plan before attempting a pinned
   Tailwind CSS 3 alternative.
