@@ -7,22 +7,33 @@ import {
 } from "./check-tailwind-canonical-classes.mjs";
 
 const designSystem = await loadProjectDesignSystem();
+// Keep fixture candidates split so Tailwind's source scanner cannot emit them
+// into the production stylesheet merely because this regression test is tracked.
+const arbitraryHeight = ["h-", "[28px]"].join("");
+const canonicalHeight = ["h", "-7"].join("");
+const darkArbitraryHeight = ["dark:", arbitraryHeight].join("");
+const darkCanonicalHeight = ["dark:", canonicalHeight].join("");
+const anchorWidth = ["w-", "(--anchor-width)"].join("");
 
 test("reports non-canonical Tailwind classes with their variants", () => {
-  const source = `const classes = "h-[28px] dark:h-[28px] w-(--anchor-width)";`;
+  const source = `const classes = "${[
+    arbitraryHeight,
+    darkArbitraryHeight,
+    anchorWidth
+  ].join(" ")}";`;
 
   assert.deepEqual(
     findCanonicalClassFindings(source, "fixture.tsx", designSystem),
     [
       {
-        candidate: "h-[28px]",
-        canonical: "h-7",
+        candidate: arbitraryHeight,
+        canonical: canonicalHeight,
         file: "fixture.tsx",
         line: 1
       },
       {
-        candidate: "dark:h-[28px]",
-        canonical: "dark:h-7",
+        candidate: darkArbitraryHeight,
+        canonical: darkCanonicalHeight,
         file: "fixture.tsx",
         line: 1
       }
@@ -31,7 +42,11 @@ test("reports non-canonical Tailwind classes with their variants", () => {
 });
 
 test("accepts canonical and project-supported Tailwind classes", () => {
-  const source = `const classes = "h-7 dark:h-7 w-(--anchor-width)";`;
+  const source = `const classes = "${[
+    canonicalHeight,
+    darkCanonicalHeight,
+    anchorWidth
+  ].join(" ")}";`;
 
   assert.deepEqual(
     findCanonicalClassFindings(source, "fixture.tsx", designSystem),
