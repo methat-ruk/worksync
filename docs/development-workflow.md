@@ -144,10 +144,20 @@ Run relevant checks for the changed surface:
 - build
 - Docker or Compose validation when affected
 
-Frontend browser E2E tests and browser-visible verification require the local
-Playwright Chromium browser. Install it once with `corepack pnpm
-playwright:install`; use `corepack pnpm playwright:install:with-deps` on Linux,
-containers, or CI-like hosts when system dependencies are missing.
+Frontend browser E2E tests and browser-visible verification require the current
+Playwright Chromium, Firefox, and WebKit engines. Install them once with
+`corepack pnpm playwright:install`; use `corepack pnpm
+playwright:install:with-deps` on Linux, containers, or CI-like hosts when system
+dependencies are missing. Run `corepack pnpm
+test:e2e:frontend:compatibility` after styling-runtime changes.
+
+The workspace recommends Tailwind CSS IntelliSense and opens `.css` files in
+Tailwind CSS language mode so Tailwind 4 directives such as `@theme` and
+`@custom-variant` are validated by the correct language service. The generic CSS
+validator's `unknownAtRules` diagnostic is disabled because it cannot parse
+Tailwind directives; Tailwind-specific validation remains enabled. Frontend
+lint also fails when a utility has a canonical Tailwind spelling; apply the
+suggested canonical class instead of suppressing the diagnostic.
 
 If a check cannot run, report why and what remains unverified.
 

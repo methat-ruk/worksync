@@ -152,7 +152,7 @@ findings and rerun affected validation.
 
 ## Dependencies
 
-- [Frontend UI Runtime Compatibility](frontend-ui-runtime-compatibility.md)
+- [Frontend UI Runtime Compatibility](../completed/frontend-ui-runtime-compatibility.md)
 - completed Task Foundation and Frontend Structure Boundaries
 - existing task unit, component, mocked browser, and live browser harnesses
 

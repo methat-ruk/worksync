@@ -23,7 +23,7 @@ import {
 } from "../model/workspace-contract";
 
 export const surfaceClass =
-  "rounded-2xl border border-border/80 bg-card shadow-sm shadow-slate-950/5 dark:border-primary/20 dark:shadow-black/25";
+  "rounded-2xl border border-border/80 bg-card shadow-xs shadow-slate-950/5 dark:border-primary/20 dark:shadow-black/25";
 export const featureBadgeClass =
   "rounded-full border border-primary/20 bg-primary/10 px-2.5 text-primary-emphasis dark:bg-primary/15";
 export const statusBadgeClass =
@@ -32,7 +32,7 @@ export const statusBadgeClass =
 const iconTileClass =
   "grid place-items-center border border-primary/15 bg-primary/10 text-primary-emphasis dark:bg-primary/15";
 const createButtonClass =
-  "w-full gap-2 rounded-xl shadow-sm transition-all hover:-translate-y-px hover:shadow-md focus-visible:ring-primary/30 md:w-auto";
+  "w-full gap-2 rounded-xl shadow-xs transition-all hover:-translate-y-px hover:shadow-md focus-visible:ring-primary/30 md:w-auto";
 
 const upcomingItems = [
   {
@@ -53,7 +53,7 @@ function formatDate(value: Date): string {
 
 export function WorkspaceSkeleton() {
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div className="mx-auto flex max-w-6xl flex-col gap-5">
       <section className={`${surfaceClass} p-6`}>
         <Skeleton className="h-7 w-52" />
         <Skeleton className="mt-3 h-4 w-full max-w-lg" />
@@ -80,7 +80,7 @@ export function WorkspaceCard({
   return (
     <button
       aria-pressed={selected}
-      className="rounded-2xl border border-border/80 bg-card p-4 text-left shadow-sm transition-all hover:-translate-y-px hover:border-primary/45 hover:bg-accent/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:border-primary/60 data-[selected=true]:bg-primary/10 dark:border-primary/15"
+      className="rounded-2xl border border-border/80 bg-card p-4 text-left shadow-xs transition-all hover:-translate-y-px hover:border-primary/45 hover:bg-accent/70 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring data-[selected=true]:border-primary/60 data-[selected=true]:bg-primary/10 dark:border-primary/15"
       data-selected={selected}
       onClick={onSelect}
       type="button"
@@ -147,7 +147,11 @@ export function WorkspaceCreateForm({
 
   return (
     <form
-      className={compact ? "grid gap-3 md:grid-cols-[1fr_auto]" : "space-y-4"}
+      className={
+        compact
+          ? "grid gap-3 md:grid-cols-[1fr_auto]"
+          : "flex flex-col gap-4"
+      }
       onSubmit={(event) => void handleSubmit(event)}
     >
       <Field>

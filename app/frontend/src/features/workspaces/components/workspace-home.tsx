@@ -281,7 +281,7 @@ export function WorkspaceHome({ user }: { user: WorkspaceHomeUser }) {
     pageRequest.kind === "refresh" ? "Retry refresh" : "Retry load more";
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div className="mx-auto flex max-w-6xl flex-col gap-5">
       <section
         className={`${surfaceClass} bg-[linear-gradient(135deg,color-mix(in_oklch,var(--card),var(--primary)_12%),var(--card))] p-6 md:p-7`}
       >

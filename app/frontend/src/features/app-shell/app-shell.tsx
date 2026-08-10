@@ -93,7 +93,7 @@ function navStatusClass(status?: string): string {
   if (status === "Active") {
     return "border-primary/35 bg-primary/20 text-white";
   }
-  return "border-white/10 bg-white/[0.06] text-white/[0.6]";
+  return "border-white/10 bg-white/6 text-white/60";
 }
 
 function initials(name: string): string {
@@ -107,18 +107,18 @@ function initials(name: string): string {
 
 function Sidebar() {
   return (
-    <div className="flex h-full flex-col border-r border-white/20 bg-sidebar-dark px-3 py-4 text-white shadow-[1px_0_0_rgb(255_255_255_/_0.06),8px_0_30px_rgb(0_0_0_/_0.12)]">
+    <div className="flex h-full flex-col border-r border-white/20 bg-sidebar-dark px-3 py-4 text-white shadow-[1px_0_0_rgb(255_255_255/0.06),8px_0_30px_rgb(0_0_0/0.12)]">
       <div className="px-2 pb-7">
         <BrandMark />
       </div>
-      <nav aria-label="Primary" className="space-y-1">
+      <nav aria-label="Primary" className="flex flex-col gap-1">
         {navItems.map((item) => (
           <button
             key={item.label}
             className={cn(
               "flex h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm transition-colors",
               item.active
-                ? "bg-white/[0.13] font-medium text-white shadow-[inset_0_1px_0_rgb(255_255_255_/_0.08),0_10px_30px_rgb(0_0_0_/_0.10)]"
+                ? "bg-white/13 font-medium text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_10px_30px_rgb(0_0_0/0.10)]"
                 : "cursor-not-allowed text-white/[0.56] hover:text-white/[0.56]"
             )}
             disabled={!item.active}
@@ -137,7 +137,7 @@ function Sidebar() {
           </button>
         ))}
       </nav>
-      <div className="mt-auto overflow-hidden rounded-2xl border border-white/10 bg-white/[0.045] p-3 shadow-2xl shadow-black/10">
+      <div className="mt-auto overflow-hidden rounded-2xl border border-white/10 bg-white/4.5 p-3 shadow-2xl shadow-black/10">
         <div className="mb-3 flex items-center gap-2">
           <span className="grid size-7 place-items-center rounded-lg bg-primary/20 text-primary-foreground">
             <ShieldCheck aria-hidden="true" className="size-3.5" />
@@ -209,7 +209,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 hidden overflow-hidden transition-[width] duration-200 lg:block",
-          sidebarCollapsed ? "w-0" : "w-[248px]"
+          sidebarCollapsed ? "w-0" : "w-62"
         )}
       >
         <Sidebar />
@@ -228,7 +228,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         aria-label="Navigation"
         aria-modal={mobileSidebarOpen}
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[248px] overflow-hidden transition-transform duration-200 lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-62 overflow-hidden transition-transform duration-200 lg:hidden",
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
         inert={!mobileSidebarOpen}
@@ -250,7 +250,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background/90 px-4 backdrop-blur md:px-7">
           <Button
             aria-label={sidebarCollapsed ? "Show navigation" : "Hide navigation"}
-            className="mr-3 hidden rounded-xl border bg-background shadow-sm hover:bg-muted lg:inline-flex"
+            className="mr-3 hidden rounded-xl border bg-background shadow-xs hover:bg-muted lg:inline-flex"
             onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
             size="icon"
             type="button"
@@ -261,7 +261,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Button
             aria-expanded={mobileSidebarOpen}
             aria-label={mobileSidebarOpen ? "Close navigation" : "Open navigation"}
-            className="mr-3 rounded-xl border bg-background shadow-sm hover:bg-muted lg:hidden"
+            className="mr-3 rounded-xl border bg-background shadow-xs hover:bg-muted lg:hidden"
             onClick={() => setMobileSidebarOpen((open) => !open)}
             size="icon"
             type="button"
@@ -279,7 +279,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <Button
             aria-label="Notifications coming soon"
-            className="ml-auto rounded-full border bg-background shadow-sm"
+            className="ml-auto rounded-full border bg-background shadow-xs"
             disabled
             size="icon"
             type="button"
@@ -307,7 +307,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               className="ml-0"
               render={
                 <Button
-                  className="h-11 gap-2.5 rounded-xl border bg-background px-2 pr-2.5 shadow-sm hover:bg-muted dark:border-white/10 dark:bg-slate-900/80 dark:hover:bg-slate-800"
+                  className="h-11 gap-2.5 rounded-xl border bg-background px-2 pr-2.5 shadow-xs hover:bg-muted dark:border-white/10 dark:bg-slate-900/80 dark:hover:bg-slate-800"
                   variant="ghost"
                 />
               }
@@ -390,7 +390,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                         className={cn(
                           "inline-flex h-7 items-center justify-center gap-1 rounded-lg px-1.5 text-[11px] font-semibold transition-colors",
                           theme.mode === option.value
-                            ? "bg-background text-foreground shadow-sm"
+                            ? "bg-background text-foreground shadow-xs"
                             : "text-muted-foreground hover:text-foreground"
                         )}
                         key={option.value}
@@ -442,7 +442,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className="space-y-4 p-4 md:p-7">
+        <main className="flex flex-col gap-4 p-4 md:p-7">
           {logoutError && (
             <Alert variant="destructive">
               <AlertDescription>{logoutError}</AlertDescription>

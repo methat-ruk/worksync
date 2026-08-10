@@ -62,7 +62,7 @@ function LandingContent() {
       </header>
       <section className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-20 pt-20 md:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pt-28">
         <div className="relative z-10">
-          <p className="w-fit rounded-full border bg-background/70 px-3 py-1 text-sm font-medium text-primary-emphasis shadow-sm shadow-primary/5">
+          <p className="w-fit rounded-full border bg-background/70 px-3 py-1 text-sm font-medium text-primary-emphasis shadow-xs shadow-primary/5">
             One calm place for collaborative work
           </p>
           <h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-foreground md:text-7xl">
@@ -100,7 +100,7 @@ function LandingContent() {
             className="absolute -inset-10 rounded-full bg-primary/10 blur-3xl"
           />
           <div className="relative rounded-3xl border bg-background/65 p-3 shadow-xl shadow-primary/5 backdrop-blur">
-            <div className="rounded-2xl border bg-card/95 p-6 shadow-sm shadow-slate-950/5">
+            <div className="rounded-2xl border bg-card/95 p-6 shadow-xs shadow-slate-950/5">
               <div className="flex items-center gap-3 border-b pb-5">
                 <span className="size-3 rounded-full bg-destructive/60" />
                 <span className="size-3 rounded-full bg-warning/60" />
@@ -113,7 +113,7 @@ function LandingContent() {
                 {previewItems.map((item) => (
                   <div
                     key={item.label}
-                    className="flex items-center gap-3 rounded-xl border bg-background/85 p-3.5 text-sm font-medium shadow-sm shadow-slate-950/[0.03]"
+                    className="flex items-center gap-3 rounded-xl border bg-background/85 p-3.5 text-sm font-medium shadow-xs shadow-slate-950/3"
                   >
                     <span
                       className={cn(

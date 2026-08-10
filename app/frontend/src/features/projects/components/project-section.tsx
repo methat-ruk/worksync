@@ -67,7 +67,7 @@ const initialCollection: ProjectCollection = {
 };
 
 const surfaceClass =
-  "rounded-2xl border border-border/80 bg-card shadow-sm shadow-slate-950/5 dark:border-primary/20 dark:shadow-black/25";
+  "rounded-2xl border border-border/80 bg-card shadow-xs shadow-slate-950/5 dark:border-primary/20 dark:shadow-black/25";
 
 function canMutateProjects(role: WorkspaceRole): boolean {
   return role !== "VIEWER";
@@ -125,7 +125,7 @@ function ProjectCard({
   return (
     <button
       aria-pressed={selected}
-      className="rounded-2xl border border-border/80 bg-background p-4 text-left shadow-sm transition hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring aria-pressed:border-primary aria-pressed:bg-primary/5"
+      className="rounded-2xl border border-border/80 bg-background p-4 text-left shadow-xs transition hover:border-primary/40 hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring aria-pressed:border-primary aria-pressed:bg-primary/5"
       onClick={onSelect}
       type="button"
     >
