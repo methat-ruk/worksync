@@ -78,8 +78,8 @@ corepack enable
 corepack pnpm install --frozen-lockfile
 ```
 
-Install the local Playwright browser once if you will run frontend E2E tests or
-browser-visible checks:
+Install the current Playwright Chromium, Firefox, and WebKit engines once if you
+will run frontend E2E tests or browser-visible checks:
 
 ```bash
 corepack pnpm playwright:install
@@ -219,8 +219,9 @@ staging, production-like, or internet-exposed environment.
 | `pnpm validate:backend` | Run complete backend validation including artifact checks |
 | `pnpm validate:backend:artifact` | Validate the compiled backend artifact shape |
 | `pnpm smoke:backend:runtime` | Smoke-test the built backend against the guarded test database |
-| `pnpm playwright:install` | Install local Chromium for frontend E2E and browser-visible checks |
-| `pnpm playwright:install:with-deps` | Install Chromium plus OS dependencies on Linux, containers, or CI-like hosts |
+| `pnpm playwright:install` | Install current Chromium, Firefox, and WebKit for frontend E2E and browser-visible checks |
+| `pnpm playwright:install:with-deps` | Install all three engines plus OS dependencies on Linux, containers, or CI-like hosts |
+| `pnpm test:e2e:frontend:compatibility` | Build the production frontend and run the Tailwind/shadcn runtime contract on Chromium, Firefox, and WebKit |
 | `pnpm test:e2e:frontend` | Run frontend browser E2E tests |
 | `pnpm validate:push` | Run typecheck, lint, and backend unit tests through the pre-push hook |
 | `pnpm docker:infra:config` | Validate the infrastructure-only Compose file |

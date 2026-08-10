@@ -24,7 +24,7 @@ RUN corepack pnpm --filter @worksync/auth-policy build
 FROM source AS test-runner
 
 FROM test-runner AS test-e2e
-RUN corepack pnpm --filter @worksync/frontend exec playwright install --with-deps chromium
+RUN corepack pnpm --filter @worksync/frontend exec playwright install --with-deps chromium firefox webkit
 
 FROM source AS frontend-builder
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000

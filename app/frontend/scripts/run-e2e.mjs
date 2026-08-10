@@ -15,6 +15,8 @@ const playwrightCli = path.join(
 const serverUrl = "http://localhost:3000";
 const startupTimeoutMs = 120_000;
 const cleanupTimeoutMs = 10_000;
+const isCompatibilityRun = process.argv.includes("--compatibility");
+const suiteLabel = isCompatibilityRun ? "Compatibility E2E" : "Mocked E2E";
 
 let server;
 let ownsServer = false;
@@ -126,16 +128,24 @@ function stopServer() {
     server.stderr?.destroy();
     server.unref();
     if (errors.length > 0) {
-      throw new Error(`Mocked E2E cleanup failed:\n- ${errors.join("\n- ")}`);
+      throw new Error(`${suiteLabel} cleanup failed:\n- ${errors.join("\n- ")}`);
     }
   })();
   return cleanupPromise;
 }
 
 async function main() {
-  if (!(await isHttpEndpointReady(serverUrl))) {
+  const frontendIsRunning = await isHttpEndpointReady(serverUrl);
+  if (isCompatibilityRun && frontendIsRunning) {
+    throw new Error(
+      `Port 3000 must be free so ${suiteLabel} can verify the production build`
+    );
+  }
+
+  if (!frontendIsRunning) {
     ownsServer = true;
-    server = spawn(process.execPath, [nextCli, "dev", "--port", "3000"], {
+    const nextCommand = isCompatibilityRun ? "start" : "dev";
+    server = spawn(process.execPath, [nextCli, nextCommand, "--port", "3000"], {
       cwd: frontendRoot,
       detached: process.platform !== "win32",
       env: {
@@ -160,7 +170,14 @@ async function main() {
     await waitForServer();
   }
 
-  const tests = spawnSync(process.execPath, [playwrightCli, "test"], {
+  const playwrightArguments = [playwrightCli, "test"];
+  if (isCompatibilityRun) {
+    playwrightArguments.push("--config", "playwright.compatibility.config.ts");
+  }
+  playwrightArguments.push(
+    ...process.argv.slice(2).filter((argument) => argument !== "--compatibility")
+  );
+  const tests = spawnSync(process.execPath, playwrightArguments, {
     cwd: frontendRoot,
     env: process.env,
     stdio: "inherit"

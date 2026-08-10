@@ -9,8 +9,8 @@ Do not assume a tool is available until its repository command, configuration, o
 
 | Abstraction | WorkSync Selection |
 |---|---|
-| Browser Automation Tool | Playwright, when configured |
-| Browser Evidence Collector | Playwright and browser-visible smoke checks, when configured |
+| Browser Automation Tool | Playwright with current Chromium, Firefox, and WebKit projects |
+| Browser Evidence Collector | Playwright compatibility suites and browser-visible smoke checks |
 | Exploratory / Generated Test Tool | TestSprite, when configured and reviewed before acceptance |
 | API Test Harness | repository-selected HTTP test runner |
 | Component / UI Test Harness | repository-selected frontend test runner |
@@ -178,6 +178,9 @@ AI behavior.
 ## End-to-End Tests
 
 Use Playwright when configured for critical journeys:
+
+- compile and render the Tailwind/shadcn runtime contract on current Chromium,
+  Firefox, and WebKit after styling-runtime changes
 
 - sign up, login, logout
 - create workspace

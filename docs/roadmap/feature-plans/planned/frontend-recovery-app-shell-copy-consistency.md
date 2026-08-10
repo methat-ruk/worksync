@@ -151,7 +151,7 @@ Resolve in-scope findings and rerun affected validation.
 
 ## Dependencies
 
-- [Frontend UI Runtime Compatibility](frontend-ui-runtime-compatibility.md)
+- [Frontend UI Runtime Compatibility](../completed/frontend-ui-runtime-compatibility.md)
 - completed frontend auth/app-shell foundations
 - current route and security documentation
 

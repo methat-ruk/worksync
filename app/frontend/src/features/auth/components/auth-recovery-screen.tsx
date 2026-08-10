@@ -16,7 +16,7 @@ export function AuthRecoveryScreen({
 }) {
   return (
     <main className="grid min-h-screen place-items-center bg-muted/30 px-6">
-      <div className="w-full max-w-md space-y-4">
+      <div className="flex w-full max-w-md flex-col gap-4">
         <Alert variant="destructive">
           <AlertCircle aria-hidden="true" />
           <AlertTitle>{title}</AlertTitle>

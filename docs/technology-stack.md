@@ -30,8 +30,8 @@ plus the root `engines` declaration.
 |---|---|---|
 | Next.js App Router | Active foundation | Frontend application and routing |
 | React | Active foundation | UI runtime |
-| Tailwind CSS | Installed and configured | Styling |
-| PostCSS / Autoprefixer | Installed and configured | CSS processing |
+| Tailwind CSS 4 | Active | CSS-first styling and design-token utilities |
+| PostCSS / `@tailwindcss/postcss` | Active | Tailwind CSS compilation |
 | shadcn/ui + Base UI | Active | Accessible frontend component system |
 | React Hook Form + Zod | Active | Form state and browser validation |
 
@@ -114,7 +114,7 @@ Redis is not the authentication-session source of truth.
 | Husky | Active | Git hook entrypoints |
 | lint-staged | Active | Staged-file linting |
 | Vitest + Testing Library | Active | Frontend unit and component tests |
-| Playwright | Active | Frontend authentication browser E2E coverage |
+| Playwright | Active | Current Chromium, Firefox, and WebKit runtime compatibility plus critical frontend E2E coverage |
 
 Backend PostgreSQL integration tests use a real `worksync_test` database.
 

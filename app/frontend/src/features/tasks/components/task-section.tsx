@@ -411,7 +411,7 @@ export function AssigneePicker({
     activeIndex >= 0 ? `${listId}-option-${activeIndex}` : undefined;
 
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
         <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
         {selected && (
@@ -466,9 +466,9 @@ export function AssigneePicker({
             : `${candidates.total} assignee candidates`}
       </p>
       {open && (
-        <div className="rounded-xl border bg-popover p-2 shadow-sm">
+        <div className="rounded-xl border bg-popover p-2 shadow-xs">
           {error ? (
-            <div className="space-y-2 p-2 text-sm">
+            <div className="flex flex-col gap-2 p-2 text-sm">
               <p className="text-destructive-emphasis">{error}</p>
               <Button
                 onClick={() => void runSearch(query.trim(), 1, false)}
@@ -486,7 +486,7 @@ export function AssigneePicker({
           ) : (
             <div
               aria-label="Assignee candidates"
-              className="max-h-48 space-y-1 overflow-y-auto"
+              className="flex max-h-48 flex-col gap-1 overflow-y-auto"
               id={listId}
               role="listbox"
             >
@@ -494,7 +494,7 @@ export function AssigneePicker({
                 <button
                   aria-selected={selected?.id === user.id}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
                     index === activeIndex && "bg-muted text-foreground"
                   )}
                   id={`${listId}-option-${index}`}
@@ -530,7 +530,7 @@ export function AssigneePicker({
             )}
           </div>
           {candidates.inconsistent && !error && !pending && (
-            <div className="mt-2 space-y-2 rounded-lg border p-2 text-sm">
+            <div className="mt-2 flex flex-col gap-2 rounded-lg border p-2 text-sm">
               <p className="text-muted-foreground">
                 The assignee list changed while it was loading. Refresh the
                 candidates to reconcile the results.
@@ -748,7 +748,7 @@ function TaskCard({
   onTransition: (status: TaskStatus) => void;
 }) {
   return (
-    <article className="rounded-2xl border bg-background p-4 shadow-sm">
+    <article className="rounded-2xl border bg-background p-4 shadow-xs">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h4 className="truncate font-semibold">{task.title}</h4>
@@ -1006,7 +1006,7 @@ export function TaskSection({
   return (
     <section
       aria-label={`Tasks in ${project.name}`}
-      className="rounded-2xl border border-primary/15 bg-card p-5 shadow-sm"
+      className="rounded-2xl border border-primary/15 bg-card p-5 shadow-xs"
       id="tasks"
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1045,7 +1045,7 @@ export function TaskSection({
             Status filter
           </FieldLabel>
           <select
-            className="h-9 rounded-lg border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-9 rounded-lg border bg-background px-3 text-sm outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
             id={`task-status-${project.id}`}
             onChange={(event) =>
               setStatusFilter(event.target.value as TaskStatus | "ALL")

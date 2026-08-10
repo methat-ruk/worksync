@@ -228,7 +228,7 @@ affected validation.
 
 ## Dependencies
 
-- [Frontend UI Runtime Compatibility](frontend-ui-runtime-compatibility.md)
+- [Frontend UI Runtime Compatibility](../completed/frontend-ui-runtime-compatibility.md)
 - [Task UI Boundaries](task-ui-boundaries.md)
 - completed task foundation and workspace authorization boundary
 - approved comment role matrix

@@ -92,10 +92,17 @@ Use Playwright for:
 - restricted action fails for lower-privilege role
 - cross-workspace direct navigation fails
 
-Local Playwright runs require the frontend Chromium browser. Install it once
-with `corepack pnpm playwright:install`; use `corepack pnpm
-playwright:install:with-deps` on Linux, containers, or CI-like hosts when
-system dependencies are missing.
+Local Playwright runs require the current Chromium, Firefox, and WebKit engines.
+Install them once with `corepack pnpm playwright:install`; use `corepack pnpm
+playwright:install:with-deps` on Linux, containers, or CI-like hosts when system
+dependencies are missing. Styling-runtime changes must also run `corepack pnpm
+test:e2e:frontend:compatibility`, which exercises the production Tailwind CSS
+and shadcn runtime contract on all three engines.
+
+Frontend lint includes a canonical Tailwind class check backed by the locked
+Tailwind 4 design system. This converts editor `suggestCanonicalClasses`
+guidance into CI evidence and prevents non-canonical arbitrary values or opacity
+syntax from accumulating silently.
 
 The live E2E runner must stop the frontend and backend processes it starts on
 success, failure, and interruption, then confirm their health endpoints are

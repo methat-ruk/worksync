@@ -233,11 +233,12 @@ the production build:
 corepack pnpm validate:frontend
 ```
 
-Install Chromium once before local browser E2E tests or browser-visible
-verification:
+Install the current Chromium, Firefox, and WebKit engines once before local
+browser E2E tests or browser-visible verification:
 
 ```bash
 corepack pnpm playwright:install
+corepack pnpm test:e2e:frontend:compatibility
 corepack pnpm test:e2e:frontend
 ```
 
@@ -368,8 +369,9 @@ runner.
 | `corepack pnpm check` | Typecheck, lint, test, and build all workspaces |
 | `corepack pnpm validate:backend` | Run complete backend validation |
 | `corepack pnpm validate:frontend` | Run shared policy and frontend validation |
-| `corepack pnpm playwright:install` | Install local Chromium for frontend browser checks |
-| `corepack pnpm playwright:install:with-deps` | Install Chromium plus OS dependencies on Linux, containers, or CI-like hosts |
+| `corepack pnpm playwright:install` | Install current Chromium, Firefox, and WebKit for frontend browser checks |
+| `corepack pnpm playwright:install:with-deps` | Install all three engines plus OS dependencies on Linux, containers, or CI-like hosts |
+| `corepack pnpm test:e2e:frontend:compatibility` | Build and verify the Tailwind/shadcn runtime contract on all three engines |
 | `corepack pnpm test:e2e:frontend` | Run frontend browser E2E tests |
 | `corepack pnpm prisma:migrate:deploy:test` | Apply committed migrations to the guarded test database |
 | `corepack pnpm prisma:migrate:status:test` | Verify migration status against the guarded test database |

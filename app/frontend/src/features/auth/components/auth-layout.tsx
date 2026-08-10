@@ -20,7 +20,7 @@ export function AuthLayout({
             <BrandMark />
           </Link>
           <div className="relative z-10 my-auto max-w-lg">
-            <p className="mb-5 w-fit rounded-full border bg-background/65 px-3 py-1 text-xs font-medium text-primary-emphasis shadow-sm shadow-primary/5">
+            <p className="mb-5 w-fit rounded-full border bg-background/65 px-3 py-1 text-xs font-medium text-primary-emphasis shadow-xs shadow-primary/5">
               Enterprise-ready team operations
             </p>
             <p className="text-4xl font-semibold leading-tight tracking-[-0.035em] text-foreground xl:text-5xl">
@@ -34,7 +34,7 @@ export function AuthLayout({
               {["Secure sessions", "Workspace-ready"].map((item) => (
                 <div
                   key={item}
-                  className="rounded-2xl border bg-background/55 px-4 py-3 text-sm font-medium text-foreground/85 shadow-sm shadow-primary/5"
+                  className="rounded-2xl border bg-background/55 px-4 py-3 text-sm font-medium text-foreground/85 shadow-xs shadow-primary/5"
                 >
                   {item}
                 </div>
@@ -47,7 +47,7 @@ export function AuthLayout({
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-32 -right-28 size-[28rem] rounded-full bg-primary/10 blur-3xl"
+            className="pointer-events-none absolute -bottom-32 -right-28 size-112 rounded-full bg-primary/10 blur-3xl"
           />
           <div
             aria-hidden="true"
@@ -56,14 +56,14 @@ export function AuthLayout({
         </section>
 
         <section className="auth-form-surface flex min-h-screen items-center justify-center bg-card px-5 py-10 sm:px-8 lg:px-12">
-          <div className="w-full max-w-[420px]">
+          <div className="w-full max-w-105">
             <div className="mb-10 lg:hidden">
               <Link href="/" aria-label="WorkSync home">
                 <BrandMark />
               </Link>
             </div>
             <div className="mb-8">
-              <h1 className="text-3xl font-semibold tracking-[-0.025em]">
+              <h1 className="text-3xl font-semibold tracking-tight">
                 {title}
               </h1>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">

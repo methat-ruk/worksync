@@ -24,7 +24,7 @@ Install dependencies
 | --- | --- |
 | Backend validation | Prisma validation/generation, migrations, backend typecheck, lint, Jest projects, backend build, backend artifact checks |
 | Frontend validation | shared auth policy package tests, frontend typecheck, lint, unit/component tests, frontend build |
-| Frontend E2E | Playwright browser evidence for critical auth and navigation behavior |
+| Frontend E2E | Production-build compatibility on Chromium, Firefox, and WebKit plus critical mocked/live browser journeys |
 | Container topology and images | Development/test Compose config and service lists, Docker orchestration self-test, and production/test image builds |
 | Dependency audit | production dependency vulnerability gate |
 

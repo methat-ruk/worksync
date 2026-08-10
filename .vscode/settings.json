@@ -1,4 +1,9 @@
 {
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "css.lint.unknownAtRules": "ignore",
+  "tailwindCSS.classFunctions": ["cn"],
   "eslint.workingDirectories": [
     {
       "directory": "./app/frontend",
@@ -12,5 +17,6 @@
       "directory": "./packages/auth-policy",
       "changeProcessCWD": true
     }
-  ]
+  ],
+  "tailwindCSS.lint.suggestCanonicalClasses": "error"
 }

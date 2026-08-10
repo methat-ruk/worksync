@@ -22,13 +22,12 @@ Prioritize planned work by:
 
 For the current roadmap, this means:
 
-1. restore the frontend UI runtime compatibility contract
-2. correct frontend recovery and app-shell copy
-3. clarify task UI boundaries before adding the discussion surface
-4. reconcile shared frontend pagination semantics
-5. remove misleading task authorization policy abstractions
-6. deliver comments and mentions
-7. add notifications, files, jobs, and production readiness in dependency order
+1. correct frontend recovery and app-shell copy
+2. clarify task UI boundaries before adding the discussion surface
+3. reconcile shared frontend pagination semantics
+4. remove misleading task authorization policy abstractions
+5. deliver comments and mentions
+6. add notifications, files, jobs, and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -37,16 +36,15 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Frontend UI Runtime Compatibility](planned/frontend-ui-runtime-compatibility.md) | Cross-cutting | Next |
-| 2 | [Frontend Recovery and App-Shell Copy Consistency](planned/frontend-recovery-app-shell-copy-consistency.md) | Cross-cutting | Planned |
-| 3 | [Task UI Boundaries](planned/task-ui-boundaries.md) | 2 remediation | Planned |
-| 4 | [Frontend Pagination Reconciliation](planned/frontend-pagination-reconciliation.md) | Cross-cutting | Planned |
-| 5 | [Task Authorization Policy Cleanup](planned/task-authorization-policy-cleanup.md) | 2 remediation | Planned |
-| 6 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 7 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 8 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 9 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 10 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 1 | [Frontend Recovery and App-Shell Copy Consistency](planned/frontend-recovery-app-shell-copy-consistency.md) | Cross-cutting | Next |
+| 2 | [Task UI Boundaries](planned/task-ui-boundaries.md) | 2 remediation | Planned |
+| 3 | [Frontend Pagination Reconciliation](planned/frontend-pagination-reconciliation.md) | Cross-cutting | Planned |
+| 4 | [Task Authorization Policy Cleanup](planned/task-authorization-policy-cleanup.md) | 2 remediation | Planned |
+| 5 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 6 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 7 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 8 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 9 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
 If the approved file-upload policy requires asynchronous malware scanning
 before attachments can be made available, replace the default File/Jobs order
@@ -80,8 +78,10 @@ Review outcome:
 - runtime/copy and task UI/pagination/policy work were separated where their
   validation and rollback boundaries are independent
 
-Implementation remains unapproved. Each plan's unresolved decisions and scope
-must be reviewed before its implementation starts.
+At that review point, implementation remained unapproved. Frontend UI Runtime
+Compatibility was subsequently approved and completed on 2026-08-10; each
+remaining planned slice still requires review of its unresolved decisions and
+scope before implementation starts.
 
 ## Completed Feature Summaries
 
@@ -91,6 +91,7 @@ reconstructing every historical implementation detail.
 
 | Plan | Status |
 |---|---|
+| [Frontend UI Runtime Compatibility](completed/frontend-ui-runtime-compatibility.md) | Done |
 | [Runtime and Validation Foundation](completed/runtime-validation-foundation.md) | Done |
 | [Auth Foundation](completed/auth-foundation.md) | Done |
 | [Auth Session Lifecycle](completed/auth-session-lifecycle.md) | Done |

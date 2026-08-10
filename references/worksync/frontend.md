@@ -10,7 +10,11 @@ this project profile should stay focused on WorkSync facts and conventions.
 - Use TypeScript strict mode.
 - Prefer Server Components when interaction, browser APIs, or client effects are not required.
 - Introduce Client Components deliberately and keep their boundary narrow.
-- Use Tailwind CSS with project design tokens and CSS variables.
+- Use Tailwind CSS 4's CSS-first configuration with project design tokens and
+  CSS variables.
+- Support current evergreen Chrome, Edge, Firefox, Safari, mobile Chrome, and
+  mobile Safari; do not rely on optional CSS features missing from a current
+  engine when a cross-engine fallback can preserve the UI contract.
 
 ## UI Component Standards
 

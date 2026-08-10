@@ -62,7 +62,7 @@ following `docs/project-setup.md`.
 | Pre-push hook | `pnpm validate:push` | Typecheck, lint, and backend unit tests |
 | CI backend job | Pull requests and pushes to `main` | PostgreSQL and Redis-backed backend validation, migrations, build, and artifact checks |
 | CI frontend job | Pull requests and pushes to `main` | Shared auth policy tests, frontend typecheck, lint, tests, and production build |
-| CI frontend E2E job | Pull requests and pushes to `main` | Mocked and live Playwright browser evidence for critical auth, navigation, project, and task behavior |
+| CI frontend E2E job | Pull requests and pushes to `main` | Production-build runtime compatibility on Chromium, Firefox, and WebKit plus mocked and live Playwright evidence for critical auth, navigation, project, and task behavior |
 | CI container job | Pull requests and pushes to `main` | Development/test Compose topology, orchestration self-test, and production/test image target builds |
 | CI security job | Pull requests and pushes to `main` | Production dependency audit |
 
@@ -74,8 +74,8 @@ CI jobs: `Backend validation`, `Frontend validation`, `Frontend E2E`,
 ## Current Limitations
 
 - Frontend validation includes shared password-policy tests, Vitest component
-  tests, and production build. Playwright authentication E2E runs in the
-  separate frontend E2E CI job.
+  tests, and production build. Playwright runtime compatibility, mocked E2E,
+  and live E2E run in the separate frontend E2E CI job.
 - Required backend PostgreSQL integration and security evidence is incomplete
   when the test `DATABASE_URL` is unavailable or the database-backed suite
   cannot run.
