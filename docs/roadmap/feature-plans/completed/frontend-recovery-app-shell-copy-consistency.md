@@ -1,6 +1,6 @@
 # Feature Plan: Frontend Recovery and App-Shell Copy Consistency
 
-Status: Implemented locally 2026-08-19 - Firefox compatibility validation pending
+Status: Done - implemented and validated 2026-08-19
 
 Intended PR: `fix/frontend-recovery-shell-copy`
 
@@ -103,17 +103,15 @@ Implementation approval confirms these reviewed decisions:
 - Frontend typecheck, full lint, canonical Tailwind checking, 160 frontend
   unit/component tests, 5 auth-policy tests, 5 frontend script tests,
   production build, and all 23 mocked Chromium E2E tests passed.
-- Production compatibility tests passed in Chromium and WebKit, including
-  desktop/mobile, light/dark recovery, current navigation, profile actions, and
-  console checks. Local Firefox launched but could not create its headless
-  framebuffer (`RenderCompositorSWGL failed mapping default framebuffer`), so
-  the three Firefox cases remain unavailable rather than passed.
-- The in-app Browser plugin could not initialize because its trusted runtime
-  dependency was rejected; repository Playwright provided the approved browser
-  fallback and Chromium screenshot evidence.
-- Completion remains pending successful Firefox compatibility evidence from CI
-  or another supported graphics runtime. No production, backend, API, auth,
-  session, redirect, data, dependency, or deployment change was made.
+- Required production compatibility CI passed in Chromium, Firefox, and WebKit,
+  including desktop/mobile, light/dark recovery, current navigation, profile
+  actions, visible keyboard focus, and console checks. This supplied the
+  Firefox evidence that the local headless graphics runtime could not produce.
+- Repository Playwright also supplied the approved local Chromium browser
+  fallback and screenshot evidence when the in-app Browser runtime was
+  unavailable.
+- No production, backend, API, auth, session, redirect, data, dependency, or
+  deployment change was made.
 
 ## Scope
 
@@ -255,7 +253,7 @@ style/runtime changes. Resolve in-scope findings and rerun affected validation.
 
 ## Dependencies
 
-- [Frontend UI Runtime Compatibility](../completed/frontend-ui-runtime-compatibility.md)
+- [Frontend UI Runtime Compatibility](frontend-ui-runtime-compatibility.md)
 - completed frontend auth/app-shell foundations
 - current route and security documentation
 

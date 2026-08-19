@@ -314,6 +314,6 @@ requires a wider component rewrite or browser-support change.
 
 ## Follow-up
 
-- [Frontend Recovery and App-Shell Copy Consistency](../planned/frontend-recovery-app-shell-copy-consistency.md)
+- [Frontend Recovery and App-Shell Copy Consistency](frontend-recovery-app-shell-copy-consistency.md)
 - keep new feature UI on the centralized semantic variant/token contract
 - treat broader visual redesign as a separate plan

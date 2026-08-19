@@ -459,6 +459,11 @@ test("falls back to the app for unsafe encoded and normalized next paths", async
 test("recovers Google callback completion without restarting sign-in", async ({
   page
 }) => {
+  let releaseRetry = () => {};
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
+
   await page.unroute(apiUrl("/api/auth/refresh"));
   await page.route(apiUrl("/api/auth/refresh"), (route) =>
     route.fulfill({
@@ -478,13 +483,14 @@ test("recovers Google callback completion without restarting sign-in", async ({
   ).toBeVisible();
 
   await page.unroute(apiUrl("/api/auth/refresh"));
-  await page.route(apiUrl("/api/auth/refresh"), (route) =>
-    route.fulfill({
+  await page.route(apiUrl("/api/auth/refresh"), async (route) => {
+    await retryGate;
+    await route.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({ ...authBody, message: "Authentication refreshed" })
-    })
-  );
+    });
+  });
   await page.route(workspaceCollectionUrl, (route) =>
     route.fulfill({
       status: 200,
@@ -497,6 +503,10 @@ test("recovers Google callback completion without restarting sign-in", async ({
   );
 
   await page.getByRole("button", { name: "Retry" }).click();
+  await expect(page.getByRole("status")).toHaveText(
+    "Finishing Google sign-in…"
+  );
+  releaseRetry();
   await expect(page).toHaveURL(/\/app$/);
 });
 

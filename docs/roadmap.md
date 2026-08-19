@@ -9,10 +9,10 @@ Last updated: 2026-08-19
 ## Current Snapshot
 
 WorkSync has completed the project and task foundation slices in Milestone 2.
-Repository health review found a frontend runtime/component compatibility gap
-plus frontend copy, task UI, pagination, and policy-semantics debt that should be
-resolved before the next collaboration slice. The next product capability
-remains comments and mentions.
+The frontend runtime compatibility and recovery/app-shell copy findings from
+the repository health review are resolved. Task UI, pagination, and
+policy-semantics debt should be resolved before the next collaboration slice.
+The next product capability remains comments and mentions.
 
 Done:
 
@@ -39,11 +39,12 @@ Done:
 - backend/frontend validation commands and CI structure
 - coherent Tailwind CSS 4/shadcn runtime contract with current-engine
   Chromium, Firefox, and WebKit compatibility evidence
+- accurate auth-recovery messages, announced retry loading, and app-shell copy
+  that exposes only current routes and actions
 - project setup, workflow, API, security, deployment, and roadmap docs
 
 Still missing before the collaboration MVP works:
 
-- accurate auth-recovery and app-shell copy
 - maintainable and accessible task UI boundaries for the discussion host
 - explicit shared pagination and task authorization-policy semantics
 - workspace-scoped authorization for comment, file, and activity resources
@@ -63,21 +64,18 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Frontend Recovery and App-Shell Copy Consistency](roadmap/feature-plans/planned/frontend-recovery-app-shell-copy-consistency.md)
-   - remove speculative/redundant recovery messages and align navigation copy
-     with current workflows and routes.
-2. [Task UI Boundaries](roadmap/feature-plans/planned/task-ui-boundaries.md)
+1. [Task UI Boundaries](roadmap/feature-plans/planned/task-ui-boundaries.md)
    - separate task UI responsibilities, establish the discussion host, and
      correct assignee-search accessibility before comments extend the surface.
-3. [Frontend Pagination Reconciliation](roadmap/feature-plans/planned/frontend-pagination-reconciliation.md)
+2. [Frontend Pagination Reconciliation](roadmap/feature-plans/planned/frontend-pagination-reconciliation.md)
    - extract only page-merging semantics proven common across current consumers.
-4. [Task Authorization Policy Cleanup](roadmap/feature-plans/planned/task-authorization-policy-cleanup.md)
+3. [Task Authorization Policy Cleanup](roadmap/feature-plans/planned/task-authorization-policy-cleanup.md)
    - remove or justify the production-dead task read-policy abstraction without
      changing authorization.
-5. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
+4. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
    - build the first task discussion workflow inside the proven workspace/task
      authorization boundary.
-6. Add notifications, files, jobs, activity, and production readiness in
+5. Add notifications, files, jobs, activity, and production readiness in
    dependency order. If attachments require asynchronous scanning, split the
    work around the attachment lifecycle contract, scan worker, and final
    availability/UI integration rather than creating a file/job dependency

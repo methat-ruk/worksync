@@ -253,6 +253,13 @@ test("renders the responsive recovery Alert in light and dark themes", async ({
   await expectAlertLayout(alert);
   await expect(alert).toHaveText("We couldn't load this page.");
 
+  const retry = page.getByRole("button", { name: "Retry" });
+  await page.keyboard.press("Tab");
+  await expect(retry).toBeFocused();
+  expect(
+    await retry.evaluate((element) => getComputedStyle(element).boxShadow)
+  ).not.toBe("none");
+
   const desktopWidth = await alert.evaluate((element) => element.clientWidth);
   await page.setViewportSize({ width: 390, height: 844 });
   await expectAlertLayout(alert);
@@ -267,7 +274,7 @@ test("renders the responsive recovery Alert in light and dark themes", async ({
   await expect(page.locator("html")).toHaveCSS("color-scheme", "dark");
   await expectAlertLayout(alert);
 
-  await page.getByRole("button", { name: "Retry" }).click();
+  await retry.click();
   await expect.poll(() => refreshRequests).toBeGreaterThan(2);
   await expectAlertLayout(alert);
   expect(consoleErrors).toEqual([]);

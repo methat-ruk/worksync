@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -45,35 +45,55 @@ beforeEach(() => {
 });
 
 describe("AppShell", () => {
-  it("exposes Home as the only primary destination", () => {
-    render(<AppShell>Workspace content</AppShell>);
+  it("exposes only Home in primary navigation while workflow labels remain in content", () => {
+    render(
+      <AppShell>
+        <p>Workspaces</p>
+        <p>Projects</p>
+        <p>Tasks</p>
+      </AppShell>
+    );
 
-    const homeLinks = screen.getAllByRole("link", { name: "Home" });
-    expect(homeLinks.length).toBeGreaterThan(0);
-    for (const link of homeLinks) {
-      expect(link).toHaveAttribute("href", "/app");
-      expect(link).toHaveAttribute("aria-current", "page");
+    const primaryNavigations = screen.getAllByRole("navigation", {
+      name: "Primary"
+    });
+    expect(primaryNavigations.length).toBeGreaterThan(0);
+    for (const primaryNavigation of primaryNavigations) {
+      const links = within(primaryNavigation).getAllByRole("link");
+      expect(links).toHaveLength(1);
+      expect(links[0]).toHaveAccessibleName("Home");
+      expect(links[0]).toHaveAttribute("href", "/app");
+      expect(links[0]).toHaveAttribute("aria-current", "page");
     }
 
-    expect(screen.queryByText("Workspaces")).not.toBeInTheDocument();
-    expect(screen.queryByText("Projects")).not.toBeInTheDocument();
-    expect(screen.queryByText("Tasks")).not.toBeInTheDocument();
-    expect(screen.queryByText("Notifications")).not.toBeInTheDocument();
+    const header = screen.getByRole("banner");
     expect(
-      screen.queryByRole("button", { name: "Notifications coming soon" })
+      within(header).queryByRole("button", {
+        name: "Notifications coming soon"
+      })
     ).not.toBeInTheDocument();
   });
 
   it("shows accurate workspace access copy", () => {
     render(<AppShell>Workspace content</AppShell>);
 
-    expect(screen.getAllByText("Workspace access").length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(
-        "Workspaces, projects, and tasks are limited by your current membership and role."
-      ).length
-    ).toBeGreaterThan(0);
-    expect(screen.queryByText("Auth secured")).not.toBeInTheDocument();
+    const primaryNavigations = screen.getAllByRole("navigation", {
+      name: "Primary"
+    });
+    for (const primaryNavigation of primaryNavigations) {
+      const sidebar = primaryNavigation.parentElement;
+      expect(sidebar).not.toBeNull();
+      const sidebarQueries = within(sidebar as HTMLElement);
+      expect(sidebarQueries.getByText("Workspace access")).toBeVisible();
+      expect(
+        sidebarQueries.getByText(
+          "Workspaces, projects, and tasks are limited by your current membership and role."
+        )
+      ).toBeVisible();
+      expect(
+        sidebarQueries.queryByText("Auth secured")
+      ).not.toBeInTheDocument();
+    }
   });
 
   it("keeps current profile actions without advertising unavailable actions", async () => {
@@ -82,12 +102,28 @@ describe("AppShell", () => {
 
     await user.click(screen.getByRole("button", { name: /Task Owner/ }));
 
-    expect(await screen.findByText("Theme")).toBeVisible();
-    expect(screen.getByText("Sign out", { exact: true })).toBeVisible();
-    expect(screen.getByText("Sign out all devices", { exact: true })).toBeVisible();
-    expect(screen.queryByText("Profile")).not.toBeInTheDocument();
-    expect(screen.queryByText("Settings")).not.toBeInTheDocument();
-    expect(screen.queryByText("Security")).not.toBeInTheDocument();
-    expect(screen.queryByText("Sessions")).not.toBeInTheDocument();
+    const menu = await screen.findByRole("menu");
+    const menuQueries = within(menu);
+    expect(menuQueries.getByText("Theme")).toBeVisible();
+    const menuItems = menuQueries.getAllByRole("menuitem");
+    expect(menuItems).toHaveLength(2);
+    expect(
+      menuQueries.getByRole("menuitem", { name: /Sign out of this device/ })
+    ).toBeVisible();
+    expect(
+      menuQueries.getByRole("menuitem", {
+        name: /Sign out from all devices and browsers/
+      })
+    ).toBeVisible();
+    for (const unavailableItem of [
+      "Profile",
+      "Settings",
+      "Security",
+      "Sessions"
+    ]) {
+      expect(
+        menuQueries.queryByRole("menuitem", { name: unavailableItem })
+      ).not.toBeInTheDocument();
+    }
   });
 });
