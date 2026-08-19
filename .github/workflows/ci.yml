@@ -139,6 +139,9 @@ jobs:
   frontend-e2e:
     name: Frontend E2E
     runs-on: ubuntu-latest
+    container:
+      # Keep this tag aligned with the @playwright/test version in pnpm-lock.yaml.
+      image: mcr.microsoft.com/playwright:v1.61.0-noble
     timeout-minutes: 20
     services:
       postgres:
@@ -157,7 +160,7 @@ jobs:
     env:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
       NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
-      DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
+      DATABASE_URL: postgresql://worksync:worksync@postgres:5432/worksync_test?schema=public
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -174,22 +177,11 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Restore Playwright browser cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
       - name: Verify pnpm version
         run: pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright browsers
-        run: pnpm --filter @worksync/frontend exec playwright install --with-deps chromium firefox webkit
 
       - name: Run frontend runtime compatibility tests
         run: pnpm --filter @worksync/frontend test:e2e:compatibility
