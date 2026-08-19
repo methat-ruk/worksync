@@ -81,15 +81,11 @@ async function expectAlertLayout(alert: Locator) {
 
   const layout = await alert.evaluate((element) => {
     const icon = element.querySelector("svg");
-    const title = element.querySelector<HTMLElement>(
-      "[data-slot='alert-title']"
-    );
     const description = element.querySelector<HTMLElement>(
       "[data-slot='alert-description']"
     );
     const style = getComputedStyle(element);
     const iconBounds = icon?.getBoundingClientRect();
-    const titleBounds = title?.getBoundingClientRect();
     const descriptionBounds = description?.getBoundingClientRect();
 
     return {
@@ -98,17 +94,13 @@ async function expectAlertLayout(alert: Locator) {
       columns: style.gridTemplateColumns,
       descriptionX: descriptionBounds?.x ?? 0,
       iconX: iconBounds?.x ?? 0,
-      scrollWidth: element.scrollWidth,
-      titleColumnStart: title ? getComputedStyle(title).gridColumnStart : "",
-      titleX: titleBounds?.x ?? 0
+      scrollWidth: element.scrollWidth
     };
   });
 
   expect(layout.columns).not.toBe("none");
   expect(layout.columns.trim().split(/\s+/)).toHaveLength(2);
   expect(layout.columnGap).toBeGreaterThan(0);
-  expect(layout.titleColumnStart).toBe("2");
-  expect(layout.titleX).toBeGreaterThan(layout.iconX);
   expect(layout.descriptionX).toBeGreaterThan(layout.iconX);
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
 }
@@ -259,6 +251,7 @@ test("renders the responsive recovery Alert in light and dark themes", async ({
 
   const alert = page.locator("[data-slot='alert']");
   await expectAlertLayout(alert);
+  await expect(alert).toHaveText("We couldn't load this page.");
 
   const desktopWidth = await alert.evaluate((element) => element.clientWidth);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -295,14 +288,28 @@ test("renders authenticated app, task, and overlay primitives from actual routes
   await expect(page.locator("[data-slot='avatar']").first()).toBeVisible();
   await expect(page.locator("[data-slot='separator']").first()).toBeVisible();
 
+  const primaryNavigation = page
+    .getByRole("navigation", { name: "Primary" })
+    .first();
+  const homeLink = primaryNavigation.getByRole("link", { name: "Home" });
+  await expect(primaryNavigation.getByRole("link")).toHaveCount(1);
+  await expect(homeLink).toHaveAttribute("href", "/app");
+  await expect(homeLink).toHaveAttribute("aria-current", "page");
+  await expect(page.getByText("Workspace access").first()).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Notifications coming soon" })
+  ).toHaveCount(0);
+
   await page.getByRole("button", { name: new RegExp(user.displayName) }).click();
   const menu = page.locator("[data-slot='dropdown-menu-content']");
   await expect(menu).toBeVisible();
   await expect(menu).not.toHaveCSS("max-height", "none");
   await expect(menu).not.toHaveCSS("transform-origin", "50% 50%");
-  const disabledProfileItem = page.getByRole("menuitem", { name: /Profile/ });
-  await expect(disabledProfileItem).toBeVisible();
-  await expect(disabledProfileItem).toBeDisabled();
+  await expect(page.getByRole("menuitem", { name: /Profile/ })).toHaveCount(0);
+  await expect(page.getByText("Theme")).toBeVisible();
+  await expect(
+    page.getByRole("menuitem", { name: /Sign out of this device/ })
+  ).toBeVisible();
 
   await page.getByText("Sign out all devices", { exact: true }).click();
   const alertDialog = page.getByRole("alertdialog");

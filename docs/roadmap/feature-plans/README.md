@@ -36,7 +36,7 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Frontend Recovery and App-Shell Copy Consistency](planned/frontend-recovery-app-shell-copy-consistency.md) | Cross-cutting | Next |
+| 1 | [Frontend Recovery and App-Shell Copy Consistency](planned/frontend-recovery-app-shell-copy-consistency.md) | Cross-cutting | Implemented locally - Firefox validation pending |
 | 2 | [Task UI Boundaries](planned/task-ui-boundaries.md) | 2 remediation | Planned |
 | 3 | [Frontend Pagination Reconciliation](planned/frontend-pagination-reconciliation.md) | Cross-cutting | Planned |
 | 4 | [Task Authorization Policy Cleanup](planned/task-authorization-policy-cleanup.md) | 2 remediation | Planned |
@@ -79,9 +79,12 @@ Review outcome:
   validation and rollback boundaries are independent
 
 At that review point, implementation remained unapproved. Frontend UI Runtime
-Compatibility was subsequently approved and completed on 2026-08-10; each
-remaining planned slice still requires review of its unresolved decisions and
-scope before implementation starts.
+Compatibility was subsequently approved and completed on 2026-08-10. Frontend
+Recovery and App-Shell Copy Consistency was reviewed and implemented locally on
+2026-08-19; its Chromium and WebKit evidence passes, while required Firefox
+compatibility remains pending because the local headless graphics runtime could
+not create a framebuffer. Each later planned slice still requires review before
+implementation starts.
 
 ## Completed Feature Summaries
 

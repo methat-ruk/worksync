@@ -54,7 +54,7 @@ export function OAuthLanding() {
   ) {
     return (
       <AuthRecoveryScreen
-        title="We couldn't finish signing you in."
+        message="We couldn't finish signing you in."
         onRetry={completeGoogleSignIn}
       />
     );

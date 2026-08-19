@@ -33,8 +33,6 @@ track status, and see task activity inside the correct workspace boundary.
 
 ## Still Required
 
-- frontend UI runtime compatibility remediation before extending shared
-  primitives into the collaboration workflow
 - frontend recovery/app-shell copy correction
 - task UI boundary/accessibility remediation before adding comments
 - shared frontend pagination reconciliation

@@ -76,7 +76,7 @@ describe("auth route guards", () => {
       </PublicOnlyRoute>
     );
 
-    expect(screen.getByText("We couldn't verify your session.")).toBeVisible();
+    expect(screen.getByText("We couldn't load this page.")).toBeVisible();
     expect(screen.queryByText("Login form")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(mocks.bootstrapAuth).toHaveBeenCalledTimes(1);
@@ -136,7 +136,7 @@ describe("auth route guards", () => {
       </ProtectedRoute>
     );
 
-    expect(screen.getByText("We couldn't verify your session.")).toBeVisible();
+    expect(screen.getByText("We couldn't load this page.")).toBeVisible();
     expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
     expect(mocks.replace).not.toHaveBeenCalled();
   });

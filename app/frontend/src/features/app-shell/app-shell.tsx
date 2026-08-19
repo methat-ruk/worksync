@@ -1,24 +1,18 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Bell,
-  ChevronRight,
-  CheckSquare2,
   ChevronsUpDown,
-  FolderKanban,
   Home,
   LogOut,
   Menu,
   Moon,
   Monitor,
   PanelsTopLeft,
-  Settings,
   ShieldCheck,
   Sun,
-  UserRound,
-  Users,
   X
 } from "lucide-react";
 
@@ -33,10 +27,10 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BrandMark } from "@/components/brand-mark";
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,49 +46,11 @@ import { authErrorMessage } from "../auth/model/auth-error-message";
 import { logout, logoutAll, useAuth } from "../auth/auth-store";
 import { useTheme } from "../theme/theme-provider";
 
-const navItems = [
-  { label: "Home", icon: Home, active: true },
-  { label: "Workspaces", icon: Users, status: "Active" },
-  { label: "Projects", icon: FolderKanban, status: "Soon" },
-  { label: "Tasks", icon: CheckSquare2, status: "Soon" },
-  { label: "Notifications", icon: Bell, status: "Soon" }
-];
-
-const pendingMenuItems = [
-  {
-    label: "Profile",
-    description: "View and edit your profile",
-    icon: UserRound
-  },
-  {
-    label: "Settings",
-    description: "Preferences and workspace settings",
-    icon: Settings
-  },
-  {
-    label: "Security",
-    description: "Password and security options",
-    icon: ShieldCheck
-  },
-  {
-    label: "Sessions",
-    description: "Manage your active sessions",
-    icon: Monitor
-  }
-];
-
 const themeOptions = [
   { value: "system", label: "System", icon: Monitor },
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon }
 ] as const;
-
-function navStatusClass(status?: string): string {
-  if (status === "Active") {
-    return "border-primary/35 bg-primary/20 text-white";
-  }
-  return "border-white/10 bg-white/6 text-white/60";
-}
 
 function initials(name: string): string {
   return name
@@ -112,41 +68,25 @@ function Sidebar() {
         <BrandMark />
       </div>
       <nav aria-label="Primary" className="flex flex-col gap-1">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className={cn(
-              "flex h-11 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm transition-colors",
-              item.active
-                ? "bg-white/13 font-medium text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_10px_30px_rgb(0_0_0/0.10)]"
-                : "cursor-not-allowed text-white/[0.56] hover:text-white/[0.56]"
-            )}
-            disabled={!item.active}
-            type="button"
-          >
-            <item.icon aria-hidden="true" className="size-4" />
-            <span>{item.label}</span>
-            {item.status && (
-              <Badge
-                className={`ml-auto rounded-full px-2 py-0 text-[10px] ${navStatusClass(item.status)}`}
-                variant="outline"
-              >
-                {item.status}
-              </Badge>
-            )}
-          </button>
-        ))}
+        <Link
+          aria-current="page"
+          className="flex h-11 w-full items-center gap-3 rounded-2xl bg-white/13 px-3 text-left text-sm font-medium text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_10px_30px_rgb(0_0_0/0.10)] transition-colors hover:bg-white/18 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          href="/app"
+        >
+          <Home aria-hidden="true" className="size-4" />
+          <span>Home</span>
+        </Link>
       </nav>
       <div className="mt-auto overflow-hidden rounded-2xl border border-white/10 bg-white/4.5 p-3 shadow-2xl shadow-black/10">
         <div className="mb-3 flex items-center gap-2">
           <span className="grid size-7 place-items-center rounded-lg bg-primary/20 text-primary-foreground">
             <ShieldCheck aria-hidden="true" className="size-3.5" />
           </span>
-          <p className="text-xs font-semibold text-white/86">Auth secured</p>
+          <p className="text-xs font-semibold text-white/86">Workspace access</p>
         </div>
         <p className="mt-1 text-xs leading-5 text-white/45">
-          Password, Google OAuth, refresh rotation, and rate limits are ready.
-          Workspace selection is now connected to real membership data.
+          Workspaces, projects, and tasks are limited by your current membership
+          and role.
         </p>
       </div>
     </div>
@@ -163,7 +103,14 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const mobileSidebarRef = useRef<HTMLElement>(null);
   const user = auth.user!;
+
+  useEffect(() => {
+    if (mobileSidebarRef.current) {
+      mobileSidebarRef.current.inert = !mobileSidebarOpen;
+    }
+  }, [mobileSidebarOpen]);
 
   useEffect(() => {
     if (!profileMenuOpen && !mobileSidebarOpen) {
@@ -231,7 +178,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           "fixed inset-y-0 left-0 z-50 w-62 overflow-hidden transition-transform duration-200 lg:hidden",
           mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        inert={!mobileSidebarOpen}
+        ref={mobileSidebarRef}
         role="dialog"
       >
         <Sidebar />
@@ -277,19 +224,9 @@ export function AppShell({ children }: { children: ReactNode }) {
               Workspace home
             </p>
           </div>
-          <Button
-            aria-label="Notifications coming soon"
-            className="ml-auto rounded-full border bg-background shadow-xs"
-            disabled
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <Bell aria-hidden="true" className="size-4" />
-          </Button>
-          <span
-            aria-hidden="true"
-            className="mx-2 h-7 w-px bg-border dark:bg-white/10"
+          <Separator
+            className="ml-auto mr-2 h-7 self-auto"
+            orientation="vertical"
           />
           {profileMenuOpen && (
             <button
@@ -354,31 +291,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                     </span>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="my-1.5" />
-                {pendingMenuItems.map((item) => (
-                  <DropdownMenuItem
-                    className="h-auto cursor-not-allowed rounded-xl px-2 py-1.5 opacity-55"
-                    disabled
-                    key={item.label}
-                  >
-                    <item.icon
-                      aria-hidden="true"
-                      className="mr-2 size-3.5 text-muted-foreground"
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[13px] font-semibold text-foreground">
-                        {item.label}
-                      </span>
-                      <span className="block truncate text-[10px] font-normal text-muted-foreground">
-                        {item.description}
-                      </span>
-                    </span>
-                    <ChevronRight
-                      aria-hidden="true"
-                      className="size-3.5 text-muted-foreground"
-                    />
-                  </DropdownMenuItem>
-                ))}
                 <DropdownMenuSeparator className="my-1.5" />
                 <div className="px-2 py-1.5">
                   <div className="mb-1 text-[10px] font-semibold text-muted-foreground">

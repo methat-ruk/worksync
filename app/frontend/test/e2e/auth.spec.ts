@@ -250,7 +250,7 @@ test("keeps protected content hidden and recovers after refresh failure", async 
   );
 
   await page.goto("/app");
-  await expect(page.getByText("We couldn't verify your session.")).toBeVisible();
+  await expect(page.getByText("We couldn't load this page.")).toBeVisible();
   await expect(page.getByText("Workspace bootstrap")).not.toBeVisible();
   await expect(page).toHaveURL(/\/app$/);
 
@@ -278,6 +278,51 @@ test("keeps protected content hidden and recovers after refresh failure", async 
   await expect(page).toHaveURL(/\/app$/);
 });
 
+test("announces retry loading and returns to one recovery action after repeated failure", async ({
+  page
+}) => {
+  let refreshRequests = 0;
+  let releaseRetry = () => {};
+  const retryGate = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
+
+  await page.unroute(apiUrl("/api/auth/refresh"));
+  await page.route(apiUrl("/api/auth/refresh"), async (route) => {
+    refreshRequests += 1;
+    if (refreshRequests > 1) {
+      await retryGate;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: false,
+        message: "Internal server error",
+        data: { code: "INTERNAL_SERVER_ERROR" }
+      })
+    });
+  });
+
+  await page.goto("/app");
+  const retry = page.getByRole("button", { name: "Retry" });
+  const recoveryAlert = page.locator("[data-slot='alert']");
+  await expect(recoveryAlert).toHaveText(
+    "We couldn't load this page."
+  );
+
+  await retry.click();
+  await expect(page.getByRole("status")).toHaveText("Checking your session…");
+  releaseRetry();
+
+  await expect(recoveryAlert).toHaveText(
+    "We couldn't load this page."
+  );
+  await expect(retry).toHaveCount(1);
+  await page.keyboard.press("Tab");
+  await expect(retry).toBeFocused();
+});
+
 test("keeps public auth forms hidden until refresh can decide", async ({ page }) => {
   await page.unroute(apiUrl("/api/auth/refresh"));
   await page.route(apiUrl("/api/auth/refresh"), (route) =>
@@ -293,7 +338,7 @@ test("keeps public auth forms hidden until refresh can decide", async ({ page })
   );
 
   await page.goto("/login");
-  await expect(page.getByText("We couldn't verify your session.")).toBeVisible();
+  await expect(page.getByText("We couldn't load this page.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in" })).not.toBeVisible();
   await expect(page).toHaveURL(/\/login$/);
 
