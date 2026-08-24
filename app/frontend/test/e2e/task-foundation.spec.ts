@@ -100,26 +100,40 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
   const consoleErrors: string[] = [];
   const assigneeQueries: string[] = [];
   const statusBodies: unknown[] = [];
+  const taskMutationMethods: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") {
       consoleErrors.push(message.text());
+    }
+  });
+  page.on("request", (request) => {
+    if (
+      request.url().includes("/projects/project-1/tasks") &&
+      request.method() !== "GET"
+    ) {
+      taskMutationMethods.push(request.method());
     }
   });
   await page.route(
     /^http:\/\/localhost:4000\/api\/workspaces\/workspace-1\/task-assignees\?.*$/,
     (route) => {
       const url = new URL(route.request().url());
-      assigneeQueries.push(url.searchParams.get("search") ?? "");
+      const search = url.searchParams.get("search") ?? "";
+      assigneeQueries.push(search);
+      const items =
+        search === "Nobody"
+          ? []
+          : [{ id: "user-2", displayName: "Alice Example" }];
       return route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           success: true,
           data: {
-            items: [{ id: "user-2", displayName: "Alice Example" }],
+            items,
             page: 1,
             pageSize: 20,
-            total: 1
+            total: items.length
           }
         })
       });
@@ -145,12 +159,66 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
   await page.goto("/app");
   await expect(page.getByText(task.title)).toBeVisible();
 
+  const createTask = page.getByRole("button", { name: "Create task" });
+  await createTask.click();
+  const taskDialog = page.getByRole("dialog");
+  await expect(taskDialog).toBeVisible();
+  await taskDialog.getByLabel("Title").fill("Keyboard-safe task");
+  const formAssignee = taskDialog.getByRole("combobox", { name: "Assignee" });
+  await formAssignee.focus();
+  await expect(
+    taskDialog.getByRole("listbox", { name: "Assignee candidates" })
+  ).toBeVisible();
+  await formAssignee.fill("Nobody");
+  await expect.poll(() => assigneeQueries).toContain("Nobody");
+  await expect(
+    taskDialog.getByText("No matching workspace members.")
+  ).toBeVisible();
+  await formAssignee.press("Enter");
+  await expect(taskDialog).toBeVisible();
+  expect(taskMutationMethods).toEqual([]);
+  await formAssignee.press("Escape");
+  await expect(
+    taskDialog.getByRole("listbox", { name: "Assignee candidates" })
+  ).toBeHidden();
+  await formAssignee.press("Enter");
+  await expect(taskDialog).toBeVisible();
+  await expect(formAssignee).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    taskDialog.getByRole("listbox", { name: "Assignee candidates" })
+  ).toBeAttached();
+  expect(taskMutationMethods).toEqual([]);
+  await formAssignee.press("Escape");
+  await expect(
+    taskDialog.getByRole("listbox", { name: "Assignee candidates" })
+  ).toBeHidden();
+  await formAssignee.press("Escape");
+  await expect(taskDialog).toBeHidden();
+  await expect(createTask).toBeFocused();
+
   const assigneeSearch = page.getByRole("combobox", {
     name: "Assignee filter"
   });
+  await expect(assigneeSearch).not.toHaveAttribute("aria-controls");
   await assigneeSearch.fill("Ali");
   await expect.poll(() => assigneeQueries).toContain("Ali");
-  await expect(page.getByRole("option", { name: /Alice Example/ })).toBeVisible();
+  const assigneeListbox = page.getByRole("listbox", {
+    name: "Assignee candidates"
+  });
+  await expect(assigneeListbox).toBeVisible();
+  const assigneeListboxId = await assigneeListbox.getAttribute("id");
+  expect(assigneeListboxId).not.toBeNull();
+  await expect(assigneeSearch).toHaveAttribute(
+    "aria-controls",
+    assigneeListboxId!
+  );
+  await expect(
+    page.getByRole("option", { name: /Alice Example/ })
+  ).toHaveAttribute("tabindex", "-1");
+  await assigneeSearch.press("Escape");
+  await expect(assigneeListbox).toBeHidden();
+  await expect(assigneeSearch).toBeFocused();
+  await expect(assigneeSearch).not.toHaveAttribute("aria-controls");
 
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(
@@ -163,6 +231,7 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await page.getByRole("button", { name: "Cancel task" }).click();
   await expect.poll(() => statusBodies).toEqual([{ status: "CANCELED" }]);
+  expect(taskMutationMethods).toEqual(["PATCH"]);
   expect(consoleErrors).toEqual([]);
 });
 

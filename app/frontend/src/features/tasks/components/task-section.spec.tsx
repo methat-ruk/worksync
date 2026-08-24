@@ -3,6 +3,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
   waitFor
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -30,7 +31,8 @@ import type {
   TaskAssigneeListData,
   TaskListData
 } from "../model/task-contract";
-import { AssigneePicker, TaskSection } from "./task-section";
+import { AssigneePicker } from "./assignee-picker";
+import { TaskSection } from "./task-section";
 
 vi.mock("../api/tasks-api", () => ({
   createTask: vi.fn(),
@@ -134,6 +136,100 @@ describe("TaskSection", () => {
     expect(
       screen.queryByRole("button", { name: "Start" })
     ).not.toBeInTheDocument();
+  });
+
+  it("creates a task through the existing form contract", async () => {
+    const user = userEvent.setup();
+    const createdTask = {
+      ...task,
+      id: "task-2",
+      title: "Create characterization"
+    };
+    let resolveRefresh!: (value: TaskListData) => void;
+    vi.mocked(listTasks)
+      .mockResolvedValueOnce(page([]))
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveRefresh = resolve;
+        })
+      );
+    vi.mocked(createTask).mockResolvedValue(createdTask);
+
+    render(<TaskSection project={project} workspace={workspace} />);
+
+    const createButton = await screen.findByRole("button", {
+      name: "Create task"
+    });
+    await user.click(createButton);
+    const dialog = screen.getByRole("dialog");
+    await user.type(within(dialog).getByLabelText("Title"), createdTask.title);
+    await user.click(
+      within(dialog).getByRole("button", { name: "Create task" })
+    );
+
+    await waitFor(() =>
+      expect(createTask).toHaveBeenCalledWith(
+        workspace.id,
+        project.id,
+        expect.objectContaining({ title: createdTask.title }),
+        expect.any(AbortSignal)
+      )
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    );
+    expect(document.activeElement).toBe(createButton);
+    expect(screen.getByText("No matching tasks")).toBeVisible();
+
+    resolveRefresh(page([createdTask]));
+    expect(await screen.findByText(createdTask.title)).toBeVisible();
+  });
+
+  it("submits edits through the existing task update contract", async () => {
+    const user = userEvent.setup();
+    const updatedTask = { ...task, title: "Updated task title" };
+    vi.mocked(listTasks).mockResolvedValue(page([task]));
+    vi.mocked(updateTask).mockResolvedValue(updatedTask);
+
+    render(<TaskSection project={project} workspace={workspace} />);
+
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    const dialog = screen.getByRole("dialog");
+    const title = within(dialog).getByLabelText("Title");
+    await user.clear(title);
+    await user.type(title, updatedTask.title);
+    await user.click(within(dialog).getByRole("button", { name: "Save task" }));
+
+    await waitFor(() =>
+      expect(updateTask).toHaveBeenCalledWith(
+        workspace.id,
+        project.id,
+        task.id,
+        expect.objectContaining({ title: updatedTask.title }),
+        expect.any(AbortSignal)
+      )
+    );
+  });
+
+  it("reloads the task list with the selected status filter", async () => {
+    const user = userEvent.setup();
+    vi.mocked(listTasks).mockResolvedValue(page([task]));
+
+    render(<TaskSection project={project} workspace={workspace} />);
+
+    await screen.findByText(task.title);
+    await user.selectOptions(
+      screen.getByRole("combobox", { name: "Status filter" }),
+      "IN_PROGRESS"
+    );
+
+    await waitFor(() =>
+      expect(listTasks).toHaveBeenLastCalledWith(
+        workspace.id,
+        project.id,
+        expect.objectContaining({ status: "IN_PROGRESS" })
+      )
+    );
   });
 
   it("requires confirmation before terminal cancellation", async () => {
@@ -276,6 +372,187 @@ describe("AssigneePicker auto-search", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  it("only exposes mounted combobox relationships across closed and loading states", async () => {
+    vi.useFakeTimers();
+    vi.mocked(searchTaskAssignees).mockReturnValue(new Promise(() => {}));
+
+    render(
+      <AssigneePicker
+        onSelect={vi.fn()}
+        selected={null}
+        workspaceId={workspace.id}
+      />
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(input).not.toHaveAttribute("aria-controls");
+    expect(input).not.toHaveAttribute("aria-activedescendant");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+
+    fireEvent.focus(input);
+    await vi.runOnlyPendingTimersAsync();
+
+    const listbox = screen.getByRole("listbox", {
+      name: "Assignee candidates"
+    });
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(input).toHaveAttribute("aria-controls", listbox.id);
+    expect(listbox).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("keeps the listbox mounted for empty and error results", async () => {
+    vi.useFakeTimers();
+    vi.mocked(searchTaskAssignees)
+      .mockResolvedValueOnce({
+        items: [],
+        page: 1,
+        pageSize: 20,
+        total: 0
+      })
+      .mockRejectedValueOnce(new Error("search failed"));
+
+    render(
+      <AssigneePicker
+        onSelect={vi.fn()}
+        selected={null}
+        workspaceId={workspace.id}
+      />
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    expect(screen.getByText(/No matching workspace members/)).toBeVisible();
+
+    fireEvent.change(input, { target: { value: "missing" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry search" })).toBeEnabled();
+    expect(input).not.toHaveAttribute("aria-activedescendant");
+  });
+
+  it("prevents Enter from submitting a parent form when reopening", async () => {
+    vi.useFakeTimers();
+    const onSubmit = vi.fn();
+    render(
+      <form onSubmit={onSubmit}>
+        <AssigneePicker
+          onSelect={vi.fn()}
+          selected={null}
+          workspaceId={workspace.id}
+        />
+      </form>
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    fireEvent.keyDown(input, { key: "Escape" });
+
+    expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(false);
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("prevents Enter from submitting while open without an active option", async () => {
+    vi.useFakeTimers();
+    const onSubmit = vi.fn();
+    vi.mocked(searchTaskAssignees).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      total: 0
+    });
+    render(
+      <form onSubmit={onSubmit}>
+        <AssigneePicker
+          onSelect={vi.fn()}
+          selected={null}
+          workspaceId={workspace.id}
+        />
+      </form>
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(input).not.toHaveAttribute("aria-activedescendant");
+    expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(false);
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("only consumes Escape while the candidate popup is open", async () => {
+    vi.useFakeTimers();
+    const onKeyDown = vi.fn();
+    render(
+      <div onKeyDown={onKeyDown}>
+        <AssigneePicker
+          onSelect={vi.fn()}
+          selected={null}
+          workspaceId={workspace.id}
+        />
+      </div>
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(fireEvent.keyDown(input, { key: "Escape" })).toBe(false);
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(onKeyDown).not.toHaveBeenCalled();
+    expect(fireEvent.keyDown(input, { key: "Escape" })).toBe(true);
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps virtual options out of the Tab order and closes when focus leaves", async () => {
+    vi.useFakeTimers();
+    render(
+      <div>
+        <AssigneePicker
+          onSelect={vi.fn()}
+          selected={null}
+          workspaceId={workspace.id}
+        />
+        <button type="button">After picker</button>
+      </div>
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(screen.getByRole("option", { name: /Alice Example/ })).toHaveAttribute(
+      "tabindex",
+      "-1"
+    );
+    fireEvent.blur(input, {
+      relatedTarget: screen.getByRole("button", { name: "After picker" })
+    });
+
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(input).not.toHaveAttribute("aria-controls");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
   it("loads initial candidates and debounces settled input", async () => {

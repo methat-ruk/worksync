@@ -20,6 +20,18 @@ Use pnpm for this repository. Do not install dependencies with npm or Yarn.
 
 ## 1. Select Node.js 22
 
+With fnm in PowerShell:
+
+```powershell
+fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression
+fnm use
+node --version
+```
+
+`fnm use` reads the repository `.nvmrc`. Add the `fnm env --use-on-cd` line to
+your PowerShell profile when you want future shells to switch automatically as
+you enter the repository.
+
 With nvm:
 
 ```bash

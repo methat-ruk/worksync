@@ -30,10 +30,11 @@ track status, and see task activity inside the correct workspace boundary.
   workflow
 - task unit, contract, integration, security, component, mocked browser, and
   live browser evidence
+- cohesive task UI component boundaries and corrected assignee combobox/focus
+  behavior, with the future discussion host kept separate from the task form
 
 ## Still Required
 
-- task UI boundary/accessibility remediation before adding comments
 - shared frontend pagination reconciliation
 - production-dead task authorization policy cleanup
 - board view
@@ -46,7 +47,7 @@ Feature plan order:
 2. [Task Foundation](feature-plans/completed/task-foundation.md)
 3. [Frontend UI Runtime Compatibility](feature-plans/completed/frontend-ui-runtime-compatibility.md)
 4. [Frontend Recovery and App-Shell Copy Consistency](feature-plans/completed/frontend-recovery-app-shell-copy-consistency.md)
-5. [Task UI Boundaries](feature-plans/planned/task-ui-boundaries.md)
+5. [Task UI Boundaries](feature-plans/completed/task-ui-boundaries.md)
 6. [Frontend Pagination Reconciliation](feature-plans/planned/frontend-pagination-reconciliation.md)
 7. [Task Authorization Policy Cleanup](feature-plans/planned/task-authorization-policy-cleanup.md)
 

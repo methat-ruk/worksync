@@ -150,7 +150,7 @@ regression evidence. Resolve in-scope findings and rerun affected checks.
 ## Dependencies
 
 - completed project, task, and workspace pagination foundations
-- [Task UI Boundaries](task-ui-boundaries.md) first to avoid moving the same
+- [Task UI Boundaries](../completed/task-ui-boundaries.md) first to avoid moving the same
   task module concurrently
 - existing component and live browser pagination evidence
 
