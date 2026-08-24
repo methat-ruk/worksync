@@ -50,7 +50,10 @@ test("creates a workspace, project, and task through the real application bounda
     await expect(page.getByText("1 total").last()).toBeVisible();
     await expect(page.getByText("No matching tasks")).toBeVisible();
 
-    await page.getByRole("button", { name: "Create task" }).click();
+    const createTaskButton = page
+      .getByRole("region", { name: "Tasks in WorkSync Live" })
+      .getByRole("button", { name: "Create task" });
+    await createTaskButton.click();
     const taskDialog = page.getByRole("dialog");
     await taskDialog.getByLabel("Title").fill("Live task workflow");
     await taskDialog
@@ -71,6 +74,7 @@ test("creates a workspace, project, and task through the real application bounda
     await expect(page.getByText("Live task workflow")).toBeVisible({
       timeout: 20_000
     });
+    await expect(createTaskButton).toBeFocused();
     await expect(page.getByText("Backlog").last()).toBeVisible();
     await page.getByRole("button", { name: "Start" }).click();
     await expect(page.getByText("In progress").last()).toBeVisible();

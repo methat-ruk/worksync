@@ -100,9 +100,18 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
   const consoleErrors: string[] = [];
   const assigneeQueries: string[] = [];
   const statusBodies: unknown[] = [];
+  const taskMutationMethods: string[] = [];
   page.on("console", (message) => {
     if (message.type() === "error") {
       consoleErrors.push(message.text());
+    }
+  });
+  page.on("request", (request) => {
+    if (
+      request.url().includes("/projects/project-1/tasks") &&
+      request.method() !== "GET"
+    ) {
+      taskMutationMethods.push(request.method());
     }
   });
   await page.route(
@@ -147,9 +156,26 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
 
   const createTask = page.getByRole("button", { name: "Create task" });
   await createTask.click();
-  await expect(page.getByRole("dialog")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).toBeHidden();
+  const taskDialog = page.getByRole("dialog");
+  await expect(taskDialog).toBeVisible();
+  await taskDialog.getByLabel("Title").fill("Keyboard-safe task");
+  const formAssignee = taskDialog.getByRole("combobox", { name: "Assignee" });
+  await formAssignee.focus();
+  await expect(
+    taskDialog.getByRole("listbox", { name: "Assignee candidates" })
+  ).toBeVisible();
+  await formAssignee.press("Escape");
+  await expect(
+    taskDialog.getByRole("listbox", { name: "Assignee candidates" })
+  ).toBeHidden();
+  await formAssignee.press("Enter");
+  await expect(taskDialog).toBeVisible();
+  await expect(
+    taskDialog.getByRole("listbox", { name: "Assignee candidates" })
+  ).toBeVisible();
+  expect(taskMutationMethods).toEqual([]);
+  await taskDialog.getByLabel("Title").press("Escape");
+  await expect(taskDialog).toBeHidden();
   await expect(createTask).toBeFocused();
 
   const assigneeSearch = page.getByRole("combobox", {
@@ -187,6 +213,7 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await page.getByRole("button", { name: "Cancel task" }).click();
   await expect.poll(() => statusBodies).toEqual([{ status: "CANCELED" }]);
+  expect(taskMutationMethods).toEqual(["PATCH"]);
   expect(consoleErrors).toEqual([]);
 });
 

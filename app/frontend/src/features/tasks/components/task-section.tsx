@@ -119,14 +119,19 @@ export function TaskSection({
   const controllerRef = useRef<AbortController | null>(null);
   const mutationControllerRef = useRef<AbortController | null>(null);
   const formReturnFocusRef = useRef<HTMLElement | null>(null);
+  const createTaskButtonRef = useRef<HTMLButtonElement | null>(null);
   const canMutate = workspace.membershipRole !== "VIEWER";
 
-  const loadInitial = useCallback(async () => {
+  const loadInitial = useCallback(async ({
+    preserveContent = false
+  }: { preserveContent?: boolean } = {}) => {
     controllerRef.current?.abort();
     const controller = new AbortController();
     controllerRef.current = controller;
     setPagePending(false);
-    setLoadState("loading");
+    if (!preserveContent) {
+      setLoadState("loading");
+    }
     setLoadError(null);
     setPageError(null);
     try {
@@ -146,8 +151,14 @@ export function TaskSection({
       }
     } catch (error: unknown) {
       if (!controller.signal.aborted && !isTaskAbortError(error)) {
-        setLoadError(taskErrorMessage(error));
-        setLoadState("error");
+        if (preserveContent) {
+          setMutationError(
+            `Task saved, but the task list could not be refreshed. ${taskErrorMessage(error)}`
+          );
+        } else {
+          setLoadError(taskErrorMessage(error));
+          setLoadState("error");
+        }
       }
     }
   }, [assigneeFilter, project.id, statusFilter, workspace.id]);
@@ -313,6 +324,7 @@ export function TaskSection({
         {canMutate && (
           <Button
             onClick={(event) => openCreate(event.currentTarget)}
+            ref={createTaskButtonRef}
             type="button"
           >
             <Plus aria-hidden="true" />
@@ -478,10 +490,14 @@ export function TaskSection({
       {canMutate && (
         <TaskFormSheet
           onOpenChange={setFormOpen}
-          onSaved={() => void loadInitial()}
+          onSaved={() => {
+            setMutationError(null);
+            void loadInitial({ preserveContent: true });
+          }}
           open={formOpen}
           projectId={project.id}
           returnFocusRef={formReturnFocusRef}
+          successFocusRef={createTaskButtonRef}
           task={editingTask}
           workspaceId={workspace.id}
         />

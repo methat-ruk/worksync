@@ -145,7 +145,14 @@ describe("TaskSection", () => {
       id: "task-2",
       title: "Create characterization"
     };
-    vi.mocked(listTasks).mockResolvedValue(page([]));
+    let resolveRefresh!: (value: TaskListData) => void;
+    vi.mocked(listTasks)
+      .mockResolvedValueOnce(page([]))
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveRefresh = resolve;
+        })
+      );
     vi.mocked(createTask).mockResolvedValue(createdTask);
 
     render(<TaskSection project={project} workspace={workspace} />);
@@ -171,6 +178,11 @@ describe("TaskSection", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     );
+    expect(document.activeElement).toBe(createButton);
+    expect(screen.getByText("No matching tasks")).toBeVisible();
+
+    resolveRefresh(page([createdTask]));
+    expect(await screen.findByText(createdTask.title)).toBeVisible();
   });
 
   it("submits edits through the existing task update contract", async () => {
@@ -427,6 +439,31 @@ describe("AssigneePicker auto-search", () => {
     expect(screen.getByRole("listbox")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry search" })).toBeEnabled();
     expect(input).not.toHaveAttribute("aria-activedescendant");
+  });
+
+  it("prevents Enter from submitting a parent form when reopening", async () => {
+    vi.useFakeTimers();
+    const onSubmit = vi.fn();
+    render(
+      <form onSubmit={onSubmit}>
+        <AssigneePicker
+          onSelect={vi.fn()}
+          selected={null}
+          workspaceId={workspace.id}
+        />
+      </form>
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    fireEvent.keyDown(input, { key: "Escape" });
+
+    expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(false);
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("keeps virtual options out of the Tab order and closes when focus leaves", async () => {

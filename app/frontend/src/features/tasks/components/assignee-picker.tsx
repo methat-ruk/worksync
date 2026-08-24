@@ -186,6 +186,7 @@ export function AssigneePicker({
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (!open && (event.key === "ArrowDown" || event.key === "Enter")) {
+      event.preventDefault();
       setOpen(true);
       return;
     }

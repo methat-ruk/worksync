@@ -21,14 +21,16 @@ Impact: Material task frontend refactor with behavior preservation
   viewer-accessible future `TaskDetailSheet` decision for comments
 - added create, edit, filter, loading, empty, error, keyboard, focus, and ARIA
   regression evidence; the mocked Chromium task journey verifies Sheet focus
-  return, combobox relationships, Escape behavior, and terminal cancellation
+  return after close and successful save, combobox relationships, closed-state
+  Enter handling without form submission, Escape behavior, and terminal
+  cancellation
 - on Node.js 22, passed the authoritative `validate:frontend` gate: 5 shared
   auth-policy tests, frontend typecheck, ESLint and canonical Tailwind checks,
-  166 frontend tests plus 5 Node script tests, and the production Next.js build
-- passed 2 focused mocked Chromium E2E tests and 3 guarded live Chromium E2E
+  167 frontend tests plus 5 Node script tests, and the production Next.js build
+- passed 23 mocked Chromium E2E tests and 3 guarded live Chromium E2E
   tests against the real backend and `worksync_test` PostgreSQL database; the
   live task journey also verifies the assignee combobox relationships, option
-  Tab behavior, Escape close, and focus retention
+  Tab behavior, Escape close, and successful-save focus restoration
 - passed `git diff --check` and the production dependency audit with no known
   vulnerabilities; no package or lockfile dependency changed
 

@@ -54,6 +54,7 @@ export function TaskFormSheet({
   projectId,
   task,
   returnFocusRef,
+  successFocusRef,
   onOpenChange,
   onSaved
 }: {
@@ -62,6 +63,7 @@ export function TaskFormSheet({
   projectId: string;
   task: PublicTask | null;
   returnFocusRef: RefObject<HTMLElement | null>;
+  successFocusRef: RefObject<HTMLElement | null>;
   onOpenChange: (open: boolean) => void;
   onSaved: (task: PublicTask) => void;
 }) {
@@ -73,6 +75,7 @@ export function TaskFormSheet({
   const [requestError, setRequestError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
+  const savedSuccessfullyRef = useRef(false);
   const controllerRef = useRef<AbortController | null>(null);
   const titleId = useId();
   const titleErrorId = `${titleId}-error`;
@@ -87,6 +90,7 @@ export function TaskFormSheet({
     setAssignee(task?.assignee ?? null);
     setTitleError(null);
     setRequestError(null);
+    savedSuccessfullyRef.current = false;
   }, [open, task]);
 
   useEffect(() => () => controllerRef.current?.abort(), []);
@@ -129,6 +133,7 @@ export function TaskFormSheet({
             parsed.data,
             controller.signal
           );
+      savedSuccessfullyRef.current = true;
       onSaved(saved);
       onOpenChange(false);
     } catch (error: unknown) {
@@ -144,18 +149,14 @@ export function TaskFormSheet({
   }
 
   return (
-    <Sheet
-      onOpenChange={onOpenChange}
-      onOpenChangeComplete={(nextOpen) => {
-        if (!nextOpen) {
-          returnFocusRef.current?.focus();
-        }
-      }}
-      open={open}
-    >
+    <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent
         className="w-full overflow-y-auto sm:max-w-lg"
-        finalFocus={returnFocusRef}
+        finalFocus={() =>
+          savedSuccessfullyRef.current
+            ? successFocusRef.current
+            : returnFocusRef.current
+        }
       >
         <SheetHeader>
           <SheetTitle>{task ? "Edit task" : "Create task"}</SheetTitle>
