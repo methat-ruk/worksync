@@ -145,12 +145,36 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
   await page.goto("/app");
   await expect(page.getByText(task.title)).toBeVisible();
 
+  const createTask = page.getByRole("button", { name: "Create task" });
+  await createTask.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await expect(createTask).toBeFocused();
+
   const assigneeSearch = page.getByRole("combobox", {
     name: "Assignee filter"
   });
+  await expect(assigneeSearch).not.toHaveAttribute("aria-controls");
   await assigneeSearch.fill("Ali");
   await expect.poll(() => assigneeQueries).toContain("Ali");
-  await expect(page.getByRole("option", { name: /Alice Example/ })).toBeVisible();
+  const assigneeListbox = page.getByRole("listbox", {
+    name: "Assignee candidates"
+  });
+  await expect(assigneeListbox).toBeVisible();
+  const assigneeListboxId = await assigneeListbox.getAttribute("id");
+  expect(assigneeListboxId).not.toBeNull();
+  await expect(assigneeSearch).toHaveAttribute(
+    "aria-controls",
+    assigneeListboxId!
+  );
+  await expect(
+    page.getByRole("option", { name: /Alice Example/ })
+  ).toHaveAttribute("tabindex", "-1");
+  await assigneeSearch.press("Escape");
+  await expect(assigneeListbox).toBeHidden();
+  await expect(assigneeSearch).toBeFocused();
+  await expect(assigneeSearch).not.toHaveAttribute("aria-controls");
 
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(

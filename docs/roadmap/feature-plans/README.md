@@ -22,11 +22,10 @@ Prioritize planned work by:
 
 For the current roadmap, this means:
 
-1. clarify task UI boundaries before adding the discussion surface
-2. reconcile shared frontend pagination semantics
-3. remove misleading task authorization policy abstractions
-4. deliver comments and mentions
-5. add notifications, files, jobs, and production readiness in dependency order
+1. reconcile shared frontend pagination semantics
+2. remove misleading task authorization policy abstractions
+3. deliver comments and mentions on the completed task UI boundary
+4. add notifications, files, jobs, and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -35,14 +34,13 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Task UI Boundaries](planned/task-ui-boundaries.md) | 2 remediation | Planned |
-| 2 | [Frontend Pagination Reconciliation](planned/frontend-pagination-reconciliation.md) | Cross-cutting | Planned |
-| 3 | [Task Authorization Policy Cleanup](planned/task-authorization-policy-cleanup.md) | 2 remediation | Planned |
-| 4 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 5 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 6 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 7 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 8 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 1 | [Frontend Pagination Reconciliation](planned/frontend-pagination-reconciliation.md) | Cross-cutting | Planned |
+| 2 | [Task Authorization Policy Cleanup](planned/task-authorization-policy-cleanup.md) | 2 remediation | Planned |
+| 3 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 4 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 5 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 6 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 7 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
 If the approved file-upload policy requires asynchronous malware scanning
 before attachments can be made available, replace the default File/Jobs order
@@ -83,6 +81,10 @@ on 2026-08-19 after required production compatibility CI passed in Chromium,
 Firefox, and WebKit. Each remaining planned slice still requires review before
 implementation starts.
 
+Task UI Boundaries was subsequently reviewed, implemented, and completed on
+2026-08-24 with component, mocked Chromium E2E, guarded live Chromium E2E,
+production-build, and dependency-audit evidence.
+
 ## Completed Feature Summaries
 
 Completed summaries are intentionally lighter than planned feature plans. They
@@ -91,6 +93,7 @@ reconstructing every historical implementation detail.
 
 | Plan | Status |
 |---|---|
+| [Task UI Boundaries](completed/task-ui-boundaries.md) | Done |
 | [Frontend Recovery and App-Shell Copy Consistency](completed/frontend-recovery-app-shell-copy-consistency.md) | Done |
 | [Frontend UI Runtime Compatibility](completed/frontend-ui-runtime-compatibility.md) | Done |
 | [Runtime and Validation Foundation](completed/runtime-validation-foundation.md) | Done |

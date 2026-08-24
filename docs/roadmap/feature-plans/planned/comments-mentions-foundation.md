@@ -22,6 +22,8 @@ or search data across workspace boundaries.
   are implemented and tested.
 - The current task workflow is hosted under Home rather than a dedicated task
   route.
+- The current `TaskFormSheet` is a create/edit surface available only to roles
+  that may mutate tasks; it is not the task-detail host.
 - Mentions, comment APIs, comment UI, and notification persistence are not yet
   implemented.
 
@@ -67,10 +69,18 @@ and requires the security model, tests, and UI affordances to change together.
 
 ### Task-detail host
 
-Use the existing task Sheet if the preceding frontend-boundary plan confirms it
-can host an accessible comment thread. If a dedicated task route is required,
-stop and create a separate prerequisite plan rather than adding routing to this
-PR.
+Use a viewer-accessible `TaskDetailSheet` composed from the existing Sheet
+primitive. Keep it separate from `TaskFormSheet`: the detail Sheet owns task
+display and the comment thread for every role allowed to read comments, while
+task-editing affordances remain conditional on the existing task mutation
+contract. This comments PR introduces the detail Sheet and its explicit opening
+affordance; the preceding frontend-boundary refactor only establishes the named
+`TaskSection` and `TaskCard` extension seam.
+
+A dedicated task route is not required by this decision. If implementation
+shows that the Sheet cannot provide accessible focus, navigation, responsive,
+or long-thread behavior, stop and create a separate prerequisite route plan
+rather than adding routing to this PR.
 
 ### Mention persistence contract
 
@@ -183,8 +193,9 @@ plain-text content is validated and safely output-encoded.
 
 ## Ordered Implementation Plan
 
-1. Approve the comment role matrix, task-detail host, mention grammar, mention
-   persistence, body limit, and pagination contract.
+1. Approve the comment role matrix, confirm the selected `TaskDetailSheet`
+   contract, and approve mention grammar, mention persistence, body limit, and
+   pagination contract.
 2. Add or adjust schema/indexes only where the approved contract requires it;
    validate migration forward and rollback behavior.
 3. Implement strict body and mention validators/parsers as separate typed units.
@@ -206,7 +217,7 @@ plain-text content is validated and safely output-encoded.
 | Stable bounded listing | integration tests for ordering, cursors, concurrent insert, and empty page |
 | Strict body/mention contract | unit and HTTP contract tests for valid and invalid boundaries |
 | Atomic durable state | integration tests for mention failure and transaction rollback |
-| Search race/accessibility behavior | component tests plus real-browser debounce, abort, IME, keyboard, and ARIA flow |
+| Search race/accessibility behavior | component tests plus real-browser debounce, abort, keyboard, ARIA, focus, and composition-event flow without claiming operating-system IME coverage |
 | Safe rendering | component/browser evidence with HTML-like and long text inputs |
 | Existing task flow preserved | critical task live E2E and frontend/backend regression gates |
 
@@ -229,7 +240,7 @@ affected validation.
 ## Dependencies
 
 - [Frontend UI Runtime Compatibility](../completed/frontend-ui-runtime-compatibility.md)
-- [Task UI Boundaries](task-ui-boundaries.md)
+- [Task UI Boundaries](../completed/task-ui-boundaries.md)
 - completed task foundation and workspace authorization boundary
 - approved comment role matrix
 

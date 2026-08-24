@@ -79,6 +79,31 @@ test("creates a workspace, project, and task through the real application bounda
     await page.getByLabel("Status filter").selectOption("DONE");
     await expect(page.getByText("Live task workflow")).toBeVisible();
 
+    const assigneeFilter = page.getByRole("combobox", {
+      name: "Assignee filter"
+    });
+    await expect(assigneeFilter).not.toHaveAttribute("aria-controls");
+    await assigneeFilter.fill(`Project Live ${runId}`);
+    const assigneeListbox = page.getByRole("listbox", {
+      name: "Assignee candidates"
+    });
+    await expect(assigneeListbox).toBeVisible();
+    const assigneeListboxId = await assigneeListbox.getAttribute("id");
+    expect(assigneeListboxId).not.toBeNull();
+    await expect(assigneeFilter).toHaveAttribute(
+      "aria-controls",
+      assigneeListboxId!
+    );
+    await expect(
+      assigneeListbox.getByRole("option", {
+        name: new RegExp(`Project Live ${runId}`)
+      })
+    ).toHaveAttribute("tabindex", "-1");
+    await assigneeFilter.press("Escape");
+    await expect(assigneeListbox).toBeHidden();
+    await expect(assigneeFilter).toBeFocused();
+    await expect(assigneeFilter).not.toHaveAttribute("aria-controls");
+
     await page.reload();
     await expect(
       page.getByRole("button", { name: /WSLIVE WorkSync Live/ })

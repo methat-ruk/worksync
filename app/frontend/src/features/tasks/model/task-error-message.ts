@@ -11,6 +11,10 @@ const TASK_ERROR_MESSAGES: Record<string, string> = {
   VALIDATION_ERROR: "Check the task details and try again."
 };
 
+export function isTaskAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 export function taskErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     const code = error.body.data?.code;

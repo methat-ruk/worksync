@@ -41,11 +41,12 @@ Done:
   Chromium, Firefox, and WebKit compatibility evidence
 - accurate auth-recovery messages, announced retry loading, and app-shell copy
   that exposes only current routes and actions
+- maintainable task UI component boundaries, accessible assignee search, and a
+  separate viewer-accessible discussion-host decision
 - project setup, workflow, API, security, deployment, and roadmap docs
 
 Still missing before the collaboration MVP works:
 
-- maintainable and accessible task UI boundaries for the discussion host
 - explicit shared pagination and task authorization-policy semantics
 - workspace-scoped authorization for comment, file, and activity resources
 - comments, mentions, notifications, realtime, files, jobs, and production
@@ -64,18 +65,15 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Task UI Boundaries](roadmap/feature-plans/planned/task-ui-boundaries.md)
-   - separate task UI responsibilities, establish the discussion host, and
-     correct assignee-search accessibility before comments extend the surface.
-2. [Frontend Pagination Reconciliation](roadmap/feature-plans/planned/frontend-pagination-reconciliation.md)
+1. [Frontend Pagination Reconciliation](roadmap/feature-plans/planned/frontend-pagination-reconciliation.md)
    - extract only page-merging semantics proven common across current consumers.
-3. [Task Authorization Policy Cleanup](roadmap/feature-plans/planned/task-authorization-policy-cleanup.md)
+2. [Task Authorization Policy Cleanup](roadmap/feature-plans/planned/task-authorization-policy-cleanup.md)
    - remove or justify the production-dead task read-policy abstraction without
      changing authorization.
-4. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
+3. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
    - build the first task discussion workflow inside the proven workspace/task
      authorization boundary.
-5. Add notifications, files, jobs, activity, and production readiness in
+4. Add notifications, files, jobs, activity, and production readiness in
    dependency order. If attachments require asynchronous scanning, split the
    work around the attachment lifecycle contract, scan worker, and final
    availability/UI integration rather than creating a file/job dependency
