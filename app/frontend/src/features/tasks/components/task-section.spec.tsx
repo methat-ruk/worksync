@@ -466,6 +466,63 @@ describe("AssigneePicker auto-search", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("prevents Enter from submitting while open without an active option", async () => {
+    vi.useFakeTimers();
+    const onSubmit = vi.fn();
+    vi.mocked(searchTaskAssignees).mockResolvedValue({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      total: 0
+    });
+    render(
+      <form onSubmit={onSubmit}>
+        <AssigneePicker
+          onSelect={vi.fn()}
+          selected={null}
+          workspaceId={workspace.id}
+        />
+      </form>
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(input).not.toHaveAttribute("aria-activedescendant");
+    expect(fireEvent.keyDown(input, { key: "Enter" })).toBe(false);
+    expect(input).toHaveAttribute("aria-expanded", "true");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("only consumes Escape while the candidate popup is open", async () => {
+    vi.useFakeTimers();
+    const onKeyDown = vi.fn();
+    render(
+      <div onKeyDown={onKeyDown}>
+        <AssigneePicker
+          onSelect={vi.fn()}
+          selected={null}
+          workspaceId={workspace.id}
+        />
+      </div>
+    );
+
+    const input = screen.getByRole("combobox", { name: "Assignee" });
+    fireEvent.focus(input);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+
+    expect(fireEvent.keyDown(input, { key: "Escape" })).toBe(false);
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(onKeyDown).not.toHaveBeenCalled();
+    expect(fireEvent.keyDown(input, { key: "Escape" })).toBe(true);
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps virtual options out of the Tab order and closes when focus leaves", async () => {
     vi.useFakeTimers();
     render(

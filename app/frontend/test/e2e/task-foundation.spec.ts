@@ -118,17 +118,22 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
     /^http:\/\/localhost:4000\/api\/workspaces\/workspace-1\/task-assignees\?.*$/,
     (route) => {
       const url = new URL(route.request().url());
-      assigneeQueries.push(url.searchParams.get("search") ?? "");
+      const search = url.searchParams.get("search") ?? "";
+      assigneeQueries.push(search);
+      const items =
+        search === "Nobody"
+          ? []
+          : [{ id: "user-2", displayName: "Alice Example" }];
       return route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           success: true,
           data: {
-            items: [{ id: "user-2", displayName: "Alice Example" }],
+            items,
             page: 1,
             pageSize: 20,
-            total: 1
+            total: items.length
           }
         })
       });
@@ -164,17 +169,30 @@ test("auto-searches assignees and confirms terminal cancellation", async ({
   await expect(
     taskDialog.getByRole("listbox", { name: "Assignee candidates" })
   ).toBeVisible();
+  await formAssignee.fill("Nobody");
+  await expect.poll(() => assigneeQueries).toContain("Nobody");
+  await expect(
+    taskDialog.getByText("No matching workspace members.")
+  ).toBeVisible();
+  await formAssignee.press("Enter");
+  await expect(taskDialog).toBeVisible();
+  expect(taskMutationMethods).toEqual([]);
   await formAssignee.press("Escape");
   await expect(
     taskDialog.getByRole("listbox", { name: "Assignee candidates" })
   ).toBeHidden();
   await formAssignee.press("Enter");
   await expect(taskDialog).toBeVisible();
+  await expect(formAssignee).toHaveAttribute("aria-expanded", "true");
   await expect(
     taskDialog.getByRole("listbox", { name: "Assignee candidates" })
-  ).toBeVisible();
+  ).toBeAttached();
   expect(taskMutationMethods).toEqual([]);
-  await taskDialog.getByLabel("Title").press("Escape");
+  await formAssignee.press("Escape");
+  await expect(
+    taskDialog.getByRole("listbox", { name: "Assignee candidates" })
+  ).toBeHidden();
+  await formAssignee.press("Escape");
   await expect(taskDialog).toBeHidden();
   await expect(createTask).toBeFocused();
 

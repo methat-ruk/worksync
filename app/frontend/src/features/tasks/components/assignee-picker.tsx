@@ -185,7 +185,20 @@ export function AssigneePicker({
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (!open && (event.key === "ArrowDown" || event.key === "Enter")) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (!open) {
+        setOpen(true);
+        return;
+      }
+      const user =
+        activeIndex >= 0 ? candidates.items[activeIndex] : undefined;
+      if (user) {
+        select(user);
+      }
+      return;
+    }
+    if (!open && event.key === "ArrowDown") {
       event.preventDefault();
       setOpen(true);
       return;
@@ -198,14 +211,9 @@ export function AssigneePicker({
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActiveIndex((current) => Math.max(current - 1, 0));
-    } else if (event.key === "Enter" && activeIndex >= 0) {
+    } else if (event.key === "Escape" && open) {
       event.preventDefault();
-      const user = candidates.items[activeIndex];
-      if (user) {
-        select(user);
-      }
-    } else if (event.key === "Escape") {
-      event.preventDefault();
+      event.stopPropagation();
       setOpen(false);
     }
   }
