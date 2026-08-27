@@ -48,7 +48,7 @@ Feature plan order:
 3. [Frontend UI Runtime Compatibility](feature-plans/completed/frontend-ui-runtime-compatibility.md)
 4. [Frontend Recovery and App-Shell Copy Consistency](feature-plans/completed/frontend-recovery-app-shell-copy-consistency.md)
 5. [Task UI Boundaries](feature-plans/completed/task-ui-boundaries.md)
-6. [Frontend Pagination Reconciliation](feature-plans/planned/frontend-pagination-reconciliation.md)
+6. [Frontend Pagination Reconciliation](feature-plans/completed/frontend-pagination-reconciliation.md)
 7. [Task Authorization Policy Cleanup](feature-plans/planned/task-authorization-policy-cleanup.md)
 
 ## Exit Criteria

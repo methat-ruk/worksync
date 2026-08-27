@@ -848,10 +848,17 @@ test("creates the first workspace from the app empty state", async ({ page }) =>
   await page.goto("/app");
   await expect(page.getByText("Create your first workspace")).toBeVisible();
   await page.getByLabel("Workspace name").fill(" Product Team ");
-  await page.getByRole("button", { name: "Create workspace" }).click();
+  const createWorkspaceButton = page.getByRole("button", {
+    name: "Create workspace"
+  });
+  await expect(createWorkspaceButton).toHaveCSS("cursor", "pointer");
+  await createWorkspaceButton.click();
 
   await expect(page.getByText("Product Team is ready.")).toBeVisible();
   await expect(page.getByText("Product Team").first()).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Product Team/ }).first()
+  ).toHaveCSS("cursor", "pointer");
   expect(createRequestBody).toEqual({ name: "Product Team" });
   expect(createAuthorization).toBe("Bearer test-access-token");
 });

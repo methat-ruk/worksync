@@ -150,6 +150,10 @@
     color: var(--foreground);
   }
 
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
   html {
     font-family: var(--font-family-sans);
   }

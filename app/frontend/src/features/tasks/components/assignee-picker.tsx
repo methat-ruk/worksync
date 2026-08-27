@@ -15,25 +15,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  reconcilePageCollection,
+  type ReconciledPageCollection
+} from "@/lib/pagination/reconcile-page-collection";
 import { cn } from "@/lib/utils";
 
 import { searchTaskAssignees } from "../api/tasks-api";
-import type {
-  PublicTaskUser,
-  TaskAssigneeListData
-} from "../model/task-contract";
+import type { PublicTaskUser } from "../model/task-contract";
 import {
   isTaskAbortError,
   taskErrorMessage
 } from "../model/task-error-message";
 
-type AssigneeCandidateCollection = {
-  items: PublicTaskUser[];
-  total: number;
-  nextPage: number;
-  exhausted: boolean;
-  inconsistent: boolean;
-};
+type AssigneeCandidateCollection = ReconciledPageCollection<PublicTaskUser>;
 
 const initialAssigneeCandidateCollection: AssigneeCandidateCollection = {
   items: [],
@@ -42,33 +37,6 @@ const initialAssigneeCandidateCollection: AssigneeCandidateCollection = {
   exhausted: true,
   inconsistent: false
 };
-
-function mergeAssignees(
-  current: PublicTaskUser[],
-  incoming: PublicTaskUser[]
-): PublicTaskUser[] {
-  const byId = new Map(current.map((user) => [user.id, user]));
-  for (const user of incoming) {
-    byId.set(user.id, user);
-  }
-  return [...byId.values()];
-}
-
-function assigneeCandidateCollectionFromPage(
-  data: TaskAssigneeListData,
-  current: PublicTaskUser[] = []
-): AssigneeCandidateCollection {
-  const items = mergeAssignees(current, data.items);
-  const total = Math.max(data.total, items.length);
-  const exhausted = data.page * data.pageSize >= total;
-  return {
-    items,
-    total,
-    nextPage: data.page + 1,
-    exhausted,
-    inconsistent: exhausted && items.length < total
-  };
-}
 
 function shortId(value: string): string {
   return value.slice(-6);
@@ -121,12 +89,25 @@ export function AssigneePicker({
         ) {
           return;
         }
-        setCandidates((current) =>
-          assigneeCandidateCollectionFromPage(
-            result,
-            append ? current.items : []
-          )
-        );
+        if (append) {
+          setCandidates((current) =>
+            reconcilePageCollection(
+              {
+                mode: "append",
+                currentItems: current.items,
+                page: result
+              },
+              (user) => user.id
+            )
+          );
+        } else {
+          setCandidates(
+            reconcilePageCollection(
+              { mode: "replace", page: result },
+              (user) => user.id
+            )
+          );
+        }
         setActiveIndex(result.items.length > 0 && !append ? 0 : -1);
       } catch (requestError: unknown) {
         if (

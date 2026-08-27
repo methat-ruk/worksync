@@ -311,7 +311,7 @@ describe("TaskSection", () => {
       (_workspaceId, _projectId, options) =>
         Promise.resolve(
           options?.page === 2
-            ? page([task], 2, 2, 1)
+            ? page([{ ...task, title: "Ship updated task flow" }], 2, 2, 1)
             : page([task], 2, 1, 1)
         )
     );
@@ -325,6 +325,8 @@ describe("TaskSection", () => {
     expect(
       await screen.findByText(/task list changed while it was loading/i)
     ).toBeInTheDocument();
+    expect(screen.getByText("Ship updated task flow")).toBeInTheDocument();
+    expect(screen.queryByText("Ship task flow")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Refresh tasks" })
     ).toBeEnabled();
@@ -739,7 +741,9 @@ describe("AssigneePicker auto-search", () => {
         Promise.resolve(
           options?.page === 2
             ? {
-                items: [firstPage[19]!],
+                items: [
+                  { ...firstPage[19]!, displayName: "Updated Candidate 20" }
+                ],
                 page: 2,
                 pageSize: 20,
                 total: 21
@@ -774,6 +778,12 @@ describe("AssigneePicker auto-search", () => {
     expect(
       screen.getByText(/assignee list changed while it was loading/i)
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /Updated Candidate 20/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /^Candidate 20/ })
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Load more" })
     ).not.toBeInTheDocument();

@@ -186,6 +186,31 @@ describe("WorkspaceHome", () => {
     expect(operationsButton).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("retains the previous total when a later page reports a lower total", async () => {
+    const actor = userEvent.setup();
+    listWorkspacesMock
+      .mockResolvedValueOnce({
+        items: [workspace, designWorkspace],
+        page: 1,
+        pageSize: 2,
+        total: 3
+      })
+      .mockResolvedValueOnce({
+        items: [operationsWorkspace],
+        page: 2,
+        pageSize: 2,
+        total: 2
+      });
+
+    render(<WorkspaceHome user={user} />);
+
+    await screen.findByText("2 of 3 loaded");
+    await actor.click(screen.getByRole("button", { name: "Load more" }));
+
+    expect(await screen.findByText("Operations Team")).toBeInTheDocument();
+    expect(screen.getByText("3 of 3 loaded")).toBeInTheDocument();
+  });
+
   it("keeps loaded workspaces visible and retries the failed page", async () => {
     const actor = userEvent.setup();
     listWorkspacesMock

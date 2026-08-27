@@ -272,7 +272,10 @@ describe("ProjectSection", () => {
         projectPage([project], { page: 1, pageSize: 1, total: 2 })
       )
       .mockResolvedValueOnce(
-        projectPage([project], { page: 2, pageSize: 1, total: 2 })
+        projectPage(
+          [{ ...project, name: "WorkSync Updated" }],
+          { page: 2, pageSize: 1, total: 2 }
+        )
       )
       .mockResolvedValueOnce(projectPage([project, secondProject]));
 
@@ -282,6 +285,8 @@ describe("ProjectSection", () => {
     );
 
     expect(screen.getByText("1 of 2 loaded")).toBeInTheDocument();
+    expect(screen.getByText("WorkSync Updated")).toBeInTheDocument();
+    expect(screen.queryByText("WorkSync")).not.toBeInTheDocument();
     expect(
       screen.getByText(/The project list changed while it was loading/)
     ).toBeInTheDocument();
