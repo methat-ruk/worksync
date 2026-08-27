@@ -19,6 +19,10 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PublicProject } from "@/features/projects/model/project-contract";
 import type { PublicWorkspace } from "@/features/workspaces/model/workspace-contract";
+import {
+  reconcilePageCollection,
+  type ReconciledPageCollection
+} from "@/lib/pagination/reconcile-page-collection";
 
 import {
   listTasks,
@@ -27,7 +31,6 @@ import {
 import type {
   PublicTask,
   PublicTaskUser,
-  TaskListData,
   TaskStatus
 } from "../model/task-contract";
 import {
@@ -44,13 +47,8 @@ type AssigneeFilter =
   | { kind: "unassigned" }
   | { kind: "user"; user: PublicTaskUser };
 
-type TaskCollection = {
-  items: PublicTask[];
-  total: number;
+type TaskCollection = ReconciledPageCollection<PublicTask> & {
   pageSize: number;
-  nextPage: number;
-  exhausted: boolean;
-  inconsistent: boolean;
 };
 
 const initialTaskCollection: TaskCollection = {
@@ -61,38 +59,6 @@ const initialTaskCollection: TaskCollection = {
   exhausted: true,
   inconsistent: false
 };
-
-function mergeTasks(
-  current: PublicTask[],
-  incoming: PublicTask[]
-): PublicTask[] {
-  const byId = new Map(current.map((task) => [task.id, task]));
-  for (const task of incoming) {
-    byId.set(task.id, task);
-  }
-  return [...byId.values()];
-}
-
-function taskCollectionFromPage(
-  data: TaskListData,
-  current: PublicTask[] = []
-): TaskCollection {
-  const items = mergeTasks(current, data.items);
-  const total = Math.max(data.total, items.length);
-  const exhausted = data.page * data.pageSize >= total;
-  return {
-    items,
-    total,
-    pageSize: data.pageSize,
-    nextPage: data.page + 1,
-    exhausted,
-    inconsistent: exhausted && items.length < total
-  };
-}
-
-
-
-
 
 export function TaskSection({
   workspace,
@@ -146,7 +112,13 @@ export function TaskSection({
         signal: controller.signal
       });
       if (!controller.signal.aborted) {
-        setCollection(taskCollectionFromPage(data));
+        setCollection({
+          ...reconcilePageCollection(
+            { mode: "replace", page: data },
+            (task) => task.id
+          ),
+          pageSize: data.pageSize
+        });
         setLoadState("success");
       }
     } catch (error: unknown) {
@@ -197,9 +169,17 @@ export function TaskSection({
         signal: controller.signal
       });
       if (!controller.signal.aborted) {
-        setCollection((current) =>
-          taskCollectionFromPage(data, current.items)
-        );
+        setCollection((current) => ({
+          ...reconcilePageCollection(
+            {
+              mode: "append",
+              currentItems: current.items,
+              page: data
+            },
+            (task) => task.id
+          ),
+          pageSize: data.pageSize
+        }));
       }
     } catch (error: unknown) {
       if (!controller.signal.aborted && !isTaskAbortError(error)) {

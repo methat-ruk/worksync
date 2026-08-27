@@ -32,12 +32,15 @@ import type {
   WorkspaceRole
 } from "@/features/workspaces/model/workspace-contract";
 import { TaskSection } from "@/features/tasks/components/task-section";
+import {
+  reconcilePageCollection,
+  type ReconciledPageCollection
+} from "@/lib/pagination/reconcile-page-collection";
 
 import { createProject, listProjects } from "../api/projects-api";
 import { projectErrorMessage } from "../model/project-error-message";
 import {
   createProjectInputSchema,
-  type ProjectListData,
   type PublicProject
 } from "../model/project-contract";
 
@@ -48,13 +51,8 @@ type ProjectFieldErrors = {
   key?: string;
 };
 
-type ProjectCollection = {
-  items: PublicProject[];
-  total: number;
+type ProjectCollection = ReconciledPageCollection<PublicProject> & {
   pageSize: number;
-  nextPage: number;
-  exhausted: boolean;
-  inconsistent: boolean;
 };
 
 const initialCollection: ProjectCollection = {
@@ -71,34 +69,6 @@ const surfaceClass =
 
 function canMutateProjects(role: WorkspaceRole): boolean {
   return role !== "VIEWER";
-}
-
-function mergeProjects(
-  current: PublicProject[],
-  incoming: PublicProject[]
-): PublicProject[] {
-  const byId = new Map(current.map((project) => [project.id, project]));
-  for (const project of incoming) {
-    byId.set(project.id, project);
-  }
-  return [...byId.values()];
-}
-
-function collectionFromPage(
-  data: ProjectListData,
-  current: PublicProject[] = []
-): ProjectCollection {
-  const items = mergeProjects(current, data.items);
-  const total = Math.max(data.total, items.length);
-  const exhausted = data.page * data.pageSize >= total;
-  return {
-    items,
-    total,
-    pageSize: data.pageSize,
-    nextPage: data.page + 1,
-    exhausted,
-    inconsistent: exhausted && items.length < total
-  };
 }
 
 function formatDate(value: Date): string {
@@ -317,7 +287,13 @@ export function ProjectSection({
         signal: controller.signal
       });
       if (!controller.signal.aborted) {
-        setCollection(collectionFromPage(data));
+        setCollection({
+          ...reconcilePageCollection(
+            { mode: "replace", page: data },
+            (project) => project.id
+          ),
+          pageSize: data.pageSize
+        });
         setSelectedProjectId((current) =>
           current && data.items.some((project) => project.id === current)
             ? current
@@ -357,9 +333,17 @@ export function ProjectSection({
         signal: controller.signal
       });
       if (!controller.signal.aborted) {
-        setCollection((current) =>
-          collectionFromPage(data, current.items)
-        );
+        setCollection((current) => ({
+          ...reconcilePageCollection(
+            {
+              mode: "append",
+              currentItems: current.items,
+              page: data
+            },
+            (project) => project.id
+          ),
+          pageSize: data.pageSize
+        }));
       }
     } catch (error: unknown) {
       if (

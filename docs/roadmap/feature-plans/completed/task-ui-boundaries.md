@@ -257,6 +257,6 @@ findings and rerun affected validation.
 
 ## Follow-up
 
-- [Frontend Pagination Reconciliation](../planned/frontend-pagination-reconciliation.md)
+- [Frontend Pagination Reconciliation](frontend-pagination-reconciliation.md)
 - [Task Authorization Policy Cleanup](../planned/task-authorization-policy-cleanup.md)
 - [Comments and Mentions Foundation](../planned/comments-mentions-foundation.md)
