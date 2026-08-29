@@ -2,22 +2,10 @@ import {
   TaskStatus,
   WorkspaceRole
 } from "../../src/generated/prisma/client";
-import {
-  canMutateTask,
-  canReadTask
-} from "../../src/tasks/task-rbac.policy";
+import { canMutateTask } from "../../src/tasks/task-rbac.policy";
 import { canTransitionTaskStatus } from "../../src/tasks/task-status.policy";
 
 describe("task policies", () => {
-  it.each([
-    WorkspaceRole.OWNER,
-    WorkspaceRole.ADMIN,
-    WorkspaceRole.MEMBER,
-    WorkspaceRole.VIEWER
-  ])("allows %s to read tasks", (role) => {
-    expect(canReadTask(role)).toBe(true);
-  });
-
   it.each([
     [WorkspaceRole.OWNER, true],
     [WorkspaceRole.ADMIN, true],

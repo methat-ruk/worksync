@@ -20,11 +20,10 @@ Prioritize planned work by:
 4. smallest complete slice that can be reviewed deeply
 5. availability of validation evidence
 
-With pagination reconciliation complete, this means:
+With task authorization policy cleanup complete, this means:
 
-1. remove misleading task authorization policy abstractions
-2. deliver comments and mentions on the completed task UI boundary
-3. add notifications, files, jobs, and production readiness in dependency order
+1. deliver comments and mentions on the completed task UI boundary
+2. add notifications, files, jobs, and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -33,12 +32,11 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Task Authorization Policy Cleanup](planned/task-authorization-policy-cleanup.md) | 2 remediation | Planned |
-| 2 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 3 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 4 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 5 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 6 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 1 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
+| 2 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 3 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 4 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 5 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
 If the approved file-upload policy requires asynchronous malware scanning
 before attachments can be made available, replace the default File/Jobs order
@@ -87,6 +85,11 @@ Frontend Pagination Reconciliation was subsequently reviewed, implemented, and
 completed on 2026-08-27 with pure/component regression, mocked Chromium E2E,
 guarded live Chromium E2E, and production-build evidence.
 
+Task Authorization Policy Cleanup was reviewed and revised on 2026-08-29 as a
+deletion-only change with required real-PostgreSQL role/isolation evidence,
+Node.js 22 final validation, and post-validation roadmap closeout. It was then
+approved, implemented, reviewed, validated, and completed on the same date.
+
 ## Completed Feature Summaries
 
 Completed summaries are intentionally lighter than planned feature plans. They
@@ -95,6 +98,7 @@ reconstructing every historical implementation detail.
 
 | Plan | Status |
 |---|---|
+| [Task Authorization Policy Cleanup](completed/task-authorization-policy-cleanup.md) | Done |
 | [Frontend Pagination Reconciliation](completed/frontend-pagination-reconciliation.md) | Done |
 | [Task UI Boundaries](completed/task-ui-boundaries.md) | Done |
 | [Frontend Recovery and App-Shell Copy Consistency](completed/frontend-recovery-app-shell-copy-consistency.md) | Done |
