@@ -4,15 +4,16 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-08-19
+Last updated: 2026-08-29
 
 ## Current Snapshot
 
 WorkSync has completed the project and task foundation slices in Milestone 2.
-The frontend runtime compatibility and recovery/app-shell copy findings from
-the repository health review are resolved. Task UI, pagination, and
-policy-semantics debt should be resolved before the next collaboration slice.
-The next product capability remains comments and mentions.
+The frontend runtime compatibility, recovery/app-shell copy, task UI, and shared
+pagination findings from the repository health review are resolved. The
+production-dead task read-policy abstraction is also removed with real-database
+role and tenant-isolation evidence. The next product capability is comments and
+mentions.
 
 Done:
 
@@ -33,6 +34,8 @@ Done:
 - workspace/project-scoped task create/list/read/update/status APIs, fixed task
   lifecycle, assignment and due dates, viewer read-only access, membership
   removal concurrency protection, and task authorization/isolation evidence
+- explicit task read-policy ownership with the production-dead role helper
+  removed and PostgreSQL role/isolation regressions
 - frontend task list, filters, create/edit/status workflow, assignee auto-search,
   semantic action colors, and concise authentication errors
 - Docker hybrid and full run modes
@@ -47,7 +50,6 @@ Done:
 
 Still missing before the collaboration MVP works:
 
-- explicit shared pagination and task authorization-policy semantics
 - workspace-scoped authorization for comment, file, and activity resources
 - comments, mentions, notifications, realtime, files, jobs, and production
   readiness
@@ -65,15 +67,10 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [Frontend Pagination Reconciliation](roadmap/feature-plans/planned/frontend-pagination-reconciliation.md)
-   - extract only page-merging semantics proven common across current consumers.
-2. [Task Authorization Policy Cleanup](roadmap/feature-plans/planned/task-authorization-policy-cleanup.md)
-   - remove or justify the production-dead task read-policy abstraction without
-     changing authorization.
-3. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
+1. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
    - build the first task discussion workflow inside the proven workspace/task
      authorization boundary.
-4. Add notifications, files, jobs, activity, and production readiness in
+2. Add notifications, files, jobs, activity, and production readiness in
    dependency order. If attachments require asynchronous scanning, split the
    work around the attachment lifecycle contract, scan worker, and final
    availability/UI integration rather than creating a file/job dependency

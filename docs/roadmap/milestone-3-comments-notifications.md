@@ -30,10 +30,9 @@ Feature plan order:
 1. [Comments and Mentions Foundation](feature-plans/planned/comments-mentions-foundation.md)
 2. [Notifications Foundation](feature-plans/planned/notifications-foundation.md)
 
-Frontend runtime compatibility is complete. Comments begin after the task UI
-boundary remediation establishes the discussion host. Recovery/app-shell copy,
-shared pagination, and task policy cleanup remain ordered remediation work but
-are not hard dependencies of the comment authorization boundary.
+Frontend runtime compatibility, recovery/app-shell copy, the task UI boundary,
+shared pagination remediation, and task policy cleanup are complete. Comments
+and mentions are now the next ordered collaboration slice.
 
 ## Exit Criteria
 

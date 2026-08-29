@@ -32,11 +32,11 @@ track status, and see task activity inside the correct workspace boundary.
   live browser evidence
 - cohesive task UI component boundaries and corrected assignee combobox/focus
   behavior, with the future discussion host kept separate from the task form
+- production-dead task read-policy removal with real-PostgreSQL role-matrix and
+  tenant-hiding evidence
 
 ## Still Required
 
-- shared frontend pagination reconciliation
-- production-dead task authorization policy cleanup
 - board view
 - activity log model and write path
 - frontend project update workflow
@@ -49,7 +49,7 @@ Feature plan order:
 4. [Frontend Recovery and App-Shell Copy Consistency](feature-plans/completed/frontend-recovery-app-shell-copy-consistency.md)
 5. [Task UI Boundaries](feature-plans/completed/task-ui-boundaries.md)
 6. [Frontend Pagination Reconciliation](feature-plans/completed/frontend-pagination-reconciliation.md)
-7. [Task Authorization Policy Cleanup](feature-plans/planned/task-authorization-policy-cleanup.md)
+7. [Task Authorization Policy Cleanup](feature-plans/completed/task-authorization-policy-cleanup.md)
 
 ## Exit Criteria
 
