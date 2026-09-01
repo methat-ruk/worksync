@@ -1,1 +1,2 @@
-corepack pnpm validate:push
+exec "$(git rev-parse --show-toplevel)/scripts/run-with-project-node.sh" \
+  corepack pnpm validate:push

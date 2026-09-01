@@ -58,15 +58,19 @@ following `docs/project-setup.md`.
 | Layer | Command or trigger | Scope |
 |---|---|---|
 | Local targeted validation | Repository scripts selected for the changed surface | Fast feedback while implementing |
-| Pre-commit hook | `pnpm lint:staged` | ESLint on staged backend and frontend TypeScript files |
-| Pre-push hook | `pnpm validate:push` | Typecheck, lint, and backend unit tests |
+| Pre-commit hook | `.husky/pre-commit` | Select `.nvmrc` Node.js, then run `pnpm lint:staged` for staged TypeScript files |
+| Pre-push hook | `.husky/pre-push` | Select `.nvmrc` Node.js, then run `pnpm validate:push` for typecheck, lint, and backend unit tests |
 | CI backend job | Pull requests and pushes to `main` | PostgreSQL and Redis-backed backend validation, migrations, build, and artifact checks |
 | CI frontend job | Pull requests and pushes to `main` | Shared auth policy tests, frontend typecheck, lint, tests, and production build |
 | CI frontend E2E job | Pull requests and pushes to `main` | Production-build runtime compatibility on Chromium, Firefox, and WebKit plus mocked and live Playwright evidence for critical auth, navigation, project, and task behavior |
 | CI container job | Pull requests and pushes to `main` | Development/test Compose topology, orchestration self-test, and production/test image target builds |
 | CI security job | Pull requests and pushes to `main` | Production dependency audit |
 
-Git hooks provide local feedback and can be bypassed. CI remains the authoritative merge gate.
+Git hooks use `scripts/run-with-project-node.sh` so GUI clients and parent
+shells cannot silently run them with a different Node.js major. The launcher
+uses an already-installed `fnm` or `nvm` runtime and fails closed when the
+version in `.nvmrc` is unavailable. Hooks still provide local feedback and can
+be bypassed; CI remains the authoritative merge gate.
 If branch protection uses required check names, keep it aligned with the split
 CI jobs: `Backend validation`, `Frontend validation`, `Frontend E2E`,
 `Container topology and images`, and `Dependency audit`.
