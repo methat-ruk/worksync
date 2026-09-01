@@ -41,6 +41,12 @@ node --version
 
 The reported version must satisfy `>=22 <23`.
 
+Repository Git hooks also read `.nvmrc`. If Git is started by a parent process
+that exposes another Node.js version, the shared hook launcher uses an existing
+`fnm` or `nvm` installation to run the hook under Node.js 22. It never installs
+a runtime automatically and fails with an actionable message when the required
+version is unavailable.
+
 ## 2. Enable pnpm and Install Dependencies
 
 ```bash

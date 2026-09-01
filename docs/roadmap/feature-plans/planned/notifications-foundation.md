@@ -165,8 +165,8 @@ affected validation.
 
 ## Dependencies
 
-- [Comments and Mentions Foundation](comments-mentions-foundation.md) or another
-  approved, delivered event source
+- [Comments and Mentions Foundation](../completed/comments-mentions-foundation.md)
+  as the approved, delivered event source
 - app-shell and workspace authorization foundations
 
 ## Re-plan Conditions

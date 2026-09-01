@@ -15,6 +15,7 @@ Swagger/OpenAPI should reflect these rules as implementation is added.
 | Workspace create/read/list contracts and workspace DTO shape | [Workspace Management](api-design/workspaces.md) |
 | Project create/list/read/update contracts and project DTO shape | [Project Management](api-design/projects.md) |
 | Task create/read/update/status, assignment search, filtering, and lifecycle contracts | [Task Management](api-design/tasks.md) |
+| Comment list/create, mention occurrences, candidate search, cursor, and role contracts | [Comments and Mentions](api-design/comments.md) |
 | Server-side authorization, workspace boundary rules, and realtime event safety | [Authorization and Boundaries](api-design/authorization-boundaries.md) |
 
 ## Ownership Rules

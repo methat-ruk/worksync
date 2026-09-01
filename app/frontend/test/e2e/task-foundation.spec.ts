@@ -94,6 +94,118 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
+test("opens task details and posts a validated mention", async ({ page }) => {
+  const consoleErrors: string[] = [];
+  const commentBodies: unknown[] = [];
+  const commentRequests: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on("request", (request) => {
+    if (request.url().includes("/comments")) {
+      commentRequests.push(`${request.method()} ${request.url()}`);
+    }
+  });
+  await page.route(
+    /^http:\/\/localhost:4000\/api\/workspaces\/workspace-1\/mention-candidates\?.*$/,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            items: [
+              {
+                id: "user-2",
+                displayName: "Alice   Example",
+                mentionLabel: "Alice Example"
+              }
+            ]
+          }
+        })
+      })
+  );
+  await page.route(
+    /^http:\/\/localhost:4000\/api\/workspaces\/workspace-1\/projects\/project-1\/tasks\/task-1\/comments(?:\?.*)?$/,
+    (route) => {
+      if (route.request().method() === "POST") {
+        const input = route.request().postDataJSON() as {
+          body: string;
+          mentions: Array<{ start: number; end: number }>;
+        };
+        commentBodies.push(input);
+        return route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            message: "Comment created",
+            data: {
+              comment: {
+                id: "comment-1",
+                taskId: task.id,
+                body: input.body,
+                author: { id: user.id, displayName: user.displayName },
+                mentions: input.mentions.map(({ start, end }) => ({
+                  start,
+                  end
+                })),
+                createdAt: "2026-09-01T10:00:00.000Z"
+              }
+            }
+          })
+        });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { items: [], nextCursor: null }
+        })
+      });
+    }
+  );
+
+  await page.goto("/app");
+  const detailsButton = page.getByRole("button", { name: "View details" });
+  await detailsButton.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("No comments yet")).toBeVisible();
+
+  const composer = dialog.getByRole("textbox", { name: "Add a comment" });
+  await composer.fill("Ask @Ali");
+  await expect(
+    dialog.getByRole("option", { name: /Alice Example/i })
+  ).toBeVisible();
+  await composer.press("Tab");
+  await expect(composer).toHaveValue("Ask @Alice Example ");
+  await composer.pressSequentially("now");
+  await dialog.getByRole("button", { name: "Post comment" }).click();
+
+  await expect
+    .poll(() =>
+      commentRequests.some((value) => value.startsWith("POST "))
+    )
+    .toBe(true);
+  await expect.poll(() => commentBodies).toEqual([
+    {
+      body: "Ask @Alice Example now",
+      mentions: [{ userId: "user-2", start: 4, end: 18 }]
+    }
+  ]);
+  await expect(composer).toHaveValue("");
+  await expect(
+    dialog.locator("article").getByText("Ask @Alice Example now")
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await expect(detailsButton).toBeFocused();
+  expect(consoleErrors).toEqual([]);
+});
+
 test("auto-searches assignees and confirms terminal cancellation", async ({
   page
 }) => {

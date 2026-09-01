@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CheckCircle2,
   CircleX,
+  Eye,
   Pencil,
   Play,
   RotateCcw,
@@ -92,12 +93,14 @@ export function TaskCard({
   canMutate,
   pending,
   onEdit,
+  onView,
   onTransition
 }: {
   task: PublicTask;
   canMutate: boolean;
   pending: boolean;
   onEdit: (trigger: HTMLButtonElement) => void;
+  onView: (trigger: HTMLButtonElement) => void;
   onTransition: (status: TaskStatus) => void;
 }) {
   return (
@@ -128,36 +131,47 @@ export function TaskCard({
           {task.dueDate ? formatDate(task.dueDate) : "No due date"}
         </span>
       </div>
-      {canMutate && (
-        <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
-          <Button
-            disabled={pending}
-            onClick={(event) => onEdit(event.currentTarget)}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <Pencil aria-hidden="true" />
-            Edit
-          </Button>
-          {transitionOptions[task.status].map((option) => {
-            const Icon = option.icon;
-            return (
-              <Button
-                disabled={pending}
-                key={option.status}
-                onClick={() => onTransition(option.status)}
-                size="sm"
-                type="button"
-                variant={option.variant}
-              >
-                <Icon aria-hidden="true" />
-                {option.label}
-              </Button>
-            );
-          })}
-        </div>
-      )}
+      <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
+        <Button
+          onClick={(event) => onView(event.currentTarget)}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <Eye aria-hidden="true" />
+          View details
+        </Button>
+        {canMutate && (
+          <>
+            <Button
+              disabled={pending}
+              onClick={(event) => onEdit(event.currentTarget)}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <Pencil aria-hidden="true" />
+              Edit
+            </Button>
+            {transitionOptions[task.status].map((option) => {
+              const Icon = option.icon;
+              return (
+                <Button
+                  disabled={pending}
+                  key={option.status}
+                  onClick={() => onTransition(option.status)}
+                  size="sm"
+                  type="button"
+                  variant={option.variant}
+                >
+                  <Icon aria-hidden="true" />
+                  {option.label}
+                </Button>
+              );
+            })}
+          </>
+        )}
+      </div>
     </article>
   );
 }

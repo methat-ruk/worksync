@@ -3,8 +3,8 @@
 import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
+  Bell,
   Building2,
-  MessageSquare,
   Plus,
   Users
 } from "lucide-react";
@@ -36,9 +36,9 @@ const createButtonClass =
 
 const upcomingItems = [
   {
-    icon: MessageSquare,
-    title: "Comments and mentions",
-    body: "Task discussions and teammate mentions are the next collaboration slice.",
+    icon: Bell,
+    title: "Notifications",
+    body: "Private mention notifications and read state are the next collaboration slice.",
     status: "Next"
   }
 ];

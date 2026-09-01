@@ -165,16 +165,21 @@ rejected until a safe transfer rule exists.
 | Search task assignees | yes | yes | yes | yes |
 | Create task | yes | yes | yes | no |
 | Update, assign, and transition task | yes | yes | yes | no |
-| Comment | yes | yes | yes | no or maybe |
+| Read comments and search mention candidates | yes | yes | yes | yes |
+| Create comment | yes | yes | yes | no |
 | Upload file | yes | yes | yes, when allowed | no |
 | View activity log | yes | yes | maybe | maybe |
 
-Project and task mutations are available to normal collaboration members.
+Project, task, and comment mutations are available to normal collaboration
+members; `VIEWER` remains read-only for all three resources.
 Project keys remain immutable. Every project and task query is constrained to
 the caller's proven workspace, and cross-workspace task identifiers use safe
 not-found behavior. Task assignee search returns only the minimum identity
-fields required for assignment. Open decisions must be resolved before
-implementation for the remaining `maybe` cells.
+fields required for assignment. Comment listing/creation resolves the task
+through project and workspace scope. Mention targets are server-validated
+current workspace members, public history omits recipient IDs, bodies render as
+plain text, and comment plus occurrence rows commit atomically. Open decisions
+must be resolved before implementation for the remaining `maybe` cells.
 
 ## File Upload Security
 

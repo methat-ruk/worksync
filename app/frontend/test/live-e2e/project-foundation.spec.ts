@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, request, test } from "@playwright/test";
 
 const apiBaseUrl = "http://localhost:4000";
 
@@ -9,15 +9,33 @@ test("creates a workspace, project, and task through the real application bounda
   const consoleErrors: string[] = [];
   const projectStatuses: number[] = [];
   const runId = `${Date.now()}`;
+  const memberApi = await request.newContext({ baseURL: apiBaseUrl });
   try {
+    const ownerDisplayName = `Project Live ${runId}`;
     const signup = await context.request.post(`${apiBaseUrl}/api/auth/signup`, {
       data: {
-        displayName: `Project Live ${runId}`,
+        displayName: ownerDisplayName,
         email: `project-live-${runId}@example.com`,
         password: "correct horse battery staple"
       }
     });
     expect(signup.status()).toBe(201);
+    const signupData = (await signup.json()) as {
+      data: { accessToken: string };
+    };
+    const authorization = {
+      Authorization: `Bearer ${signupData.data.accessToken}`
+    };
+    const memberDisplayName = `Mention Live ${runId}`;
+    const memberEmail = `mention-live-${runId}@example.com`;
+    const memberSignup = await memberApi.post("/api/auth/signup", {
+      data: {
+        displayName: memberDisplayName,
+        email: memberEmail,
+        password: "correct horse battery staple"
+      }
+    });
+    expect(memberSignup.status()).toBe(201);
 
     const page = await context.newPage();
     page.on("console", (message) => {
@@ -35,12 +53,33 @@ test("creates a workspace, project, and task through the real application bounda
     await expect(page.getByText("Create your first workspace")).toBeVisible({
       timeout: 20_000
     });
-    await page.getByLabel("Workspace name").fill(`Project Live ${runId}`);
+    await page.getByLabel("Workspace name").fill(ownerDisplayName);
     await page.getByRole("button", { name: "Create workspace" }).click();
 
     await expect(page.getByText("No projects in this workspace")).toBeVisible({
       timeout: 20_000
     });
+    const workspaceResponse = await context.request.get(
+      `${apiBaseUrl}/api/workspaces`,
+      { headers: authorization }
+    );
+    expect(workspaceResponse.status()).toBe(200);
+    const workspaceData = (await workspaceResponse.json()) as {
+      data: { items: Array<{ id: string; name: string }> };
+    };
+    const workspaceId = workspaceData.data.items.find(
+      ({ name }) => name === ownerDisplayName
+    )?.id;
+    expect(workspaceId).toBeTruthy();
+    const membership = await context.request.post(
+      `${apiBaseUrl}/api/workspaces/${workspaceId}/members`,
+      {
+        headers: authorization,
+        data: { email: memberEmail, role: "MEMBER" }
+      }
+    );
+    expect(membership.status()).toBe(201);
+
     await page.getByLabel("Project name").fill("WorkSync Live");
     await page.getByLabel("Project key").fill("wslive");
     await page.getByRole("button", { name: "Create project" }).click();
@@ -76,6 +115,82 @@ test("creates a workspace, project, and task through the real application bounda
     });
     await expect(createTaskButton).toBeFocused();
     await expect(page.getByText("Backlog").last()).toBeVisible();
+
+    const detailsButton = page.getByRole("button", { name: "View details" });
+    await detailsButton.click();
+    const detailsDialog = page.getByRole("dialog");
+    await expect(detailsDialog.getByText("No comments yet")).toBeVisible();
+    const commentBody = `Ask @${memberDisplayName} now`;
+    const composer = detailsDialog.getByRole("textbox", {
+      name: "Add a comment"
+    });
+    await composer.fill(`Ask @${memberDisplayName}`);
+    await expect(
+      detailsDialog.getByRole("option", {
+        name: new RegExp(memberDisplayName)
+      })
+    ).toBeVisible();
+    await composer.press("Tab");
+    await composer.pressSequentially("now");
+    await detailsDialog
+      .getByRole("button", { name: "Post comment" })
+      .click();
+    await expect(detailsDialog.getByText(commentBody)).toBeVisible();
+
+    const projectsResponse = await context.request.get(
+      `${apiBaseUrl}/api/workspaces/${workspaceId}/projects`,
+      { headers: authorization }
+    );
+    expect(projectsResponse.status()).toBe(200);
+    const projectsData = (await projectsResponse.json()) as {
+      data: { items: Array<{ id: string; name: string }> };
+    };
+    const projectId = projectsData.data.items.find(
+      ({ name }) => name === "WorkSync Live"
+    )?.id;
+    expect(projectId).toBeTruthy();
+    const tasksResponse = await context.request.get(
+      `${apiBaseUrl}/api/workspaces/${workspaceId}/projects/${projectId}/tasks`,
+      { headers: authorization }
+    );
+    expect(tasksResponse.status()).toBe(200);
+    const tasksData = (await tasksResponse.json()) as {
+      data: { items: Array<{ id: string; title: string }> };
+    };
+    const taskId = tasksData.data.items.find(
+      ({ title }) => title === "Live task workflow"
+    )?.id;
+    expect(taskId).toBeTruthy();
+    const commentsResponse = await context.request.get(
+      `${apiBaseUrl}/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/comments`,
+      { headers: authorization }
+    );
+    expect(commentsResponse.status()).toBe(200);
+    const commentsData = (await commentsResponse.json()) as {
+      data: {
+        items: Array<{
+          body: string;
+          mentions: Array<{ start: number; end: number; userId?: string }>;
+        }>;
+      };
+    };
+    expect(commentsData.data.items).toEqual([
+      expect.objectContaining({
+        body: commentBody,
+        mentions: [
+          {
+            start: 4,
+            end: 5 + memberDisplayName.length
+          }
+        ]
+      })
+    ]);
+    expect(commentsData.data.items[0]?.mentions[0]).not.toHaveProperty(
+      "userId"
+    );
+    await detailsDialog.getByRole("button", { name: "Close" }).click();
+    await expect(detailsButton).toBeFocused();
+
     await page.getByRole("button", { name: "Start" }).click();
     await expect(page.getByText("In progress").last()).toBeVisible();
     await page.getByRole("button", { name: "Complete" }).click();
@@ -123,6 +238,7 @@ test("creates a workspace, project, and task through the real application bounda
     ).toBeGreaterThanOrEqual(2);
     expect(consoleErrors).toEqual([]);
   } finally {
+    await memberApi.dispose();
     await context.close();
   }
 });
