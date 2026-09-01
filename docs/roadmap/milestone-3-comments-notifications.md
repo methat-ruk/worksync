@@ -1,23 +1,23 @@
 # Milestone 3 - Comments, Mentions, and Notifications
 
-Status: Partial foundation only
+Status: In progress - comments and mentions delivered
 
 ## Goal
 
 Users can discuss tasks, mention teammates, receive relevant notifications, and
 trust realtime or async delivery does not cross workspace boundaries.
 
-## Foundation Already Present
+## Foundation Delivered
 
-- Prisma `Comment` model
-- task/comment/user relations
-- planned realtime event names in API documentation
+- workspace-scoped comment list/create APIs and role enforcement
+- bounded stable cursor pagination and additive comment indexes
+- canonical plain-text comment and durable mention-occurrence persistence
+- server-validated mention candidates and UTF-16 ranges
+- viewer-accessible task-detail thread and accessible mention composer
+- typed notification-ready `comment.created` result, not yet published
 
 ## Still Required
 
-- comment APIs
-- comment frontend UI
-- mention parsing
 - notification model
 - notification creation rules
 - notification read/unread state
@@ -27,12 +27,12 @@ trust realtime or async delivery does not cross workspace boundaries.
 
 Feature plan order:
 
-1. [Comments and Mentions Foundation](feature-plans/planned/comments-mentions-foundation.md)
+1. [Comments and Mentions Foundation](feature-plans/completed/comments-mentions-foundation.md) - Done
 2. [Notifications Foundation](feature-plans/planned/notifications-foundation.md)
 
-Frontend runtime compatibility, recovery/app-shell copy, the task UI boundary,
-shared pagination remediation, and task policy cleanup are complete. Comments
-and mentions are now the next ordered collaboration slice.
+Frontend prerequisites, task policy cleanup, and Comments and Mentions
+Foundation are complete. Notifications Foundation is the next ordered
+collaboration slice.
 
 ## Exit Criteria
 

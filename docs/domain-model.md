@@ -100,15 +100,25 @@ Open questions:
 
 ## Comment and Mention Rules
 
-- A comment can mention only users who are valid members of the same workspace unless product rules allow external mentions.
-- A mention may create a notification for the mentioned member.
-- Comment visibility follows task and workspace authorization.
+- `OWNER`, `ADMIN`, `MEMBER`, and `VIEWER` may read comments; `VIEWER` remains
+  read-only while the other three roles may create them.
+- Comment bodies are bounded canonical plain text. Mention occurrences are
+  UTF-16 ranges tied to stable user identities and validated against current
+  workspace membership when the comment is created.
+- A comment can mention only current members of its workspace. Self, external,
+  removed-member, and stale-label mentions are rejected.
+- Historical body text, attribution, and mention ranges remain stable after a
+  display-name change or membership removal; that history grants no current
+  resource access.
+- The foundation derives a notification-ready `comment.created` result, but
+  notification persistence and delivery remain a separate feature.
+- Comment visibility follows task, project, and workspace authorization.
 
 Open questions:
 
 - Are comments editable?
 - Are comments deletable?
-- Do edits trigger notifications?
+- If editing is added later, do edits trigger notifications?
 
 ## Notification Rules
 

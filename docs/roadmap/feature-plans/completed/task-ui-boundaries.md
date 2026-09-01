@@ -259,4 +259,4 @@ findings and rerun affected validation.
 
 - [Frontend Pagination Reconciliation](frontend-pagination-reconciliation.md)
 - [Task Authorization Policy Cleanup](task-authorization-policy-cleanup.md)
-- [Comments and Mentions Foundation](../planned/comments-mentions-foundation.md)
+- [Comments and Mentions Foundation](comments-mentions-foundation.md)

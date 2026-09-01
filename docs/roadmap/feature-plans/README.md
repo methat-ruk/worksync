@@ -20,10 +20,11 @@ Prioritize planned work by:
 4. smallest complete slice that can be reviewed deeply
 5. availability of validation evidence
 
-With task authorization policy cleanup complete, this means:
+With comments and mentions complete, this means:
 
-1. deliver comments and mentions on the completed task UI boundary
-2. add notifications, files, jobs, and production readiness in dependency order
+1. deliver notification persistence and read state from the server-derived
+   comment mention result
+2. add files, jobs, and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -32,11 +33,10 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Comments and Mentions Foundation](planned/comments-mentions-foundation.md) | 3 | Planned |
-| 2 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 3 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 4 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 5 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 1 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
+| 2 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 3 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 4 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
 If the approved file-upload policy requires asynchronous malware scanning
 before attachments can be made available, replace the default File/Jobs order
@@ -90,6 +90,11 @@ deletion-only change with required real-PostgreSQL role/isolation evidence,
 Node.js 22 final validation, and post-validation roadmap closeout. It was then
 approved, implemented, reviewed, validated, and completed on the same date.
 
+Comments and Mentions Foundation was reviewed, revised, approved, implemented,
+reviewed, and completed on 2026-09-01 with schema, contract, real-PostgreSQL,
+security, component, mocked Chromium E2E, production-build, and interactive
+desktop/mobile browser evidence.
+
 ## Completed Feature Summaries
 
 Completed summaries are intentionally lighter than planned feature plans. They
@@ -98,6 +103,7 @@ reconstructing every historical implementation detail.
 
 | Plan | Status |
 |---|---|
+| [Comments and Mentions Foundation](completed/comments-mentions-foundation.md) | Done |
 | [Task Authorization Policy Cleanup](completed/task-authorization-policy-cleanup.md) | Done |
 | [Frontend Pagination Reconciliation](completed/frontend-pagination-reconciliation.md) | Done |
 | [Task UI Boundaries](completed/task-ui-boundaries.md) | Done |

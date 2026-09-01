@@ -19,6 +19,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PublicProject } from "@/features/projects/model/project-contract";
 import type { PublicWorkspace } from "@/features/workspaces/model/workspace-contract";
+import { TaskDetailSheet } from "@/features/comments/components/task-detail-sheet";
 import {
   reconcilePageCollection,
   type ReconciledPageCollection
@@ -78,6 +79,8 @@ export function TaskSection({
   const [pageError, setPageError] = useState<string | null>(null);
   const [pagePending, setPagePending] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailTask, setDetailTask] = useState<PublicTask | null>(null);
   const [editingTask, setEditingTask] = useState<PublicTask | null>(null);
   const [cancelTask, setCancelTask] = useState<PublicTask | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
@@ -85,6 +88,7 @@ export function TaskSection({
   const controllerRef = useRef<AbortController | null>(null);
   const mutationControllerRef = useRef<AbortController | null>(null);
   const formReturnFocusRef = useRef<HTMLElement | null>(null);
+  const detailReturnFocusRef = useRef<HTMLElement | null>(null);
   const createTaskButtonRef = useRef<HTMLButtonElement | null>(null);
   const canMutate = workspace.membershipRole !== "VIEWER";
 
@@ -241,6 +245,12 @@ export function TaskSection({
     formReturnFocusRef.current = trigger;
     setEditingTask(task);
     setFormOpen(true);
+  }
+
+  function openDetails(task: PublicTask, trigger: HTMLButtonElement) {
+    detailReturnFocusRef.current = trigger;
+    setDetailTask(task);
+    setDetailOpen(true);
   }
 
   if (loadState === "loading") {
@@ -407,6 +417,7 @@ export function TaskSection({
               canMutate={canMutate}
               key={task.id}
               onEdit={(trigger) => openEdit(task, trigger)}
+              onView={(trigger) => openDetails(task, trigger)}
               onTransition={(status) => void transition(task, status)}
               pending={pendingTaskId === task.id}
               task={task}
@@ -482,6 +493,21 @@ export function TaskSection({
           workspaceId={workspace.id}
         />
       )}
+
+      <TaskDetailSheet
+        canCreateComment={canMutate}
+        onOpenChange={(open) => {
+          setDetailOpen(open);
+          if (!open) {
+            setDetailTask(null);
+          }
+        }}
+        open={detailOpen}
+        projectId={project.id}
+        returnFocusRef={detailReturnFocusRef}
+        task={detailTask}
+        workspaceId={workspace.id}
+      />
 
       <AlertDialog
         onOpenChange={(open) => {

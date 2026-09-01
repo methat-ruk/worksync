@@ -27,18 +27,19 @@ enum AuthProvider {
 }
 
 model User {
-  id             String         @id @default(cuid())
-  email          String         @unique
-  displayName    String
-  passwordHash   String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  authIdentities AuthIdentity[]
-  authSessions   AuthSession[]
-  memberships    WorkspaceMember[]
-  comments       Comment[]
-  tasksCreated   Task[]         @relation("TaskCreator")
-  tasksAssigned  Task[]         @relation("TaskAssignee")
+  id              String            @id @default(cuid())
+  email           String            @unique
+  displayName     String
+  passwordHash    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  authIdentities  AuthIdentity[]
+  authSessions    AuthSession[]
+  memberships     WorkspaceMember[]
+  comments        Comment[]
+  commentMentions CommentMention[]  @relation("MentionedUser")
+  tasksCreated    Task[]            @relation("TaskCreator")
+  tasksAssigned   Task[]            @relation("TaskAssignee")
 }
 
 model AuthIdentity {
@@ -57,29 +58,29 @@ model AuthIdentity {
 }
 
 model AuthSession {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   userId           String
   refreshTokenHash String
-  userAgent        String?  @db.VarChar(512)
+  userAgent        String?   @db.VarChar(512)
   expiresAt        DateTime
-  lastUsedAt       DateTime @default(now())
+  lastUsedAt       DateTime  @default(now())
   revokedAt        DateTime?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
 }
 
 model Workspace {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  members     WorkspaceMember[]
-  projects    Project[]
+  id        String            @id @default(cuid())
+  name      String
+  slug      String            @unique
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  members   WorkspaceMember[]
+  projects  Project[]
 }
 
 model WorkspaceMember {
@@ -130,14 +131,30 @@ model Task {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   taskId    String
   authorId  String
   body      String
-  createdAt DateTime @default(now())
-  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime         @default(now())
+  task      Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User             @relation(fields: [authorId], references: [id])
+  mentions  CommentMention[]
 
   @@index([taskId])
+  @@index([taskId, createdAt, id])
   @@index([authorId])
+}
+
+model CommentMention {
+  id              String  @id @default(cuid())
+  commentId       String
+  mentionedUserId String
+  start           Int
+  end             Int
+  comment         Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentionedUser   User    @relation("MentionedUser", fields: [mentionedUserId], references: [id])
+
+  @@unique([commentId, start, end])
+  @@index([commentId])
+  @@index([mentionedUserId, commentId])
 }

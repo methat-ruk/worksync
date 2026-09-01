@@ -17,6 +17,8 @@ import {
   type AuthIdentity,
   type AuthProvider,
   type AuthSession,
+  type Comment,
+  type CommentMention,
   type Project,
   type Task,
   type TaskStatus,
@@ -34,6 +36,8 @@ import { createGoogleOAuthTestHarness } from "./google-oauth-test-harness";
 type StoredUser = User;
 type StoredProject = Project;
 type StoredTask = Task;
+type StoredComment = Comment;
+type StoredCommentMention = CommentMention;
 type StoredWorkspace = Workspace;
 type StoredWorkspaceMember = WorkspaceMember;
 
@@ -54,6 +58,8 @@ export type AuthTestContext = {
   sessions: Map<string, AuthSession>;
   projects: Map<string, StoredProject>;
   tasks: Map<string, StoredTask>;
+  comments: Map<string, StoredComment>;
+  commentMentions: Map<string, StoredCommentMention>;
   workspaces: Map<string, StoredWorkspace>;
   workspaceMembers: Map<string, StoredWorkspaceMember>;
 };
@@ -72,6 +78,8 @@ export async function createAuthTestApp(
   const sessions = new Map<string, AuthSession>();
   const projects = new Map<string, StoredProject>();
   const tasks = new Map<string, StoredTask>();
+  const comments = new Map<string, StoredComment>();
+  const commentMentions = new Map<string, StoredCommentMention>();
   const workspaces = new Map<string, StoredWorkspace>();
   const workspaceMembers = new Map<string, StoredWorkspaceMember>();
   let sequence = 0;
@@ -153,6 +161,24 @@ export async function createAuthTestApp(
         : null,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt
+    };
+  }
+
+  function selectedComment(comment: StoredComment) {
+    const author = users.get(comment.authorId);
+    if (!author) {
+      throw new Error("Comment author not found");
+    }
+    return {
+      id: comment.id,
+      taskId: comment.taskId,
+      body: comment.body,
+      author: { id: author.id, displayName: author.displayName },
+      mentions: [...commentMentions.values()]
+        .filter((mention) => mention.commentId === comment.id)
+        .sort((left, right) => left.start - right.start || left.end - right.end)
+        .map(({ start, end }) => ({ start, end })),
+      createdAt: comment.createdAt
     };
   }
 
@@ -495,6 +521,9 @@ export async function createAuthTestApp(
         }: {
           where?: {
             workspaceId?: string;
+            userId?:
+              | string
+              | { in?: string[]; not?: string };
             user?: {
               displayName?: {
                 contains?: string;
@@ -508,6 +537,13 @@ export async function createAuthTestApp(
               return (
                 (!where?.workspaceId ||
                   member.workspaceId === where.workspaceId) &&
+                (!where?.userId ||
+                  (typeof where.userId === "string"
+                    ? member.userId === where.userId
+                    : (!where.userId.in ||
+                        where.userId.in.includes(member.userId)) &&
+                      (!where.userId.not ||
+                        member.userId !== where.userId.not))) &&
                 (!where?.user?.displayName?.contains ||
                   user?.displayName
                     .toLocaleLowerCase()
@@ -526,6 +562,9 @@ export async function createAuthTestApp(
         }: {
           where?: {
             workspaceId?: string;
+            userId?:
+              | string
+              | { in?: string[]; not?: string };
             user?: {
               displayName?: {
                 contains?: string;
@@ -541,6 +580,13 @@ export async function createAuthTestApp(
               return (
                 (!where?.workspaceId ||
                   member.workspaceId === where.workspaceId) &&
+                (!where?.userId ||
+                  (typeof where.userId === "string"
+                    ? member.userId === where.userId
+                    : (!where.userId.in ||
+                        where.userId.in.includes(member.userId)) &&
+                      (!where.userId.not ||
+                        member.userId !== where.userId.not))) &&
                 (!where?.user?.displayName?.contains ||
                   user?.displayName
                     .toLocaleLowerCase()
@@ -955,6 +1001,83 @@ export async function createAuthTestApp(
         }
       )
     },
+    comment: {
+      create: jest.fn(
+        ({
+          data
+        }: {
+          data: {
+            taskId: string;
+            authorId: string;
+            body: string;
+            mentions: {
+              create: Array<{
+                mentionedUserId: string;
+                start: number;
+                end: number;
+              }>;
+            };
+          };
+        }) => {
+          const now = new Date(
+            Date.UTC(2026, 8, 1, 10, 0, 0, sequence)
+          );
+          const comment: StoredComment = {
+            id: `comment-${++sequence}`,
+            taskId: data.taskId,
+            authorId: data.authorId,
+            body: data.body,
+            createdAt: now
+          };
+          comments.set(comment.id, comment);
+          for (const occurrence of data.mentions.create) {
+            const mention: StoredCommentMention = {
+              id: `comment-mention-${++sequence}`,
+              commentId: comment.id,
+              mentionedUserId: occurrence.mentionedUserId,
+              start: occurrence.start,
+              end: occurrence.end
+            };
+            commentMentions.set(mention.id, mention);
+          }
+          return selectedComment(comment);
+        }
+      ),
+      findMany: jest.fn(
+        ({
+          where,
+          take
+        }: {
+          where: {
+            taskId: string;
+            OR?: [
+              { createdAt: { lt: Date } },
+              { createdAt: Date; id: { lt: string } }
+            ];
+          };
+          take: number;
+        }) => {
+          const cursorDate = where.OR?.[0].createdAt.lt;
+          const cursorId = where.OR?.[1].id.lt;
+          return [...comments.values()]
+            .filter(
+              (comment) =>
+                comment.taskId === where.taskId &&
+                (!cursorDate ||
+                  comment.createdAt < cursorDate ||
+                  (comment.createdAt.getTime() === cursorDate.getTime() &&
+                    comment.id < (cursorId ?? "")))
+            )
+            .sort(
+              (left, right) =>
+                right.createdAt.getTime() - left.createdAt.getTime() ||
+                right.id.localeCompare(left.id)
+            )
+            .slice(0, take)
+            .map(selectedComment);
+        }
+      )
+    },
     user: {
       create: jest.fn(
         ({
@@ -1072,6 +1195,8 @@ export async function createAuthTestApp(
     sessions,
     projects,
     tasks,
+    comments,
+    commentMentions,
     workspaces,
     workspaceMembers
   };

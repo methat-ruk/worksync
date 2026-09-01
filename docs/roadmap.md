@@ -4,16 +4,17 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-08-29
+Last updated: 2026-09-01
 
 ## Current Snapshot
 
-WorkSync has completed the project and task foundation slices in Milestone 2.
+WorkSync has completed the project and task foundation slices in Milestone 2
+and the comments and mentions foundation in Milestone 3.
 The frontend runtime compatibility, recovery/app-shell copy, task UI, and shared
 pagination findings from the repository health review are resolved. The
 production-dead task read-policy abstraction is also removed with real-database
-role and tenant-isolation evidence. The next product capability is comments and
-mentions.
+role and tenant-isolation evidence. The next product capability is private
+mention notifications and read state.
 
 Done:
 
@@ -45,14 +46,16 @@ Done:
 - accurate auth-recovery messages, announced retry loading, and app-shell copy
   that exposes only current routes and actions
 - maintainable task UI component boundaries, accessible assignee search, and a
-  separate viewer-accessible discussion-host decision
+  separate viewer-accessible discussion host
+- workspace-scoped plain-text task comments, durable mention occurrences,
+  bounded mention search, stable cursor pagination, viewer read access, and
+  accessible desktop/mobile task discussion UI
 - project setup, workflow, API, security, deployment, and roadmap docs
 
 Still missing before the collaboration MVP works:
 
-- workspace-scoped authorization for comment, file, and activity resources
-- comments, mentions, notifications, realtime, files, jobs, and production
-  readiness
+- workspace-scoped authorization for file and activity resources
+- notifications, realtime, files, jobs, and production readiness
 
 ## Milestone Status
 
@@ -61,16 +64,16 @@ Still missing before the collaboration MVP works:
 | 0 Foundation | Done | App skeleton, auth foundation, CI, Docker, validation, and docs are in place. | [Milestone 0](roadmap/milestone-0-foundation.md) |
 | 1 Identity and Workspace | Partial | Auth, workspace APIs, membership/RBAC, frontend workspace bootstrap, and the reusable actor boundary are in place; remaining downstream resource policy and scoping continue by feature. | [Milestone 1](roadmap/milestone-1-identity-workspace.md) |
 | 2 Projects and Tasks | Partial | Project and task foundations, authorization, UI, and evidence are complete; board view, project update UI, and activity logging remain. | [Milestone 2](roadmap/milestone-2-projects-tasks.md) |
-| 3 Comments, Mentions, and Notifications | Partial foundation only | Comment model exists; mentions, notifications, and realtime are not implemented. | [Milestone 3](roadmap/milestone-3-comments-notifications.md) |
+| 3 Comments, Mentions, and Notifications | In progress | Comments and mentions are delivered; notifications and realtime remain. | [Milestone 3](roadmap/milestone-3-comments-notifications.md) |
 | 4 File Uploads and Background Jobs | Planned | MinIO and Redis local services exist; storage and job features are not implemented. | [Milestone 4](roadmap/milestone-4-files-jobs.md) |
 | 5 Production Readiness | Partial | CI, Docker, artifact checks, and docs exist; deployment target and production ops are not ready. | [Milestone 5](roadmap/milestone-5-production-readiness.md) |
 
 ## Current Priorities
 
-1. [Comments and Mentions Foundation](roadmap/feature-plans/planned/comments-mentions-foundation.md)
-   - build the first task discussion workflow inside the proven workspace/task
-     authorization boundary.
-2. Add notifications, files, jobs, activity, and production readiness in
+1. [Notifications Foundation](roadmap/feature-plans/planned/notifications-foundation.md)
+   - persist private mention notifications and add deterministic read state
+     from the delivered server-derived comment event.
+2. Add files, jobs, activity, and production readiness in
    dependency order. If attachments require asynchronous scanning, split the
    work around the attachment lifecycle contract, scan worker, and final
    availability/UI integration rather than creating a file/job dependency
@@ -113,8 +116,6 @@ access is scoped to the correct workspace.
 
 - Invitation flow: email invite only, link invite, direct member add, or a
   staged combination?
-- Viewer comment behavior: keep read-only as recommended for consistency, or
-  approve a collaboration-policy change?
 - File upload: direct-to-storage upload or backend proxy?
 - File policy: allowed types, maximum size, preview rules, and malware scanning
   hook?
