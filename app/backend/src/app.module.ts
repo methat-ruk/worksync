@@ -5,6 +5,7 @@ import { ConfigurationModule } from "./config/configuration.module";
 import { CommentsModule } from "./comments/comments.module";
 import { PrismaModule } from "./database/prisma.module";
 import { HealthModule } from "./health/health.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { ObservabilityModule } from "./observability/observability.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { TasksModule } from "./tasks/tasks.module";
@@ -20,6 +21,7 @@ import { WorkspacesModule } from "./workspaces/workspaces.module";
     WorkspacesModule,
     ProjectsModule,
     TasksModule,
+    NotificationsModule,
     CommentsModule
   ]
 })

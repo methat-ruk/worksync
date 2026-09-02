@@ -38,6 +38,7 @@ model User {
   memberships     WorkspaceMember[]
   comments        Comment[]
   commentMentions CommentMention[]  @relation("MentionedUser")
+  notifications   Notification[]    @relation("NotificationRecipient")
   tasksCreated    Task[]            @relation("TaskCreator")
   tasksAssigned   Task[]            @relation("TaskAssignee")
 }
@@ -74,13 +75,14 @@ model AuthSession {
 }
 
 model Workspace {
-  id        String            @id @default(cuid())
-  name      String
-  slug      String            @unique
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  members   WorkspaceMember[]
-  projects  Project[]
+  id            String            @id @default(cuid())
+  name          String
+  slug          String            @unique
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  members       WorkspaceMember[]
+  projects      Project[]
+  notifications Notification[]
 }
 
 model WorkspaceMember {
@@ -131,14 +133,15 @@ model Task {
 }
 
 model Comment {
-  id        String           @id @default(cuid())
-  taskId    String
-  authorId  String
-  body      String
-  createdAt DateTime         @default(now())
-  task      Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  author    User             @relation(fields: [authorId], references: [id])
-  mentions  CommentMention[]
+  id            String           @id @default(cuid())
+  taskId        String
+  authorId      String
+  body          String
+  createdAt     DateTime         @default(now())
+  task          Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author        User             @relation(fields: [authorId], references: [id])
+  mentions      CommentMention[]
+  notifications Notification[]
 
   @@index([taskId])
   @@index([taskId, createdAt, id])
@@ -157,4 +160,28 @@ model CommentMention {
   @@unique([commentId, start, end])
   @@index([commentId])
   @@index([mentionedUserId, commentId])
+}
+
+enum NotificationType {
+  COMMENT_MENTION
+}
+
+model Notification {
+  id           String           @id @default(cuid())
+  type         NotificationType
+  eventVersion Int
+  recipientId  String
+  workspaceId  String
+  commentId    String
+  readAt       DateTime?
+  createdAt    DateTime         @default(now())
+  recipient    User             @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  comment      Comment          @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([recipientId, type, commentId])
+  @@index([recipientId, createdAt, id])
+  @@index([recipientId, readAt])
+  @@index([workspaceId, recipientId])
+  @@index([commentId])
 }

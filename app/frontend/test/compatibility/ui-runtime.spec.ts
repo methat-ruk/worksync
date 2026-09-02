@@ -165,6 +165,18 @@ async function mockAuthenticatedApp(page: Page) {
         })
       })
   );
+  await page.route(
+    /^http:\/\/localhost:4000\/api\/notifications(?:\?.*)?$/,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { items: [], nextCursor: null, unreadCount: 0 }
+        })
+      })
+  );
 
   return releaseWorkspaceResponse;
 }

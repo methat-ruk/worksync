@@ -30,6 +30,10 @@ vi.mock("../theme/theme-provider", () => ({
   useTheme: () => ({ mode: "system", setMode: mocks.setMode })
 }));
 
+vi.mock("../notifications/components/notification-center", () => ({
+  NotificationCenter: () => <button type="button">Notifications</button>
+}));
+
 import { AppShell } from "./app-shell";
 
 beforeEach(() => {
@@ -68,10 +72,8 @@ describe("AppShell", () => {
 
     const header = screen.getByRole("banner");
     expect(
-      within(header).queryByRole("button", {
-        name: "Notifications coming soon"
-      })
-    ).not.toBeInTheDocument();
+      within(header).getByRole("button", { name: "Notifications" })
+    ).toBeVisible();
   });
 
   it("shows accurate workspace access copy", () => {

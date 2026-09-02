@@ -110,8 +110,8 @@ Open questions:
 - Historical body text, attribution, and mention ranges remain stable after a
   display-name change or membership removal; that history grants no current
   resource access.
-- The foundation derives a notification-ready `comment.created` result, but
-  notification persistence and delivery remain a separate feature.
+- Comment creation derives a versioned `comment.created` event and persists
+  mention notifications in the same transaction.
 - Comment visibility follows task, project, and workspace authorization.
 
 Open questions:
@@ -122,15 +122,26 @@ Open questions:
 
 ## Notification Rules
 
-- Notifications are scoped to a recipient.
-- Notifications must not expose resources outside the recipient's authorized workspace access.
-- Realtime delivery is an optimization over persistent notification state.
+- Notifications are private and scoped to one recipient.
+- `COMMENT_MENTION` is currently the only notification type. One row is created
+  per distinct mentioned member and source comment; repeated occurrences for
+  one member do not create duplicate notifications.
+- Source comments, mention occurrences, and notifications commit or roll back
+  together. The source comment is the stable logical event identity.
+- A recipient can list or mutate a notification only while they retain access
+  to its workspace and source resource.
+- Notification records reference source entities and do not duplicate comment
+  bodies or rendered copy.
+- Removing a member deletes their notifications for that workspace atomically;
+  deleting the source comment, workspace, or recipient cascades to its
+  notifications.
+- Read state is monotonic and idempotent. Realtime delivery remains an
+  optimization over persistent notification state.
 
 Open questions:
 
-- Which events create notifications in MVP?
-- Are notifications persisted before realtime delivery?
-- What is the retention policy?
+- Which additional events create notifications in MVP?
+- What time-based retention policy, if any, is required before production?
 
 ## File Rules
 

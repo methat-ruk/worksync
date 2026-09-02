@@ -14,11 +14,13 @@ import {
 } from "../database/serializable-transaction";
 import { Prisma } from "../generated/prisma/client";
 import { WorkspaceAuthorizationService } from "../workspaces/workspace-authorization.service";
+import { NotificationPersistenceService } from "../notifications/notification-persistence.service";
 import {
   deriveMentionLabel,
   hasValidMentionOccurrences,
   isCanonicalCommentBody
 } from "./comment-contract";
+import type { CommentCreatedEventV1 } from "./comment-created.event";
 import { canCreateComment } from "./comment.policy";
 import type {
   CommentListDataDto,
@@ -43,17 +45,6 @@ const COMMENT_SELECT = {
 } satisfies Prisma.CommentSelect;
 
 type CommentRecord = Prisma.CommentGetPayload<{ select: typeof COMMENT_SELECT }>;
-
-export type CommentCreatedEventV1 = Readonly<{
-  type: "comment.created";
-  version: 1;
-  workspaceId: string;
-  projectId: string;
-  taskId: string;
-  commentId: string;
-  authorId: string;
-  mentionedUserIds: readonly string[];
-}>;
 
 export type CreatedCommentResult = Readonly<{
   comment: PublicCommentDto;
@@ -162,7 +153,8 @@ function decodeCursor(value: string): CommentCursor {
 export class CommentsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly workspaceAuthorization: WorkspaceAuthorizationService
+    private readonly workspaceAuthorization: WorkspaceAuthorizationService,
+    private readonly notificationPersistence: NotificationPersistenceService
   ) {}
 
   async create(
@@ -238,19 +230,22 @@ export class CommentsService {
             select: COMMENT_SELECT
           });
 
-          return {
-            comment: toPublicComment(comment),
-            event: {
-              type: "comment.created",
-              version: 1,
-              workspaceId,
-              projectId,
-              taskId,
-              commentId: comment.id,
-              authorId: actor.userId,
-              mentionedUserIds
-            }
+          const event: CommentCreatedEventV1 = {
+            type: "comment.created",
+            version: 1,
+            workspaceId,
+            projectId,
+            taskId,
+            commentId: comment.id,
+            authorId: actor.userId,
+            mentionedUserIds
           };
+          await this.notificationPersistence.createForCommentCreated(
+            transaction,
+            event
+          );
+
+          return { comment: toPublicComment(comment), event };
         }
       );
     } catch (error: unknown) {

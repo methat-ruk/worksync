@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { authErrorMessage } from "../auth/model/auth-error-message";
 import { logout, logoutAll, useAuth } from "../auth/auth-store";
 import { useTheme } from "../theme/theme-provider";
+import { NotificationCenter } from "../notifications/components/notification-center";
 
 const themeOptions = [
   { value: "system", label: "System", icon: Monitor },
@@ -228,6 +229,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="ml-auto mr-2 h-7 self-auto"
             orientation="vertical"
           />
+          <NotificationCenter key={user.id} sessionKey={user.id} />
           {profileMenuOpen && (
             <button
               aria-label="Close profile menu"

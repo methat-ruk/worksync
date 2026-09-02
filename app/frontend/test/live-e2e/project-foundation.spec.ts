@@ -1,4 +1,4 @@
-import { expect, request, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 const apiBaseUrl = "http://localhost:4000";
 
@@ -6,10 +6,10 @@ test("creates a workspace, project, and task through the real application bounda
   browser
 }) => {
   const context = await browser.newContext();
+  const memberContext = await browser.newContext();
   const consoleErrors: string[] = [];
   const projectStatuses: number[] = [];
   const runId = `${Date.now()}`;
-  const memberApi = await request.newContext({ baseURL: apiBaseUrl });
   try {
     const ownerDisplayName = `Project Live ${runId}`;
     const signup = await context.request.post(`${apiBaseUrl}/api/auth/signup`, {
@@ -28,14 +28,23 @@ test("creates a workspace, project, and task through the real application bounda
     };
     const memberDisplayName = `Mention Live ${runId}`;
     const memberEmail = `mention-live-${runId}@example.com`;
-    const memberSignup = await memberApi.post("/api/auth/signup", {
+    const memberSignup = await memberContext.request.post(
+      `${apiBaseUrl}/api/auth/signup`,
+      {
       data: {
         displayName: memberDisplayName,
         email: memberEmail,
         password: "correct horse battery staple"
       }
-    });
+      }
+    );
     expect(memberSignup.status()).toBe(201);
+    const memberSignupData = (await memberSignup.json()) as {
+      data: { accessToken: string };
+    };
+    const memberAuthorization = {
+      Authorization: `Bearer ${memberSignupData.data.accessToken}`
+    };
 
     const page = await context.newPage();
     page.on("console", (message) => {
@@ -135,7 +144,98 @@ test("creates a workspace, project, and task through the real application bounda
     await detailsDialog
       .getByRole("button", { name: "Post comment" })
       .click();
-    await expect(detailsDialog.getByText(commentBody)).toBeVisible();
+    await expect(
+      detailsDialog.locator("article").getByText(commentBody)
+    ).toBeVisible();
+
+    await expect
+      .poll(
+        async () => {
+          const response = await memberContext.request.get(
+            `${apiBaseUrl}/api/notifications`,
+            { headers: memberAuthorization }
+          );
+          if (response.status() !== 200) {
+            return -1;
+          }
+          const body = (await response.json()) as {
+            data: { items: unknown[] };
+          };
+          return body.data.items.length;
+        },
+        { timeout: 20_000 }
+      )
+      .toBe(1);
+
+    const memberNotifications = await memberContext.request.get(
+      `${apiBaseUrl}/api/notifications`,
+      { headers: memberAuthorization }
+    );
+    expect(memberNotifications.status()).toBe(200);
+    const memberNotificationData = (await memberNotifications.json()) as {
+      data: {
+        items: Array<{
+          id: string;
+          readAt: string | null;
+          actor: { displayName: string };
+          task: { title: string };
+        }>;
+        unreadCount: number;
+      };
+    };
+    expect(memberNotificationData.data).toMatchObject({
+      items: [
+        {
+          readAt: null,
+          actor: { displayName: ownerDisplayName },
+          task: { title: "Live task workflow" }
+        }
+      ],
+      unreadCount: 1
+    });
+    expect(JSON.stringify(memberNotificationData)).not.toContain(commentBody);
+    expect(JSON.stringify(memberNotificationData)).not.toContain("recipientId");
+    const notificationId = memberNotificationData.data.items[0]?.id;
+    expect(notificationId).toBeTruthy();
+    const actorReadAttempt = await context.request.patch(
+      `${apiBaseUrl}/api/notifications/${notificationId}/read`,
+      { headers: authorization }
+    );
+    expect(actorReadAttempt.status()).toBe(404);
+
+    const memberPage = await memberContext.newPage();
+    memberPage.on("console", (message) => {
+      if (message.type() === "error") {
+        consoleErrors.push(message.text());
+      }
+    });
+    await memberPage.goto("/app");
+    const notificationTrigger = memberPage.getByRole("button", {
+      name: "Notifications, 1 unread"
+    });
+    await expect(notificationTrigger).toBeVisible({ timeout: 20_000 });
+    await notificationTrigger.click();
+    const notificationDialog = memberPage.getByRole("dialog", {
+      name: "Notifications"
+    });
+    await expect(
+      notificationDialog.locator("p").filter({
+        hasText: `${ownerDisplayName} mentioned you in Live task workflow`
+      })
+    ).toBeVisible();
+    await notificationDialog
+      .getByRole("button", { name: "Mark as read" })
+      .click();
+    await expect(
+      notificationDialog.getByRole("button", { name: "Mark as read" })
+    ).toHaveCount(0);
+    await expect(
+      notificationDialog.getByRole("button", { name: "Mark all as read" })
+    ).toBeDisabled();
+    await memberPage.keyboard.press("Escape");
+    await expect(
+      memberPage.getByRole("button", { name: "Notifications" })
+    ).toBeFocused();
 
     const projectsResponse = await context.request.get(
       `${apiBaseUrl}/api/workspaces/${workspaceId}/projects`,
@@ -238,7 +338,7 @@ test("creates a workspace, project, and task through the real application bounda
     ).toBeGreaterThanOrEqual(2);
     expect(consoleErrors).toEqual([]);
   } finally {
-    await memberApi.dispose();
+    await memberContext.close();
     await context.close();
   }
 });

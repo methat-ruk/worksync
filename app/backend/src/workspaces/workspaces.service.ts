@@ -436,6 +436,12 @@ export class WorkspacesService {
             },
             data: { assigneeId: null }
           });
+          await transaction.notification.deleteMany({
+            where: {
+              workspaceId,
+              recipientId: target.userId
+            }
+          });
           await transaction.workspaceMember.delete({
             where: { id: target.id }
           });

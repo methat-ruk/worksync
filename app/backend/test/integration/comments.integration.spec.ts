@@ -6,6 +6,7 @@ import { AppModule } from "../../src/app.module";
 import { AuthRateLimiterService } from "../../src/auth/services/auth-rate-limit.service";
 import { PrismaService } from "../../src/database/prisma.service";
 import { configureApplication } from "../../src/main";
+import { NotificationPersistenceService } from "../../src/notifications/notification-persistence.service";
 
 async function signUp(
   app: INestApplication,
@@ -120,11 +121,55 @@ describe("comment PostgreSQL integration", () => {
         end: start + "@Alice Example".length
       })
     ]);
+    await expect(
+      prisma.notification.findMany({
+        where: { commentId, recipientId: member.userId }
+      })
+    ).resolves.toEqual([
+      expect.objectContaining({
+        commentId,
+        recipientId: member.userId,
+        workspaceId,
+        type: "COMMENT_MENTION",
+        eventVersion: 1,
+        readAt: null
+      })
+    ]);
+
+    const notificationPersistence = app.get(NotificationPersistenceService);
+    jest
+      .spyOn(notificationPersistence, "createForCommentCreated")
+      .mockRejectedValueOnce(new Error("forced notification persistence failure"));
+    const rollbackBody = "Rollback @Alice Example";
+    await request(app.getHttpServer())
+      .post(
+        `/api/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}/comments`
+      )
+      .set("authorization", `Bearer ${owner.accessToken}`)
+      .send({
+        body: rollbackBody,
+        mentions: [
+          {
+            userId: member.userId,
+            start: rollbackBody.indexOf("@Alice Example"),
+            end: rollbackBody.length
+          }
+        ]
+      })
+      .expect(500);
+    await expect(
+      prisma.comment.findFirst({ where: { taskId, body: rollbackBody } })
+    ).resolves.toBeNull();
 
     await request(app.getHttpServer())
       .delete(`/api/workspaces/${workspaceId}/members/${membershipId}`)
       .set("authorization", `Bearer ${owner.accessToken}`)
       .expect(200);
+    await expect(
+      prisma.notification.count({
+        where: { workspaceId, recipientId: member.userId }
+      })
+    ).resolves.toBe(0);
 
     const listed = await request(app.getHttpServer())
       .get(
@@ -195,6 +240,11 @@ describe("comment PostgreSQL integration", () => {
     ]);
     expect(raceRemoval.status).toBe(200);
     expect([201, 400, 409]).toContain(raceComment.status);
+    await expect(
+      prisma.notification.count({
+        where: { workspaceId, recipientId: raceTarget.userId }
+      })
+    ).resolves.toBe(0);
     const persistedRaceComment = await prisma.comment.findFirst({
       where: { taskId, body: raceBody },
       include: { mentions: true }

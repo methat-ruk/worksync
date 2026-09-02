@@ -19,6 +19,8 @@ import {
   type AuthSession,
   type Comment,
   type CommentMention,
+  type Notification,
+  type NotificationType,
   type Project,
   type Task,
   type TaskStatus,
@@ -38,6 +40,7 @@ type StoredProject = Project;
 type StoredTask = Task;
 type StoredComment = Comment;
 type StoredCommentMention = CommentMention;
+type StoredNotification = Notification;
 type StoredWorkspace = Workspace;
 type StoredWorkspaceMember = WorkspaceMember;
 
@@ -60,6 +63,7 @@ export type AuthTestContext = {
   tasks: Map<string, StoredTask>;
   comments: Map<string, StoredComment>;
   commentMentions: Map<string, StoredCommentMention>;
+  notifications: Map<string, StoredNotification>;
   workspaces: Map<string, StoredWorkspace>;
   workspaceMembers: Map<string, StoredWorkspaceMember>;
 };
@@ -80,6 +84,7 @@ export async function createAuthTestApp(
   const tasks = new Map<string, StoredTask>();
   const comments = new Map<string, StoredComment>();
   const commentMentions = new Map<string, StoredCommentMention>();
+  const notifications = new Map<string, StoredNotification>();
   const workspaces = new Map<string, StoredWorkspace>();
   const workspaceMembers = new Map<string, StoredWorkspaceMember>();
   let sequence = 0;
@@ -180,6 +185,49 @@ export async function createAuthTestApp(
         .map(({ start, end }) => ({ start, end })),
       createdAt: comment.createdAt
     };
+  }
+
+  function selectedNotification(notification: StoredNotification) {
+    const workspace = workspaces.get(notification.workspaceId);
+    const comment = comments.get(notification.commentId);
+    const task = comment ? tasks.get(comment.taskId) : undefined;
+    const project = task ? projects.get(task.projectId) : undefined;
+    const author = comment ? users.get(comment.authorId) : undefined;
+    if (!workspace || !comment || !task || !project || !author) {
+      throw new Error("Notification source not found");
+    }
+    return {
+      id: notification.id,
+      type: notification.type,
+      workspaceId: notification.workspaceId,
+      readAt: notification.readAt,
+      createdAt: notification.createdAt,
+      workspace: { id: workspace.id, name: workspace.name },
+      comment: {
+        author: { id: author.id, displayName: author.displayName },
+        task: {
+          id: task.id,
+          title: task.title,
+          project: {
+            id: project.id,
+            key: project.key,
+            name: project.name,
+            workspaceId: project.workspaceId
+          }
+        }
+      }
+    };
+  }
+
+  function notificationMatchesRecipient(
+    notification: StoredNotification,
+    userId: string
+  ): boolean {
+    const workspace = workspaces.get(notification.workspaceId);
+    return (
+      notification.recipientId === userId &&
+      Boolean(workspace && workspaceVisibleTo(workspace, userId))
+    );
   }
 
   const prisma = {
@@ -1076,8 +1124,216 @@ export async function createAuthTestApp(
             .slice(0, take)
             .map(selectedComment);
         }
+      ),
+      findFirst: jest.fn(
+        ({
+          where
+        }: {
+          where: {
+            id: string;
+            authorId: string;
+            task: {
+              id: string;
+              project: { id: string; workspaceId: string };
+            };
+          };
+        }) => {
+          const comment = comments.get(where.id);
+          const task = comment ? tasks.get(comment.taskId) : undefined;
+          const project = task ? projects.get(task.projectId) : undefined;
+          if (
+            !comment ||
+            !task ||
+            !project ||
+            comment.authorId !== where.authorId ||
+            task.id !== where.task.id ||
+            project.id !== where.task.project.id ||
+            project.workspaceId !== where.task.project.workspaceId
+          ) {
+            return null;
+          }
+          return { id: comment.id };
+        }
       )
     },
+    notification: {
+      createMany: jest.fn(
+        ({
+          data
+        }: {
+          data: Array<{
+            type: NotificationType;
+            eventVersion: number;
+            recipientId: string;
+            workspaceId: string;
+            commentId: string;
+          }>;
+          skipDuplicates: boolean;
+        }) => {
+          let count = 0;
+          for (const input of data) {
+            const duplicate = [...notifications.values()].some(
+              (notification) =>
+                notification.recipientId === input.recipientId &&
+                notification.type === input.type &&
+                notification.commentId === input.commentId
+            );
+            if (duplicate) {
+              continue;
+            }
+            const notification: StoredNotification = {
+              id: `notification-${++sequence}`,
+              ...input,
+              readAt: null,
+              createdAt: new Date(
+                Date.UTC(2026, 8, 2, 10, 0, 0, sequence)
+              )
+            };
+            notifications.set(notification.id, notification);
+            count += 1;
+          }
+          return { count };
+        }
+      ),
+      findMany: jest.fn(
+        ({
+          where,
+          take
+        }: {
+          where: {
+            recipientId: string;
+            OR?: [
+              { createdAt: { lt: Date } },
+              { createdAt: Date; id: { lt: string } }
+            ];
+          };
+          take: number;
+        }) => {
+          const cursorDate = where.OR?.[0].createdAt.lt;
+          const cursorId = where.OR?.[1].id.lt;
+          return [...notifications.values()]
+            .filter(
+              (notification) =>
+                notificationMatchesRecipient(
+                  notification,
+                  where.recipientId
+                ) &&
+                (!cursorDate ||
+                  notification.createdAt < cursorDate ||
+                  (notification.createdAt.getTime() === cursorDate.getTime() &&
+                    notification.id < (cursorId ?? "")))
+            )
+            .sort(
+              (left, right) =>
+                right.createdAt.getTime() - left.createdAt.getTime() ||
+                right.id.localeCompare(left.id)
+            )
+            .slice(0, take)
+            .map(selectedNotification);
+        }
+      ),
+      count: jest.fn(
+        ({
+          where
+        }: {
+          where: { recipientId: string; readAt?: null };
+        }) =>
+          [...notifications.values()].filter(
+            (notification) =>
+              notificationMatchesRecipient(notification, where.recipientId) &&
+              (where.readAt !== null || notification.readAt === null)
+          ).length
+      ),
+      findFirst: jest.fn(
+        ({
+          where,
+          select
+        }: {
+          where: { recipientId: string; id: string };
+          select?: { id?: boolean; readAt?: boolean };
+        }) => {
+          const notification = notifications.get(where.id);
+          if (
+            !notification ||
+            !notificationMatchesRecipient(notification, where.recipientId)
+          ) {
+            return null;
+          }
+          return select && Object.keys(select).length <= 2
+            ? { id: notification.id, readAt: notification.readAt }
+            : selectedNotification(notification);
+        }
+      ),
+      update: jest.fn(
+        ({
+          where,
+          data
+        }: {
+          where: { id: string };
+          data: { readAt: Date };
+        }) => {
+          const notification = notifications.get(where.id);
+          if (!notification) {
+            throw new Error("Notification not found");
+          }
+          const updated = { ...notification, readAt: data.readAt };
+          notifications.set(updated.id, updated);
+          return updated;
+        }
+      ),
+      updateMany: jest.fn(
+        ({
+          where,
+          data
+        }: {
+          where: {
+            recipientId: string;
+            readAt: null;
+            createdAt: { lte: Date };
+          };
+          data: { readAt: Date };
+        }) => {
+          let count = 0;
+          for (const [id, notification] of notifications) {
+            if (
+              !notificationMatchesRecipient(
+                notification,
+                where.recipientId
+              ) ||
+              notification.readAt !== null ||
+              notification.createdAt > where.createdAt.lte
+            ) {
+              continue;
+            }
+            notifications.set(id, { ...notification, readAt: data.readAt });
+            count += 1;
+          }
+          return { count };
+        }
+      ),
+      deleteMany: jest.fn(
+        ({
+          where
+        }: {
+          where: { workspaceId: string; recipientId: string };
+        }) => {
+          let count = 0;
+          for (const [id, notification] of notifications) {
+            if (
+              notification.workspaceId === where.workspaceId &&
+              notification.recipientId === where.recipientId
+            ) {
+              notifications.delete(id);
+              count += 1;
+            }
+          }
+          return { count };
+        }
+      )
+    },
+    $queryRaw: jest.fn(async () => [
+      { readAt: new Date("2100-01-01T00:00:00.000Z") }
+    ]),
     user: {
       create: jest.fn(
         ({
@@ -1197,6 +1453,7 @@ export async function createAuthTestApp(
     tasks,
     comments,
     commentMentions,
+    notifications,
     workspaces,
     workspaceMembers
   };
