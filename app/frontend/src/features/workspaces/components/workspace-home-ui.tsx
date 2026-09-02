@@ -2,9 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import {
-  ArrowRight,
   Bell,
   Building2,
+  Check,
   Plus,
   Users
 } from "lucide-react";
@@ -38,8 +38,8 @@ const upcomingItems = [
   {
     icon: Bell,
     title: "Notifications",
-    body: "Private mention notifications and read state are the next collaboration slice.",
-    status: "Next"
+    body: "Private mention notifications and read state are available from the app header.",
+    status: "Available"
   }
 ];
 
@@ -229,14 +229,10 @@ export function UpcomingWorkItems() {
           <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">
             {item.body}
           </p>
-          <Button
-            className="mt-4 h-auto cursor-not-allowed items-center gap-1.5 px-0 text-muted-foreground opacity-80"
-            disabled
-            variant="link"
-          >
-            <span className="leading-none">Planned next</span>
-            <ArrowRight aria-hidden="true" className="size-3.5 translate-y-px" />
-          </Button>
+          <p className="mt-4 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Check aria-hidden="true" className="size-3.5" />
+            <span className="leading-none">Available in the header</span>
+          </p>
         </article>
       ))}
     </section>

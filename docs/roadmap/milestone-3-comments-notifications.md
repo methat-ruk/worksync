@@ -1,6 +1,6 @@
 # Milestone 3 - Comments, Mentions, and Notifications
 
-Status: In progress - comments and mentions delivered
+Status: In progress - comments, mentions, and stored notifications delivered
 
 ## Goal
 
@@ -14,29 +14,30 @@ trust realtime or async delivery does not cross workspace boundaries.
 - canonical plain-text comment and durable mention-occurrence persistence
 - server-validated mention candidates and UTF-16 ranges
 - viewer-accessible task-detail thread and accessible mention composer
-- typed notification-ready `comment.created` result, not yet published
+- typed versioned `comment.created` event and transaction-coupled notification
+  persistence
+- private recipient-scoped notification list and idempotent read-state APIs
+- app-shell notification panel with unread count, refresh, pagination, and
+  recoverable async states
+- member-removal cleanup and source lifecycle rules
 
 ## Still Required
 
-- notification model
-- notification creation rules
-- notification read/unread state
 - realtime notification delivery
 - workspace-scoped realtime authorization
-- notification and mention tests
 
 Feature plan order:
 
 1. [Comments and Mentions Foundation](feature-plans/completed/comments-mentions-foundation.md) - Done
-2. [Notifications Foundation](feature-plans/planned/notifications-foundation.md)
+2. [Notifications Foundation](feature-plans/completed/notifications-foundation.md) - Done
 
-Frontend prerequisites, task policy cleanup, and Comments and Mentions
-Foundation are complete. Notifications Foundation is the next ordered
-collaboration slice.
+Frontend prerequisites, task policy cleanup, Comments and Mentions Foundation,
+and stored Notifications Foundation are complete. Realtime delivery remains a
+separate collaboration slice.
 
 ## Exit Criteria
 
-- mention and notification rules are tested: Not done
+- mention and stored-notification rules are tested: Done
 - realtime events do not cross workspace boundaries: Not done
 - background jobs are idempotent where applicable: Not done
 

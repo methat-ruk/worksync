@@ -20,11 +20,9 @@ Prioritize planned work by:
 4. smallest complete slice that can be reviewed deeply
 5. availability of validation evidence
 
-With comments and mentions complete, this means:
+With stored mention notifications complete, this means:
 
-1. deliver notification persistence and read state from the server-derived
-   comment mention result
-2. add files, jobs, and production readiness in dependency order
+1. add files, jobs, and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -33,10 +31,9 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Notifications Foundation](planned/notifications-foundation.md) | 3 | Planned |
-| 2 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 3 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 4 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 1 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 2 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 3 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
 If the approved file-upload policy requires asynchronous malware scanning
 before attachments can be made available, replace the default File/Jobs order
@@ -95,6 +92,11 @@ reviewed, and completed on 2026-09-01 with schema, contract, real-PostgreSQL,
 security, component, mocked Chromium E2E, production-build, and interactive
 desktop/mobile browser evidence.
 
+Notifications Foundation was reviewed, revised, approved, implemented,
+post-reviewed, and completed on 2026-09-02 with additive schema, atomic source
+persistence, recipient privacy, real-PostgreSQL concurrency, component, mocked
+Chromium E2E, production-build, and interactive desktop/mobile browser evidence.
+
 ## Completed Feature Summaries
 
 Completed summaries are intentionally lighter than planned feature plans. They
@@ -103,6 +105,7 @@ reconstructing every historical implementation detail.
 
 | Plan | Status |
 |---|---|
+| [Notifications Foundation](completed/notifications-foundation.md) | Done |
 | [Comments and Mentions Foundation](completed/comments-mentions-foundation.md) | Done |
 | [Task Authorization Policy Cleanup](completed/task-authorization-policy-cleanup.md) | Done |
 | [Frontend Pagination Reconciliation](completed/frontend-pagination-reconciliation.md) | Done |

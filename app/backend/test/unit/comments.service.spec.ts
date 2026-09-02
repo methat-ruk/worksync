@@ -11,6 +11,7 @@ describe("CommentsService", () => {
     );
     const service = new CommentsService(
       { $transaction: transaction } as never,
+      {} as never,
       {} as never
     );
 

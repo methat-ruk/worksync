@@ -181,6 +181,24 @@ current workspace members, public history omits recipient IDs, bodies render as
 plain text, and comment plus occurrence rows commit atomically. Open decisions
 must be resolved before implementation for the remaining `maybe` cells.
 
+## Notification Privacy
+
+- Notification recipients are derived from authenticated, server-validated
+  comment mentions; clients cannot choose a recipient or workspace through a
+  notification endpoint.
+- List and mutation queries always bind `recipientId` to the authenticated user
+  and require current membership in the recorded workspace.
+- Missing, inaccessible, and cross-recipient identifiers use the same
+  non-revealing not-found response.
+- Public payloads omit recipient IDs, comment IDs and bodies, event internals,
+  deduplication keys, and mention ranges.
+- Comment, mention, and notification writes share one serializable transaction;
+  a notification failure cannot leave the source comment partially committed.
+- Membership removal deletes the departing recipient's workspace notifications
+  in the same transaction as the membership row.
+- Notification list limits are bounded and recipient/time indexes support the
+  authorized access path. Returned strings render as plain text, never HTML.
+
 ## File Upload Security
 
 Controls:

@@ -16,6 +16,7 @@ Swagger/OpenAPI should reflect these rules as implementation is added.
 | Project create/list/read/update contracts and project DTO shape | [Project Management](api-design/projects.md) |
 | Task create/read/update/status, assignment search, filtering, and lifecycle contracts | [Task Management](api-design/tasks.md) |
 | Comment list/create, mention occurrences, candidate search, cursor, and role contracts | [Comments and Mentions](api-design/comments.md) |
+| Recipient-scoped mention notifications, read state, pagination, and public payload rules | [Notifications](api-design/notifications.md) |
 | Server-side authorization, workspace boundary rules, and realtime event safety | [Authorization and Boundaries](api-design/authorization-boundaries.md) |
 
 ## Ownership Rules
