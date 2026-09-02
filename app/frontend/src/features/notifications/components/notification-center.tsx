@@ -39,7 +39,10 @@ import {
   markAllNotificationsRead,
   markNotificationRead
 } from "../api/notifications-api";
-import { mergeNotificationPages } from "../model/notification-cache";
+import {
+  mergeNotificationPages,
+  reconcileNotificationFirstPage
+} from "../model/notification-cache";
 import type { PublicNotification } from "../model/notification-contract";
 
 type NotificationState = {
@@ -55,18 +58,20 @@ type NotificationState = {
   pendingIds: ReadonlySet<string>;
 };
 
-const INITIAL_STATE: NotificationState = {
-  phase: "loading",
-  items: [],
-  nextCursor: null,
-  unreadCount: 0,
-  refreshing: false,
-  loadingMore: false,
-  listError: null,
-  actionError: null,
-  markAllPending: false,
-  pendingIds: new Set<string>()
-};
+function createInitialState(): NotificationState {
+  return {
+    phase: "loading",
+    items: [],
+    nextCursor: null,
+    unreadCount: 0,
+    refreshing: false,
+    loadingMore: false,
+    listError: null,
+    actionError: null,
+    markAllPending: false,
+    pendingIds: new Set<string>()
+  };
+}
 
 const notificationTimeFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -103,10 +108,12 @@ function NotificationSkeletons() {
 
 function NotificationRow({
   notification,
+  disabled,
   pending,
   onMarkRead
 }: {
   notification: PublicNotification;
+  disabled: boolean;
   pending: boolean;
   onMarkRead: (notificationId: string) => void;
 }) {
@@ -140,7 +147,7 @@ function NotificationRow({
       {notification.readAt === null ? (
         <Button
           className="self-end"
-          disabled={pending}
+          disabled={disabled}
           onClick={() => onMarkRead(notification.id)}
           size="sm"
           type="button"
@@ -156,9 +163,10 @@ function NotificationRow({
 
 export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
   const [open, setOpen] = useState(false);
-  const [state, setState] = useState<NotificationState>(INITIAL_STATE);
+  const [state, setState] = useState<NotificationState>(createInitialState);
   const requestGeneration = useRef(0);
   const acceptedMutationRevision = useRef(0);
+  const mutationInFlight = useRef(false);
   const firstPageController = useRef<AbortController | null>(null);
   const paginationController = useRef<AbortController | null>(null);
   const controllers = useRef(new Set<AbortController>());
@@ -209,7 +217,7 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
           items:
             mode === "initial"
               ? data.items
-              : mergeNotificationPages(
+              : reconcileNotificationFirstPage(
                   current.items,
                   data.items,
                   preserveAcceptedReadState
@@ -222,7 +230,11 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
           listError: null
         }));
       } catch (error: unknown) {
-        if (controller.signal.aborted || isAbortError(error)) {
+        if (
+          controller.signal.aborted ||
+          generation !== requestGeneration.current ||
+          isAbortError(error)
+        ) {
           return;
         }
         setState((current) => ({
@@ -240,6 +252,10 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
 
   useEffect(() => {
     const activeControllers = controllers.current;
+    acceptedMutationRevision.current = 0;
+    mutationInFlight.current = false;
+    setOpen(false);
+    setState(createInitialState());
     void loadFirstPage("initial");
     return () => {
       requestGeneration.current += 1;
@@ -286,7 +302,11 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
         listError: null
       }));
     } catch (error: unknown) {
-      if (controller.signal.aborted || isAbortError(error)) {
+      if (
+        controller.signal.aborted ||
+        generation !== requestGeneration.current ||
+        isAbortError(error)
+      ) {
         return;
       }
       setState((current) => ({
@@ -300,10 +320,11 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
   }
 
   async function markRead(notificationId: string): Promise<void> {
-    if (state.pendingIds.has(notificationId)) {
+    if (mutationInFlight.current || state.pendingIds.has(notificationId)) {
       return;
     }
     const controller = trackController();
+    mutationInFlight.current = true;
     setState((current) => ({
       ...current,
       actionError: null,
@@ -342,15 +363,21 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
         )
       }));
     } finally {
+      mutationInFlight.current = false;
       releaseController(controller);
     }
   }
 
   async function markAllRead(): Promise<void> {
-    if (state.markAllPending || state.unreadCount === 0) {
+    if (
+      mutationInFlight.current ||
+      state.markAllPending ||
+      state.unreadCount === 0
+    ) {
       return;
     }
     const controller = trackController();
+    mutationInFlight.current = true;
     setState((current) => ({
       ...current,
       actionError: null,
@@ -366,7 +393,11 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
         ...current,
         items: current.items.map((notification) => ({
           ...notification,
-          readAt: notification.readAt ?? data.readAt
+          readAt:
+            notification.readAt ??
+            (notification.createdAt.getTime() <= data.readAt.getTime()
+              ? data.readAt
+              : null)
         })),
         unreadCount: data.unreadCount,
         markAllPending: false
@@ -382,6 +413,7 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
         markAllPending: false
       }));
     } finally {
+      mutationInFlight.current = false;
       releaseController(controller);
     }
   }
@@ -435,7 +467,11 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
               </SheetDescription>
             </div>
             <Button
-              disabled={state.unreadCount === 0 || state.markAllPending}
+              disabled={
+                state.unreadCount === 0 ||
+                state.markAllPending ||
+                state.pendingIds.size > 0
+              }
               onClick={() => void markAllRead()}
               size="sm"
               type="button"
@@ -517,6 +553,7 @@ export function NotificationCenter({ sessionKey }: { sessionKey: string }) {
             <ul className="flex flex-col gap-3" aria-label="Notification list">
               {state.items.map((notification) => (
                 <NotificationRow
+                  disabled={state.markAllPending || state.pendingIds.size > 0}
                   key={notification.id}
                   notification={notification}
                   onMarkRead={(notificationId) => void markRead(notificationId)}

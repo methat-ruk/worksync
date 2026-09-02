@@ -292,8 +292,9 @@ type NotificationListData = {
 - Provide a manual refresh action because realtime and polling are out of scope.
 - Mark-one and mark-all controls use pessimistic updates: change visible read
   state and count only after an accepted server response.
-- Disable duplicate mutation submission while the same target is pending and
-  expose recoverable mutation errors without clearing the list.
+- Serialize notification read mutations so accepted authoritative counts
+  cannot arrive out of order, and expose recoverable mutation errors without
+  clearing the list.
 
 ## Client Reconciliation Contract
 
@@ -304,15 +305,17 @@ The AppShell notification controller is the only owner of pages and
   the latest applicable generation may replace first-page state.
 - Merge pagination results by notification ID and preserve newest-first tuple
   ordering.
+- Treat a first-page refresh that began after the latest accepted mutation as
+  authoritative: remove cached notifications that are no longer returned.
 - Treat accepted `readAt` as monotonic: an older list response containing
   `readAt: null` cannot overwrite a locally accepted non-null value.
 - A mutation records the request generation visible when it started. List
   responses started before an accepted mutation cannot overwrite that
   mutation's item or unread count.
 - After mark-one, apply the returned notification and authoritative count.
-- After mark-all, mark currently cached items read using the returned `readAt`,
-  apply the returned count, and refresh the first page. Discard list responses
-  that began before mark-all was accepted.
+- After mark-all, mark only cached items created at or before the returned
+  `readAt` cutoff as read, apply the returned count, and refresh the first page.
+  Discard list responses that began before mark-all was accepted.
 - Abort requests on logout or AppShell unmount and ignore responses whose
   authenticated-session identity no longer matches.
 - Do not add polling, websocket state, service workers, or a global cache
@@ -413,7 +416,7 @@ than treated as passing.
 - real PostgreSQL evidence covers source rollback, recipient deduplication,
   equal-timestamp pagination, concurrent inserts/read commands, and membership
   cleanup
-- frontend validation passed lint, typecheck, 202 tests, health-probe checks,
+- frontend validation passed lint, typecheck, 209 tests, health-probe checks,
   and the production Next.js build
 - mocked Chromium E2E passed all 25 tests, including responsive notification
   open/read/focus behavior

@@ -35,6 +35,8 @@ const projectCollectionUrl =
   /^http:\/\/localhost:4000\/api\/workspaces\/[^/]+\/projects(?:\?.*)?$/;
 const taskCollectionUrl =
   /^http:\/\/localhost:4000\/api\/workspaces\/[^/]+\/projects\/[^/]+\/tasks(?:\?.*)?$/;
+const notificationCollectionUrl =
+  /^http:\/\/localhost:4000\/api\/notifications(?:\?.*)?$/;
 
 test.beforeEach(async ({ page }) => {
   await page.route(apiUrl("/api/auth/refresh"), (route) =>
@@ -71,6 +73,16 @@ test.beforeEach(async ({ page }) => {
       })
     });
   });
+  await page.route(notificationCollectionUrl, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { items: [], nextCursor: null, unreadCount: 0 }
+      })
+    })
+  );
 });
 
 test("keeps landing navigation accessible and centered", async ({ page }) => {

@@ -92,6 +92,18 @@ test.beforeEach(async ({ page }) => {
         })
       })
   );
+  await page.route(
+    /^http:\/\/localhost:4000\/api\/notifications(?:\?.*)?$/,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { items: [], nextCursor: null, unreadCount: 0 }
+        })
+      })
+  );
 });
 
 test("opens task details and posts a validated mention", async ({ page }) => {

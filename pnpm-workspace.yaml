@@ -7,10 +7,12 @@ overrides:
   "@prisma/dev>find-my-way": "9.7.0"
   "@prisma/dev>valibot": "1.4.2"
   "@prisma/config>deepmerge-ts": "8.0.1"
+  "browserslist": "4.28.7"
   "fast-uri": "3.1.5"
   "js-yaml": "4.3.0"
   "lodash": "4.18.1"
   "multer": "2.2.0"
+  "mysql2": "3.22.0"
   "postcss": "8.5.23"
   "qs": "6.15.2"
   "next>sharp": "0.35.3"
@@ -24,5 +26,7 @@ allowBuilds:
   "unrs-resolver@1.12.2": true
 
 minimumReleaseAgeExclude:
+  - browserslist@4.28.7
   - fast-uri@3.1.5
+  - mysql2@3.22.0
   - postcss@8.5.23

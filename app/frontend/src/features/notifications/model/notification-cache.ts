@@ -35,3 +35,15 @@ export function mergeNotificationPages(
   }
   return [...merged.values()].sort(compareNewestFirst);
 }
+
+export function reconcileNotificationFirstPage(
+  existing: readonly PublicNotification[],
+  incoming: readonly PublicNotification[],
+  preserveAcceptedReadState: boolean
+): PublicNotification[] {
+  if (preserveAcceptedReadState) {
+    return mergeNotificationPages(existing, incoming, true);
+  }
+
+  return [...incoming].sort(compareNewestFirst);
+}

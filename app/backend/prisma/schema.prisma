@@ -183,4 +183,5 @@ model Notification {
   @@index([recipientId, createdAt, id])
   @@index([recipientId, readAt])
   @@index([workspaceId, recipientId])
+  @@index([commentId])
 }

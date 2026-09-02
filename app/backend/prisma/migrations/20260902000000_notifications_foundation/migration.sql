@@ -27,6 +27,9 @@ CREATE INDEX "Notification_recipientId_readAt_idx" ON "Notification"("recipientI
 -- CreateIndex
 CREATE INDEX "Notification_workspaceId_recipientId_idx" ON "Notification"("workspaceId", "recipientId");
 
+-- CreateIndex
+CREATE INDEX "Notification_commentId_idx" ON "Notification"("commentId");
+
 -- AddForeignKey
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_recipientId_fkey" FOREIGN KEY ("recipientId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 

@@ -139,6 +139,9 @@ describe("notification PostgreSQL integration", () => {
         }),
         expect.objectContaining({
           indexname: "Notification_recipientId_type_commentId_key"
+        }),
+        expect.objectContaining({
+          indexname: "Notification_commentId_idx"
         })
       ])
     );
