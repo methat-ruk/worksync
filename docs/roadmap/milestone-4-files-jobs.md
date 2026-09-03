@@ -20,7 +20,7 @@ weakening workspace isolation, storage safety, or job reliability.
 - file access controls
 - storage client integration
 - file type and size policy
-- signed URL or backend proxy decision
+- bounded backend streaming proxy contract
 - email jobs
 - reminder jobs
 - daily summary jobs
@@ -30,14 +30,15 @@ weakening workspace isolation, storage safety, or job reliability.
 
 Feature plan order:
 
-1. [File Upload Foundation](feature-plans/planned/file-upload-foundation.md)
-2. [Background Jobs Foundation](feature-plans/planned/background-jobs-foundation.md)
+1. [File Upload Backend and Storage Foundation](feature-plans/planned/file-upload-foundation.md)
+2. [Task Attachment UI Integration](feature-plans/planned/task-attachment-ui-integration.md)
+3. [Background Jobs Foundation](feature-plans/planned/background-jobs-foundation.md)
 
 This order is conditional. If the approved upload policy requires asynchronous
 malware scanning before availability, split the work into attachment
 metadata/storage lifecycle, Background Jobs scanning worker, and final upload
-availability/UI integration slices. Do not make the two foundation plans depend
-on each other as whole units.
+availability/UI integration slices. Do not create a dependency cycle between
+file and job work.
 
 ## Exit Criteria
 
