@@ -9,6 +9,13 @@ process.env.CORS_ORIGIN = "http://localhost:3000";
 process.env.DATABASE_URL = loadTestDatabaseUrl({ allowDefault: true });
 process.env.REDIS_URL =
   process.env.TEST_REDIS_URL ?? "redis://localhost:6379/1";
+process.env.S3_REGION = process.env.S3_REGION ?? "us-east-1";
+process.env.S3_BUCKET = process.env.S3_BUCKET ?? "worksync-test";
+process.env.S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID ?? "worksync";
+process.env.S3_SECRET_ACCESS_KEY =
+  process.env.S3_SECRET_ACCESS_KEY ?? "worksync-local-secret";
+process.env.S3_ENDPOINT = process.env.S3_ENDPOINT ?? "http://localhost:9000";
+process.env.S3_FORCE_PATH_STYLE = process.env.S3_FORCE_PATH_STYLE ?? "true";
 process.env.LOG_LEVEL = "silent";
 process.env.AUTH_RATE_LIMIT_ENABLED =
   process.env.AUTH_RATE_LIMIT_ENABLED ?? "false";

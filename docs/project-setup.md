@@ -104,7 +104,7 @@ The local Compose topology provides:
 |---|---|---|
 | PostgreSQL | `localhost:5433` | Application and integration-test persistence |
 | Redis | `localhost:6379` | Available for future cache, queue, and ephemeral state |
-| MinIO API | `localhost:9000` | Available for future S3-compatible storage integration |
+| MinIO API | `localhost:9000` | S3-compatible task-attachment storage |
 | MinIO Console | `http://localhost:9001` | Local object-storage administration |
 
 If `localhost:5433` is already occupied by another local service, change

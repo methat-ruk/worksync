@@ -74,9 +74,9 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [File Upload Backend and Storage Foundation](roadmap/feature-plans/planned/file-upload-foundation.md)
-   - establish the task-scoped attachment persistence, storage, API, security,
-     reconciliation, and real-MinIO validation boundary.
+1. Merge [File Upload Backend and Storage Foundation](roadmap/feature-plans/completed/file-upload-foundation.md)
+   after review of its task-scoped persistence, storage, API, security,
+   reconciliation, and real-MinIO evidence.
 2. [Task Attachment UI Integration](roadmap/feature-plans/planned/task-attachment-ui-integration.md)
    - complete progress, cancel, retry, list, download, delete, accessibility,
      and live-browser evidence on the merged backend contract.

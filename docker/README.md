@@ -87,8 +87,8 @@ The test orchestrator:
   container names
 - refuses to replace an active test project
 - stops at the first failed scope
-- removes test containers, networks, and the disposable PostgreSQL volume
-  after success, failure, SIGINT, or SIGTERM
+- removes test containers, networks, and the disposable PostgreSQL and MinIO
+  volumes after success, failure, SIGINT, or SIGTERM
 - never runs a reset command or addresses development Compose resources
 
 If an external failure prevents normal cleanup, run:

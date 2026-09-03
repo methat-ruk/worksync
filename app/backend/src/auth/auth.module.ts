@@ -69,6 +69,11 @@ import { SessionService } from "./services/session.service";
       useValue: globalThis.fetch.bind(globalThis)
     }
   ],
-  exports: [AuthGuard, AccessTokenService, SessionService]
+  exports: [
+    AuthGuard,
+    AccessTokenService,
+    SessionService,
+    AUTH_RATE_LIMIT_STORE
+  ]
 })
 export class AuthModule {}

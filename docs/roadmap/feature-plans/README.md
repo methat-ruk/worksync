@@ -33,7 +33,7 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [File Upload Backend and Storage Foundation](planned/file-upload-foundation.md) | 4 | Planned |
+| 1 | [File Upload Backend and Storage Foundation](completed/file-upload-foundation.md) | 4 | Done - awaiting merge |
 | 2 | [Task Attachment UI Integration](planned/task-attachment-ui-integration.md) | 4 | Blocked on file backend/storage |
 | 3 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
 | 4 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |

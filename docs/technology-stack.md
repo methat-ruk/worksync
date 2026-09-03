@@ -94,10 +94,10 @@ headers must remain redacted from logs.
 |---|---|---|
 | Docker Compose | Active for local development | Hybrid infrastructure and full local container orchestration |
 | Multi-target Dockerfile | Active | Frontend and backend application images |
-| Redis 7 | Service available, application integration pending | Future cache and ephemeral state |
+| Redis 7 | Active | Authentication and attachment upload rate protection; future cache/queue state |
 | BullMQ | Planned, not installed | Future email, reminder, and summary jobs |
-| MinIO | Service available, application integration pending | Local S3-compatible storage |
-| AWS S3 SDK | Planned, not installed | Production object-storage integration |
+| MinIO | Active in local and backend test topology | Private S3-compatible attachment storage and compatibility evidence |
+| AWS S3 SDK | Active in backend | Streaming attachment storage adapter; AWS staging remains a production-release gate |
 | Socket.IO | Planned, not installed | Realtime collaboration and notifications |
 | Email provider SDK | Planned, not installed | Transactional email delivery |
 

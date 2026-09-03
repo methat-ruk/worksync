@@ -24,6 +24,12 @@ const validEnvironment = {
   DATABASE_URL:
     "postgresql://worksync:worksync@postgres:5432/worksync_test?schema=public",
   TEST_REDIS_URL: "redis://redis:6379/1",
+  S3_REGION: "us-east-1",
+  S3_BUCKET: "worksync-test",
+  S3_ACCESS_KEY_ID: "worksync",
+  S3_SECRET_ACCESS_KEY: "worksync-local-secret",
+  S3_ENDPOINT: "http://minio:9000",
+  S3_FORCE_PATH_STYLE: "true",
   NEXT_PUBLIC_API_BASE_URL: "http://localhost:4000",
   NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
 };
@@ -97,6 +103,11 @@ async function testEnvironmentValidation() {
 }
 
 function testScopeSelection() {
+  assert.deepEqual(createScopePlan("backend"), {
+    build: ["backend-test"],
+    dependencies: ["postgres", "redis", "minio"],
+    run: ["migration-test", "backend-test"]
+  });
   assert.deepEqual(createScopePlan("frontend"), {
     build: ["frontend-test"],
     dependencies: [],
@@ -236,7 +247,7 @@ async function testSuccessfulLifecycle() {
     "ps --status running --quiet",
     "down --volumes --remove-orphans",
     "build backend-test",
-    "up -d --wait postgres redis",
+    "up -d --wait postgres redis minio",
     "run --rm migration-test",
     "run --rm backend-test"
   ]);

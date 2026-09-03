@@ -74,6 +74,14 @@ Frontend `NEXT_PUBLIC_*` values are build-time inputs. A URL or public feature
 flag change requires rebuilding the frontend image; backend secrets remain
 runtime-only configuration.
 
+Object-storage configuration uses `S3_REGION`, `S3_BUCKET`, optional paired
+`S3_ACCESS_KEY_ID`/`S3_SECRET_ACCESS_KEY`, optional non-production
+`S3_ENDPOINT`, and `S3_FORCE_PATH_STYLE`. Local and test use private MinIO with
+path-style access and may create the configured bucket on first attachment
+operation. Production rejects a custom endpoint/path-style mode, never creates
+or changes the bucket, and should use the AWS default credential chain or an
+IAM workload role rather than static keys.
+
 ## Build and Artifact Expectations
 
 - Build frontend and backend from reviewed source.
@@ -104,8 +112,8 @@ Local run-mode boundaries:
   `minio` service hostnames. Frontend `NEXT_PUBLIC_*` API/socket URLs still use
   host-reachable localhost values because they execute in the user's browser.
 - Isolated Docker test mode uses `docker/compose.test.yml`, the fixed
-  `worksync-test` project, and a disposable PostgreSQL volume. It is validation
-  infrastructure, not a production deployment definition.
+  `worksync-test` project, and disposable PostgreSQL and MinIO volumes. It is
+  validation infrastructure, not a production deployment definition.
 
 The container definition does not yet implement TLS/ingress, registry
 publishing, production secret injection, automated backups, or deployment
@@ -151,6 +159,13 @@ Post-deploy smoke checks should include affected paths:
 - database and Redis reachability
 - file upload smoke when storage changed
 - realtime smoke when Socket.IO behavior changed
+
+The attachment merge gate uses real PostgreSQL and MinIO. Production release
+also requires an AWS staging upload/list/download/delete smoke and a reviewed
+schedule/owner for `attachments:reconcile --apply`.
+The 2026-09-03 validation decision intentionally limits current evidence to
+local PostgreSQL, Redis, and MinIO; no AWS environment or live web system was
+used, so AWS compatibility remains unverified release evidence.
 
 ## Rollback, Containment, and Forward Fix
 

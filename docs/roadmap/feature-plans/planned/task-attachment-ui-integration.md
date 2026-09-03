@@ -8,7 +8,7 @@ Milestone: 4 - File Uploads and Background Jobs
 
 Impact: Material authenticated upload/download browser journey
 
-Dependency: [File Upload Backend and Storage Foundation](file-upload-foundation.md)
+Dependency: [File Upload Backend and Storage Foundation](../completed/file-upload-foundation.md)
 
 ## Goal
 

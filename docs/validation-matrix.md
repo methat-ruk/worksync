@@ -35,7 +35,7 @@ following `docs/project-setup.md`.
 | Lint | `pnpm lint` | Enforce static quality and framework rules across backend source, backend tests, and frontend source |
 | Test | `pnpm test` | Run configured automated tests |
 | Backend unit tests | `pnpm --filter @worksync/backend test:unit` | Validate configuration, errors, correlation, logging policy, and health logic |
-| Backend integration tests | `pnpm --filter @worksync/backend test:integration` | Validate Prisma lifecycle, PostgreSQL connectivity, Google identity linking, transaction rollback, and uniqueness races |
+| Backend integration tests | `pnpm --filter @worksync/backend test:integration` | Validate Prisma lifecycle, PostgreSQL connectivity, real-MinIO streaming/object cleanup, Google identity linking, transaction rollback, and uniqueness races |
 | Backend contract tests | `pnpm --filter @worksync/backend test:contract` | Validate API envelopes, status codes, DTO validation, and Swagger/OpenAPI contracts |
 | Backend security tests | `pnpm --filter @worksync/backend test:security` | Validate access/refresh controls plus Google state, replay, generic failure, and sensitive-data handling |
 | Backend API tests | `pnpm --filter @worksync/backend test:e2e` | Validate health, readiness, error, validation, correlation, and route-prefix contracts |
@@ -60,7 +60,7 @@ following `docs/project-setup.md`.
 | Local targeted validation | Repository scripts selected for the changed surface | Fast feedback while implementing |
 | Pre-commit hook | `.husky/pre-commit` | Select `.nvmrc` Node.js, then run `pnpm lint:staged` for staged TypeScript files |
 | Pre-push hook | `.husky/pre-push` | Select `.nvmrc` Node.js, then run `pnpm validate:push` for typecheck, lint, and backend unit tests |
-| CI backend job | Pull requests and pushes to `main` | PostgreSQL and Redis-backed backend validation, migrations, build, and artifact checks |
+| CI backend job | Pull requests and pushes to `main` | PostgreSQL, Redis, and MinIO-backed backend validation, migrations, build, and artifact checks |
 | CI frontend job | Pull requests and pushes to `main` | Shared auth policy tests, frontend typecheck, lint, tests, and production build |
 | CI frontend E2E job | Pull requests and pushes to `main` | Production-build runtime compatibility on Chromium, Firefox, and WebKit plus mocked and live Playwright evidence for critical auth, navigation, project, and task behavior |
 | CI container job | Pull requests and pushes to `main` | Development/test Compose topology, orchestration self-test, and production/test image target builds |
@@ -95,6 +95,13 @@ to development or skipping.
 Auth rate-limit validation must run with Redis configuration available when the
 Redis-backed limiter path is in scope. Use `TEST_REDIS_URL` for isolated test
 Redis databases and never log raw limiter keys, emails, cookies, or tokens.
+Attachment integration validation additionally requires the configured private
+MinIO endpoint. The attachment reconciler is dry-run by default; use
+`pnpm --filter @worksync/backend attachments:reconcile -- --apply` only in an
+authorized environment with a reviewed schedule and recovery owner.
+Local MinIO evidence does not satisfy the AWS production-release gate. Record
+an authorized AWS staging upload/read/delete smoke separately before release;
+the 2026-09-03 validation intentionally did not access a live AWS environment.
 
 ## Next Validation Upgrades
 

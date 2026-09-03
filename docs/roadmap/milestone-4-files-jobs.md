@@ -30,7 +30,7 @@ weakening workspace isolation, storage safety, or job reliability.
 
 Feature plan order:
 
-1. [File Upload Backend and Storage Foundation](feature-plans/planned/file-upload-foundation.md)
+1. [File Upload Backend and Storage Foundation](feature-plans/completed/file-upload-foundation.md)
 2. [Task Attachment UI Integration](feature-plans/planned/task-attachment-ui-integration.md)
 3. [Background Jobs Foundation](feature-plans/planned/background-jobs-foundation.md)
 

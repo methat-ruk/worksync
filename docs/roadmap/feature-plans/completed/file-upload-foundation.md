@@ -1,6 +1,6 @@
 # Feature Plan: File Upload Backend and Storage Foundation
 
-Status: Planned - reviewed; implementation not started
+Status: Done - implemented and validated 2026-09-03
 
 Intended PR: `feat/file-upload-foundation`
 
@@ -9,13 +9,37 @@ Milestone: 4 - File Uploads and Background Jobs
 Impact: Material untrusted-content, persistence, authorization, Redis, and
 object-storage boundary
 
-Follow-up PR: [Task Attachment UI Integration](task-attachment-ui-integration.md)
+Follow-up PR: [Task Attachment UI Integration](../planned/task-attachment-ui-integration.md)
 
 ## Goal
 
 Deliver the complete backend, persistence, storage, security, and validation
 contract for task attachments. The result must be independently usable and
 provable through the API, but it does not add the user-facing attachment UI.
+
+## Implementation Evidence
+
+- Fresh-database migration deploy applied all nine migrations, including the
+  attachment foundation, against disposable PostgreSQL.
+- Complete backend validation passed locally: 55 suites and 290 tests across unit,
+  integration, contract, security, and API projects, followed by backend build
+  and artifact validation.
+- The existing local `worksync_test` migration drift was repaired without
+  deleting data, migration status reports all nine migrations applied, and the
+  complete backend validation now passes against local PostgreSQL, Redis, and
+  MinIO.
+- Real PostgreSQL/Redis/MinIO attachment integration passed upload, idempotent
+  replay, list, authorized forced download, delete, role/isolation, content
+  rejection, malformed input, object lifecycle, and quota evidence.
+- Docker full/test configuration and orchestration self-tests passed with MinIO
+  in the backend validation topology.
+- The built backend runtime smoke and production dependency audit passed; the
+  latter reports no known vulnerabilities at the required threshold.
+- AWS staging smoke was explicitly deferred on 2026-09-03. Current provider
+  evidence is local MinIO only; AWS upload/read/delete remains a production
+  release gate and must not be represented as completed.
+- Production reconciliation scheduling remains a release gate, not PR merge
+  evidence.
 
 ## Existing Foundation
 
@@ -346,7 +370,7 @@ not an incidental configuration tweak.
   selected validation environment
 - MinIO bucket provisioning for local/test and the AWS S3 API subset as the
   production target contract
-- [Task Attachment UI Integration](task-attachment-ui-integration.md) depends on
+- [Task Attachment UI Integration](../planned/task-attachment-ui-integration.md) depends on
   this PR; this PR does not depend on the UI slice
 
 ## Ordered Implementation Plan
@@ -457,7 +481,7 @@ before final validation.
 
 ## Follow-up
 
-- [Task Attachment UI Integration](task-attachment-ui-integration.md)
+- [Task Attachment UI Integration](../planned/task-attachment-ui-integration.md)
 - AWS staging upload/download/delete smoke before production release
 - production reconciliation schedule and owner in deployment readiness
 - scanning/quarantine before broader or inline-rendered file types
