@@ -259,6 +259,8 @@ async function main() {
         CORS_ORIGIN: "http://localhost:3000",
         DATABASE_URL: databaseUrl,
         REDIS_URL: process.env.TEST_REDIS_URL ?? "redis://localhost:6379/1",
+        S3_REGION: process.env.S3_REGION ?? "us-east-1",
+        S3_BUCKET: process.env.S3_BUCKET ?? "worksync-test",
         LOG_LEVEL: "silent",
         AUTH_RATE_LIMIT_ENABLED: "false",
         TRUST_PROXY: "false",
