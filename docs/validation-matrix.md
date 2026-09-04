@@ -50,7 +50,7 @@ following `docs/project-setup.md`.
 | Image preparation | `pnpm docker:images:prepare` | Pull infrastructure dependencies and build all named development/test images without creating containers |
 | Prisma generate | `pnpm prisma:generate` | Validate Prisma schema and generated client |
 | Prisma validate | `pnpm prisma:validate` | Validate Prisma schema syntax and relation consistency |
-| Dependency audit | `pnpm audit --prod --audit-level moderate` | Fail on moderate-, high-, or critical-severity production dependency findings |
+| Dependency audit | `pnpm setup:audit && pnpm test:audit-production && pnpm audit:production` | Pinned OSV scan; require full production coverage; fail on moderate-or-higher/unknown severity or incomplete scans |
 | Docker infrastructure services | `pnpm docker:infra:up` | Start local PostgreSQL, Redis, and S3-compatible storage |
 
 ## Validation Layers

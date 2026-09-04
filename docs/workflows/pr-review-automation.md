@@ -87,7 +87,9 @@ pnpm --filter @worksync/frontend test:e2e
 Prisma migrate deploy/status against worksync_test
 Swagger/OpenAPI contract checked
 Docker compose config --quiet
-pnpm audit --prod --audit-level moderate
+pnpm setup:audit
+pnpm test:audit-production
+pnpm audit:production
 ```
 
 If a check was skipped, state why and what risk remains. This is not required

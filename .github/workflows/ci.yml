@@ -333,9 +333,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Setup pinned OSV-Scanner
+        timeout-minutes: 2
+        run: pnpm setup:audit
+
       - name: Self-test dependency audit gate
         run: pnpm test:audit-production
 
       - name: Audit production dependencies
         timeout-minutes: 3
         run: pnpm audit:production
+
+      - name: Upload dependency audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-report
+          path: test-results/dependency-audit.json
+          if-no-files-found: ignore
+          retention-days: 7

@@ -135,7 +135,8 @@ Use these commands instead of maintaining a manual package-version table:
 corepack pnpm list -r --depth 0
 corepack pnpm why <package>
 corepack pnpm outdated -r
-corepack pnpm audit --prod
+corepack pnpm setup:audit
+corepack pnpm audit:production
 ```
 
 When adding a dependency:
