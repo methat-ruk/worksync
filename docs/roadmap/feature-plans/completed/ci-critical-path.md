@@ -1,8 +1,10 @@
 # Feature Plan: CI Critical Path Optimization
 
-Status: Implemented and locally reviewed/validated - hosted CI pending
+Status: Done - implemented and validated 2026-09-04; awaiting merge
 
 Intended PR / branch: `perf/ci-critical-path`
+
+Pull request: [#51](https://github.com/methat-ruk/worksync/pull/51) (Draft; not merged)
 
 Milestone: Cross-cutting delivery improvement
 
@@ -23,8 +25,27 @@ sum of job durations. Keep additional runner consumption proportionate.
 
 Implementation and subsequent stage/commit/push/Draft PR delivery were approved
 on 2026-09-04. This document records the design, bounded experiments, and
-evidence. Controlled benchmark dispatches, repository settings changes, and
-deployment are not included in that approval.
+evidence. Hosted fault/cache experiments and controlled paired benchmarks were
+subsequently authorized and completed. Repository settings changes and production
+deployment remain outside that approval.
+
+## Completion - 2026-09-04
+
+- Implemented independent E2E lanes, fail-closed aggregation, isolated JUnit
+  reports, cache input identity and a shared four-target Docker Bake build.
+- Local validation and normal hosted CI passed. Hosted failure, missing-report,
+  skipped-lane and cancellation probes confirmed the aggregate does not pass
+  incomplete evidence. Cold/warm and changed-input cache checks passed.
+- Five paired warm rounds measured a workflow median of 3:52 -> 3:06 (-19.8%),
+  with median runner consumption 706 -> 722 seconds (+2.3%). Cold dependency
+  cache and CPU/memory probes also passed without changing test or security gates.
+- No remaining scoped implementation blocker was found in the closeout review.
+  Final documentation-commit CI and merge status are tracked on PR #51; completed
+  implementation is not a claim that the PR has merged or production has deployed.
+
+See [hosted validation evidence](../evidence/ci-critical-path-validation.md) for
+candidate identities, run links, measurements, test parity and remaining evidence
+boundaries. The original reviewed plan below is retained as decision history.
 
 ## Existing Foundation and Measured Baseline
 
@@ -497,15 +518,19 @@ Review included tracked and untracked files, unchanged suite selectors/assertion
 service and build-state ownership, cache identity, action inputs, artifact paths,
 and failure propagation. No remaining local blocking finding was identified.
 
-Still required before a performance/merge verdict:
+The originally pending hosted evidence has now been collected. Normal PR CI,
+independent lane setup, all three reports, Bake integration and the aggregate
+passed. Hosted assertion/report/skipped/cancelled negative paths remained
+fail-closed. Cache miss/hit and source/config/lockfile invalidation passed, and
+five paired warm comparisons measured a 3:52 -> 3:06 workflow median with a
+small 706 -> 722 median runner-second tradeoff. Complete source identity,
+limitations, run links and raw timing tables are recorded in
+[CI Critical Path: Hosted Validation Evidence](../evidence/ci-critical-path-validation.md).
 
-- Fresh hosted CI on the final pushed candidate: actual independent-lane setup,
-  artifact publication, Bake action integration, and aggregate scheduling.
-- Authorized hosted upstream-failure/cancellation exercise; local predicate
-  fixtures do not prove GitHub's scheduler behavior.
-- Comparable timing, cold/warm cache and changed-input observations, queue and
-  post-step costs, runner-seconds and flake/retry evidence. No after-duration or
-  percentage reduction is verified yet; 2:40-3:10 remains a target only.
+This result does not establish p95/p99, a long-term flake rate, a 30-40%
+guarantee or sub-two-minute CI. The final delivery gate is green CI on the
+documentation evidence commit, recorded in PR #51's checks and delivery summary;
+the temporary experiment workflows are not part of this PR.
 
 Repository branch-rule inspection was refreshed during implementation and still
 returned no effective main-branch rules. No settings were changed. At local
