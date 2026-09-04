@@ -50,11 +50,38 @@ corepack pnpm docker:full:config
 corepack pnpm docker:full:services
 corepack pnpm docker:full:build
 corepack pnpm test:docker-orchestration
-corepack pnpm audit --prod --audit-level moderate
+corepack pnpm test:audit-production
+corepack pnpm audit:production
 ```
 
 Run only the relevant subset during normal development. Before merging a
 pipeline change, run the closest local equivalent for every affected CI job.
+
+## Dependency Audit Failure and Recovery
+
+`audit:production` runs the pinned pnpm audit for production dependencies,
+including optional dependencies, and retains the moderate-or-higher gate.
+It prints the JSON report and distinguishes three outcomes:
+
+- Exit 0: a complete successful report with no moderate-or-higher findings.
+- Exit 1: moderate-or-higher vulnerabilities; review and remediate the report.
+- Exit 2: incomplete audit (network, registry, malformed report, or tool failure).
+  This is not a security pass: restore connectivity and rerun the failed job.
+
+The client makes at most three requests with a 30-second request timeout and
+10-second retry delays (110 seconds), bounded by a 120-second process timeout
+and a three-minute CI step timeout. Retries are pnpm's native transport retries;
+vulnerability findings are not retried or ignored. No alternate registry,
+advisory exclusions, or `--ignore-registry-errors` fallback is used.
+
+During `Setup pnpm` only, `npm_config_audit=false` disables npm's implicit audit
+of the bootstrap tool. The separately required project audit still runs. An
+npm advisory outage therefore does not also stall unrelated setup jobs.
+
+`test:audit-production` exercises the real pinned pnpm client against a local
+fixture registry for clean, vulnerable, transient-error, unavailable, and
+timeout cases. These fixtures prove gate behavior, not current dependency
+safety; the live production audit remains required before merge.
 
 ## Common Failure Modes
 

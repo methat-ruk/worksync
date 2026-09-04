@@ -59,6 +59,8 @@
     "validate:push": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm --filter @worksync/backend test:unit",
     "pr:review:evidence": "node scripts/pr-review-evidence.cjs",
     "pr:review:evidence:self-test": "node scripts/pr-review-evidence-self-test.cjs",
+    "audit:production": "node scripts/audit-production.cjs",
+    "test:audit-production": "node --test scripts/audit-production-self-test.cjs",
     "check": "corepack pnpm typecheck && corepack pnpm lint && corepack pnpm test && corepack pnpm build"
   },
   "lint-staged": {
