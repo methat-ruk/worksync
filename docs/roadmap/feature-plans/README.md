@@ -44,6 +44,19 @@ with reviewed PR slices: attachment metadata/storage lifecycle first, the
 Background Jobs scanning worker second, and upload availability/UI integration
 third. Do not create a File Upload <-> Background Jobs dependency cycle.
 
+## Completed Delivery Improvements
+
+Completed implementation and validation are distinct from PR merge or production
+deployment. The linked evidence records the verified scope and remaining boundaries.
+
+| Plan | Branch | Status |
+|---|---|---|
+| [CI Critical Path Optimization](completed/ci-critical-path.md) | `perf/ci-critical-path` | Done - validated 2026-09-04; awaiting PR #51 merge |
+
+[Hosted CI and benchmark evidence](evidence/ci-critical-path-validation.md)
+records five paired warm rounds, negative-path/report behavior, cache invalidation
+and Docker resource observations without reducing test or security gates.
+
 ## File Upload Plan Review - 2026-09-03
 
 The File Upload Foundation was reviewed against the current schema, backend and

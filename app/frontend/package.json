@@ -12,7 +12,7 @@
     "pretypecheck": "corepack pnpm --filter @worksync/auth-policy build",
     "typecheck": "tsc --noEmit",
     "pretest": "corepack pnpm --filter @worksync/auth-policy build",
-    "test": "vitest run && node --test scripts/health-probe.node-test.mjs scripts/check-tailwind-canonical-classes.node-test.mjs",
+    "test": "vitest run && node --test scripts/health-probe.node-test.mjs scripts/check-tailwind-canonical-classes.node-test.mjs scripts/playwright-reporting.node-test.mjs",
     "test:watch": "vitest",
     "pretest:e2e:compatibility": "corepack pnpm build",
     "test:e2e:compatibility": "node scripts/run-e2e.mjs --compatibility",
