@@ -167,7 +167,10 @@ rejected until a safe transfer rule exists.
 | Update, assign, and transition task | yes | yes | yes | no |
 | Read comments and search mention candidates | yes | yes | yes | yes |
 | Create comment | yes | yes | yes | no |
-| Upload file | yes | yes | yes, when allowed | no |
+| List and download task attachments | yes | yes | yes | yes |
+| Upload task attachment | yes | yes | yes | no |
+| Delete own task attachment | yes | yes | yes | no |
+| Delete another user's task attachment | yes | yes | no | no |
 | View activity log | yes | yes | maybe | maybe |
 
 Project, task, and comment mutations are available to normal collaboration
@@ -203,14 +206,26 @@ must be resolved before implementation for the remaining `maybe` cells.
 
 Controls:
 
-- validate content type and extension
-- enforce maximum size
-- normalize filenames
-- prevent path traversal
-- store metadata with workspace/resource scope
-- verify access before download or preview
-- do not expose private object URLs directly unless intentionally signed and bounded
-- add malware/content scanning hook when selected
+- accept only PNG/JPEG up to 10 MiB and require extension, declared MIME type,
+  streamed size, and magic signature to agree
+- normalize display filenames to NFC and reject path components, control and
+  bidirectional-control characters, CR/LF, empty names, and names above 255
+  UTF-8 bytes
+- generate random server-owned object keys and never expose keys, provider
+  responses, URLs, idempotency keys, credentials, filenames, or bytes in normal
+  logs and public errors
+- keep storage private and proxy every upload and download through current
+  task/workspace authorization
+- force download as `application/octet-stream` with `nosniff` and `no-store`;
+  do not preview or render content inline
+- reserve bounded task/workspace capacity transactionally and fail upload
+  closed when Redis rate protection or required storage is unavailable
+- retain partial failures in explicit private states and use the bounded,
+  idempotent attachment reconciler for stale upload and delete recovery
+
+This constrained foundation does not claim malware detection. Broadening the
+allowlist, previewing, transforming, or rendering attachments requires a new
+scanning/quarantine decision before availability.
 
 ## Realtime Security
 

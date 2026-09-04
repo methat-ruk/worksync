@@ -14,7 +14,7 @@ This document captures business meaning and invariants. It is not a database sch
 | Comment | Discussion entry attached to a task |
 | Mention | Reference to a workspace member inside comment content |
 | Notification | User-visible signal caused by relevant work activity |
-| File | Uploaded or attached object associated with permitted workspace resources |
+| Task Attachment | Private uploaded object whose metadata belongs to one task and whose bytes live in object storage |
 | Activity Log | Durable record of meaningful domain changes |
 
 ## Concepts
@@ -28,7 +28,7 @@ This document captures business meaning and invariants. It is not a database sch
 | Task | stable task identity | Belongs to one project and one workspace through that project |
 | Comment | stable comment identity | Belongs to one task |
 | Notification | stable notification identity | Belongs to one recipient |
-| File | stable file identity | Metadata and authorization are in WorkSync; bytes live in object storage |
+| Task Attachment | stable attachment identity | PostgreSQL metadata is authoritative; private bytes live in object storage |
 | Activity Log Entry | stable event record | Used for audit and debugging |
 
 ## Core Invariants
@@ -145,16 +145,23 @@ Open questions:
 
 ## File Rules
 
-- File metadata belongs to a workspace-scoped resource.
-- File access requires permission to the associated resource.
-- File content is untrusted input.
-- Upload limits and content validation are required.
+- The first attachment owner is a task. Comment attachments are later work.
+- Current task access is required for every list, download, and mutation; object
+  knowledge and prior upload permission grant no authority.
+- `OWNER`, `ADMIN`, and `MEMBER` may upload. All current members may read.
+  Uploaders and elevated roles may delete under the API role contract.
+- Attachment content is untrusted. The foundation accepts only PNG/JPEG up to
+  10 MiB and never previews or renders it inline.
+- `PENDING`, `FAILED`, `AVAILABLE`, `DELETING`, and `DELETE_FAILED` make
+  storage/database partial failures explicit and reconcilable.
+- Task deletion is restricted while attachment metadata remains; object cleanup
+  must precede future task/project/workspace deletion flows.
 
 Open questions:
 
-- Are files attached to tasks, comments, or both?
 - Are previews generated?
-- What file types and sizes are allowed?
+- What evidence justifies broader file types, malware scanning, direct upload,
+  or resumable transport?
 
 ## Activity Log Rules
 

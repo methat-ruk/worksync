@@ -68,12 +68,21 @@ jobs:
       TEST_REDIS_URL: redis://localhost:6379/1
       AUTH_RATE_LIMIT_ENABLED: "true"
       AUTH_RATE_LIMIT_KEY_SECRET: ci-rate-limit-secret-at-least-32-bytes
+      S3_REGION: us-east-1
+      S3_BUCKET: worksync-test
+      S3_ACCESS_KEY_ID: worksync
+      S3_SECRET_ACCESS_KEY: worksync-local-secret
+      S3_ENDPOINT: http://localhost:9000
+      S3_FORCE_PATH_STYLE: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
+        env:
+          # Avoid npm's implicit audit of the pnpm bootstrap tool, not the project gate.
+          npm_config_audit: "false"
         with:
           run_install: false
 
@@ -89,6 +98,26 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Start MinIO
+        run: >-
+          docker run --detach --rm --name worksync-ci-minio
+          --publish 9000:9000
+          --env MINIO_ROOT_USER=worksync
+          --env MINIO_ROOT_PASSWORD=worksync-local-secret
+          minio/minio:RELEASE.2024-06-29T01-20-47Z
+          server /data
+
+      - name: Wait for MinIO
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:9000/minio/health/live >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs worksync-ci-minio
+          exit 1
 
       - name: Apply Prisma migrations
         run: pnpm prisma:migrate:deploy:test
@@ -109,6 +138,8 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
+        env:
+          npm_config_audit: "false"
         with:
           run_install: false
 
@@ -168,6 +199,8 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
+        env:
+          npm_config_audit: "false"
         with:
           run_install: false
 
@@ -228,7 +261,7 @@ jobs:
           WORKSYNC_DOCKER_TEST_ENV_FILE: .env.test.example
         run: |
           services="$(docker compose --project-name worksync-test --env-file docker/.env.test.example -f docker/compose.test.yml config --services | sort | tr '\n' ' ')"
-          test "$services" = "backend-test frontend-e2e frontend-test migration-test postgres redis "
+          test "$services" = "backend-test frontend-e2e frontend-test migration-test minio postgres redis "
 
       - name: Validate Docker orchestration scripts
         run: |
@@ -282,6 +315,8 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
+        env:
+          npm_config_audit: "false"
         with:
           run_install: false
 
@@ -298,5 +333,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Setup pinned OSV-Scanner
+        timeout-minutes: 2
+        run: pnpm setup:audit
+
+      - name: Self-test dependency audit gate
+        run: pnpm test:audit-production
+
       - name: Audit production dependencies
-        run: pnpm audit --prod --audit-level moderate
+        timeout-minutes: 3
+        run: pnpm audit:production
+
+      - name: Upload dependency audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-report
+          path: test-results/dependency-audit.json
+          if-no-files-found: ignore
+          retention-days: 7

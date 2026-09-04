@@ -4,7 +4,7 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ## Current Snapshot
 
@@ -14,7 +14,8 @@ The frontend runtime compatibility, recovery/app-shell copy, task UI, and shared
 pagination findings from the repository health review are resolved. The
 production-dead task read-policy abstraction is also removed with real-database
 role and tenant-isolation evidence. The next planned product capability is the
-File Upload Foundation.
+File Upload Backend and Storage Foundation, followed by Task Attachment UI
+Integration.
 
 Done:
 
@@ -73,9 +74,13 @@ Still missing before the collaboration MVP works:
 
 ## Current Priorities
 
-1. [File Upload Foundation](roadmap/feature-plans/planned/file-upload-foundation.md)
-   - establish the workspace-scoped attachment storage and security lifecycle.
-2. Add jobs, activity, and production readiness in
+1. Merge [File Upload Backend and Storage Foundation](roadmap/feature-plans/completed/file-upload-foundation.md)
+   after review of its task-scoped persistence, storage, API, security,
+   reconciliation, and real-MinIO evidence.
+2. [Task Attachment UI Integration](roadmap/feature-plans/planned/task-attachment-ui-integration.md)
+   - complete progress, cancel, retry, list, download, delete, accessibility,
+     and live-browser evidence on the merged backend contract.
+3. Add jobs, activity, and production readiness in
    dependency order. If attachments require asynchronous scanning, split the
    work around the attachment lifecycle contract, scan worker, and final
    availability/UI integration rather than creating a file/job dependency
@@ -118,9 +123,9 @@ access is scoped to the correct workspace.
 
 - Invitation flow: email invite only, link invite, direct member add, or a
   staged combination?
-- File upload: direct-to-storage upload or backend proxy?
-- File policy: allowed types, maximum size, preview rules, and malware scanning
-  hook?
+- Future file policy: what evidence or product need justifies broadening beyond
+  the PNG/JPEG-only, 10 MiB, forced-download foundation and introducing
+  scanning, previews, or direct/resumable transport?
 - Notification channels: in-app only for MVP, or email as well?
 - Activity log retention period?
 - Pagination model: cursor or page/pageSize for MVP lists?

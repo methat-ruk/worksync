@@ -26,6 +26,14 @@ enum AuthProvider {
   GOOGLE
 }
 
+enum AttachmentStatus {
+  PENDING
+  AVAILABLE
+  FAILED
+  DELETING
+  DELETE_FAILED
+}
+
 model User {
   id              String            @id @default(cuid())
   email           String            @unique
@@ -41,6 +49,7 @@ model User {
   notifications   Notification[]    @relation("NotificationRecipient")
   tasksCreated    Task[]            @relation("TaskCreator")
   tasksAssigned   Task[]            @relation("TaskAssignee")
+  attachments     Attachment[]      @relation("AttachmentCreator")
 }
 
 model AuthIdentity {
@@ -113,23 +122,51 @@ model Project {
 }
 
 model Task {
-  id          String     @id @default(cuid())
+  id          String       @id @default(cuid())
   projectId   String
   creatorId   String
   assigneeId  String?
   title       String
   description String?
-  status      TaskStatus @default(BACKLOG)
+  status      TaskStatus   @default(BACKLOG)
   dueDate     DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  creator     User       @relation("TaskCreator", fields: [creatorId], references: [id])
-  assignee    User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator     User         @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
   comments    Comment[]
+  attachments Attachment[]
 
   @@index([projectId, status])
   @@index([assigneeId])
+}
+
+model Attachment {
+  id                  String           @id @default(cuid())
+  taskId              String
+  creatorId           String?
+  displayFilename     String           @db.VarChar(255)
+  objectKey           String           @unique @db.VarChar(255)
+  declaredContentType String           @db.VarChar(100)
+  detectedContentType String?          @db.VarChar(100)
+  declaredSize        BigInt
+  authoritativeSize   BigInt?
+  sha256              String?          @db.Char(64)
+  status              AttachmentStatus @default(PENDING)
+  failureReasonCode   String?          @db.VarChar(64)
+  idempotencyKey      String           @db.VarChar(128)
+  requestFingerprint  String           @db.Char(64)
+  lastAttemptAt       DateTime         @default(now())
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  task                Task             @relation(fields: [taskId], references: [id], onDelete: Restrict)
+  creator             User?            @relation("AttachmentCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+
+  @@unique([taskId, creatorId, idempotencyKey])
+  @@index([taskId, status, createdAt, id])
+  @@index([status, lastAttemptAt])
+  @@index([creatorId, status])
 }
 
 model Comment {

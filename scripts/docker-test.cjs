@@ -26,7 +26,7 @@ const dockerTestLockFile = join(tmpdir(), "worksync-docker-test.lock");
 const scopePlans = Object.freeze({
   backend: {
     build: ["backend-test"],
-    dependencies: ["postgres", "redis"],
+    dependencies: ["postgres", "redis", "minio"],
     run: ["migration-test", "backend-test"]
   },
   frontend: {
@@ -41,7 +41,7 @@ const scopePlans = Object.freeze({
   },
   all: {
     build: ["backend-test", "frontend-e2e"],
-    dependencies: ["postgres", "redis"],
+    dependencies: ["postgres", "redis", "minio"],
     run: [
       "migration-test",
       "backend-test",

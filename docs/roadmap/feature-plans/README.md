@@ -22,7 +22,9 @@ Prioritize planned work by:
 
 With stored mention notifications complete, this means:
 
-1. add files, jobs, and production readiness in dependency order
+1. add the backend/storage attachment boundary
+2. complete the task-attachment UI journey
+3. add jobs and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -31,15 +33,36 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [File Upload Foundation](planned/file-upload-foundation.md) | 4 | Planned |
-| 2 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 3 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 1 | [File Upload Backend and Storage Foundation](completed/file-upload-foundation.md) | 4 | Done - awaiting merge |
+| 2 | [Task Attachment UI Integration](planned/task-attachment-ui-integration.md) | 4 | Blocked on file backend/storage |
+| 3 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 4 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
 If the approved file-upload policy requires asynchronous malware scanning
 before attachments can be made available, replace the default File/Jobs order
 with reviewed PR slices: attachment metadata/storage lifecycle first, the
 Background Jobs scanning worker second, and upload availability/UI integration
 third. Do not create a File Upload <-> Background Jobs dependency cycle.
+
+## File Upload Plan Review - 2026-09-03
+
+The File Upload Foundation was reviewed against the current schema, backend and
+frontend boundaries, typed environment contract, Docker/CI topology, MinIO
+runtime, task authorization, and available validation harnesses.
+
+The reviewed plan selects task attachments, a bounded backend streaming proxy,
+backend-authorized streaming downloads, PNG/JPEG up to 10 MiB, a constrained
+no-scanning MVP, explicit quota/rate/reconciliation controls, MinIO as the PR
+evidence boundary, and AWS staging as a later production-release gate. The
+original cross-stack PR is split into two independently reviewable plans:
+
+1. backend, persistence, storage, API, security, reconciliation, and real-MinIO
+   validation
+2. frontend progress/cancel/retry/list/download/delete behavior plus live
+   browser evidence
+
+Implementation remains unstarted. The second PR cannot change the merged
+backend contract without re-planning.
 
 ## Plan Set Review - 2026-07-31
 

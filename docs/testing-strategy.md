@@ -151,7 +151,7 @@ Use for:
 | Identity and Workspace | backend integration, API contract, security isolation |
 | Projects and Tasks | domain unit tests, integration, contract, E2E happy path |
 | Comments and Notifications | integration, realtime, queue, E2E |
-| Files and Jobs | upload security, job idempotency, storage smoke |
+| Files and Jobs | upload security, real PostgreSQL/MinIO lifecycle and failure evidence, job idempotency, storage smoke |
 | Production Readiness | release smoke, security testing, deployment validation |
 
 ## Test Data Rules

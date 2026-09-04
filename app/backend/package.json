@@ -24,9 +24,12 @@
     "prisma:reset:test": "node ../../scripts/prisma-reset.cjs test",
     "seed:auth-user": "dotenv -e .env -- node -r ts-node/register -r tsconfig-paths/register prisma/seed-auth-user.ts",
     "seed:auth-user:test": "dotenv -e .env.test -o -- node -r ts-node/register -r tsconfig-paths/register prisma/seed-auth-user.ts --test",
-    "smoke:runtime": "node ../../scripts/smoke-backend-runtime.cjs"
+    "smoke:runtime": "node ../../scripts/smoke-backend-runtime.cjs",
+    "attachments:reconcile": "dotenv -e .env -- node -r ts-node/register -r tsconfig-paths/register src/attachments/reconcile-attachments.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1124.0",
+    "@aws-sdk/lib-storage": "^3.1124.0",
     "@nestjs/common": "11.1.27",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "11.1.27",
@@ -35,7 +38,9 @@
     "@nestjs/swagger": "11.4.6",
     "@prisma/adapter-pg": "^7.9.0",
     "@prisma/client": "^7.9.0",
+    "@smithy/node-http-handler": "^4.12.0",
     "@worksync/auth-policy": "workspace:*",
+    "busboy": "^1.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "google-auth-library": "^10.7.0",
@@ -50,6 +55,7 @@
   "devDependencies": {
     "@nestjs/cli": "11.0.23",
     "@nestjs/testing": "11.1.27",
+    "@types/busboy": "^1.5.4",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.19.21",

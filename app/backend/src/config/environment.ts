@@ -19,6 +19,12 @@ export type Environment = {
   CORS_ORIGIN: string;
   DATABASE_URL: string;
   REDIS_URL: string;
+  S3_REGION: string;
+  S3_BUCKET: string;
+  S3_ACCESS_KEY_ID?: string;
+  S3_SECRET_ACCESS_KEY?: string;
+  S3_ENDPOINT?: string;
+  S3_FORCE_PATH_STYLE: boolean;
   LOG_LEVEL: LogLevel;
   AUTH_RATE_LIMIT_ENABLED: boolean;
   AUTH_RATE_LIMIT_KEY_SECRET?: string;
@@ -263,6 +269,35 @@ export function validateEnvironment(
         "AUTH_RATE_LIMIT_KEY_SECRET"
       )
     : undefined;
+  const s3AccessKeyId =
+    typeof config.S3_ACCESS_KEY_ID === "string" &&
+    config.S3_ACCESS_KEY_ID.trim() !== ""
+      ? config.S3_ACCESS_KEY_ID.trim()
+      : undefined;
+  const s3SecretAccessKey =
+    typeof config.S3_SECRET_ACCESS_KEY === "string" &&
+    config.S3_SECRET_ACCESS_KEY.trim() !== ""
+      ? config.S3_SECRET_ACCESS_KEY.trim()
+      : undefined;
+  if (Boolean(s3AccessKeyId) !== Boolean(s3SecretAccessKey)) {
+    throw new Error(
+      "Environment variables S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY must be provided together"
+    );
+  }
+  const s3Endpoint =
+    typeof config.S3_ENDPOINT === "string" && config.S3_ENDPOINT.trim() !== ""
+      ? parseUrl(config.S3_ENDPOINT.trim(), "S3_ENDPOINT")
+      : undefined;
+  const s3ForcePathStyle =
+    typeof config.S3_FORCE_PATH_STYLE === "string" &&
+    config.S3_FORCE_PATH_STYLE.trim() !== ""
+      ? parseBoolean(config.S3_FORCE_PATH_STYLE.trim(), "S3_FORCE_PATH_STYLE")
+      : false;
+  if (nodeEnvironment === "production" && (s3Endpoint || s3ForcePathStyle)) {
+    throw new Error(
+      "S3_ENDPOINT and S3_FORCE_PATH_STYLE are not permitted in production"
+    );
+  }
 
   return {
     NODE_ENV: nodeEnvironment,
@@ -277,6 +312,14 @@ export function validateEnvironment(
       "DATABASE_URL"
     ),
     REDIS_URL: parseUrl(requireValue(config, "REDIS_URL"), "REDIS_URL"),
+    S3_REGION: requireValue(config, "S3_REGION"),
+    S3_BUCKET: requireValue(config, "S3_BUCKET"),
+    ...(s3AccessKeyId ? { S3_ACCESS_KEY_ID: s3AccessKeyId } : {}),
+    ...(s3SecretAccessKey
+      ? { S3_SECRET_ACCESS_KEY: s3SecretAccessKey }
+      : {}),
+    ...(s3Endpoint ? { S3_ENDPOINT: s3Endpoint } : {}),
+    S3_FORCE_PATH_STYLE: s3ForcePathStyle,
     LOG_LEVEL: logLevel,
     AUTH_RATE_LIMIT_ENABLED: authRateLimitEnabled,
     ...(authRateLimitKeySecret

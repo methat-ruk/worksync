@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 
 import { AuthModule } from "./auth/auth.module";
+import { AttachmentsModule } from "./attachments/attachments.module";
 import { ConfigurationModule } from "./config/configuration.module";
 import { CommentsModule } from "./comments/comments.module";
 import { PrismaModule } from "./database/prisma.module";
@@ -18,6 +19,7 @@ import { WorkspacesModule } from "./workspaces/workspaces.module";
     PrismaModule,
     HealthModule,
     AuthModule,
+    AttachmentsModule,
     WorkspacesModule,
     ProjectsModule,
     TasksModule,

@@ -8,6 +8,12 @@ const validEnvironment = {
   DATABASE_URL:
     "postgresql://worksync:worksync@localhost:55432/worksync?schema=public",
   REDIS_URL: "redis://localhost:6379/1",
+  S3_REGION: "us-east-1",
+  S3_BUCKET: "worksync-test",
+  S3_ACCESS_KEY_ID: "worksync",
+  S3_SECRET_ACCESS_KEY: "worksync-local-secret",
+  S3_ENDPOINT: "http://localhost:9000",
+  S3_FORCE_PATH_STYLE: "true",
   LOG_LEVEL: "info",
   AUTH_RATE_LIMIT_ENABLED: "true",
   AUTH_RATE_LIMIT_KEY_SECRET:
@@ -35,6 +41,7 @@ describe("validateEnvironment", () => {
       AUTH_RATE_LIMIT_KEY_SECRET:
         "a-secure-rate-limit-secret-with-at-least-32-bytes",
       TRUST_PROXY: false,
+      S3_FORCE_PATH_STYLE: true,
       JWT_ACCESS_EXPIRES_IN: 900,
       JWT_REFRESH_EXPIRES_IN: 2_592_000,
       COOKIE_SECURE: false,
@@ -118,6 +125,45 @@ describe("validateEnvironment", () => {
         EMAIL_PROVIDER: "disabled"
       }).EMAIL_PROVIDER
     ).toBe("disabled");
+  });
+
+  it("validates the S3 provider boundary", () => {
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        S3_SECRET_ACCESS_KEY: undefined
+      })
+    ).toThrow("S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY must be provided together");
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        S3_ENDPOINT: "not-a-url"
+      })
+    ).toThrow("S3_ENDPOINT must be a valid URL");
+    expect(() =>
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: "production",
+        COOKIE_SECURE: "true",
+        S3_ENDPOINT: "https://s3.example.com"
+      })
+    ).toThrow("S3_ENDPOINT and S3_FORCE_PATH_STYLE are not permitted in production");
+
+    expect(
+      validateEnvironment({
+        ...validEnvironment,
+        NODE_ENV: "production",
+        COOKIE_SECURE: "true",
+        S3_ACCESS_KEY_ID: undefined,
+        S3_SECRET_ACCESS_KEY: undefined,
+        S3_ENDPOINT: undefined,
+        S3_FORCE_PATH_STYLE: "false"
+      })
+    ).toMatchObject({
+      S3_REGION: "us-east-1",
+      S3_BUCKET: "worksync-test",
+      S3_FORCE_PATH_STYLE: false
+    });
   });
 
   it("allows Google OAuth to be disabled only in development", () => {

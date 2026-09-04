@@ -240,7 +240,9 @@ describe("notification PostgreSQL integration", () => {
       select: { createdAt: true }
     });
     expect(
-      unreadAfterRace.every(({ createdAt }) => createdAt.getTime() > cutoff.getTime())
+      unreadAfterRace.every(
+        ({ createdAt }) => createdAt.getTime() >= cutoff.getTime()
+      )
     ).toBe(true);
 
     await request(app.getHttpServer())

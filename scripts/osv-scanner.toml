@@ -1,0 +1,2 @@
+# Required audit uses no advisory or package exclusions.
+# Explicit config prevents automatic discovery of unrelated local overrides.
