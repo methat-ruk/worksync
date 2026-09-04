@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { playwrightReporting } from "./scripts/playwright-reporting.mjs";
 
 export default defineConfig({
   testDir: "./test/compatibility",
@@ -8,7 +9,7 @@ export default defineConfig({
   workers: 3,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
-  reporter: "list",
+  ...playwrightReporting("compatibility"),
   timeout: 30_000,
   use: {
     baseURL: "http://localhost:3000",

@@ -110,7 +110,7 @@ jobs:
 
       - name: Wait for MinIO
         run: |
-          for attempt in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl --fail --silent http://localhost:9000/minio/health/live >/dev/null; then
               exit 0
             fi
@@ -154,9 +154,9 @@ jobs:
         uses: actions/cache@v5
         with:
           path: app/frontend/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('app/frontend/**/*.[jt]s', 'app/frontend/**/*.[jt]sx') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-nextjs-prod-v2-node22-api-local4000-googleoff-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', 'package.json', 'tsconfig.base.json', 'app/frontend/package.json', 'app/frontend/tsconfig.json', 'app/frontend/next.config.mjs', 'app/frontend/postcss.config.mjs', 'packages/auth-policy/package.json', 'packages/auth-policy/tsconfig.json') }}-${{ hashFiles('app/frontend/src/**', 'packages/auth-policy/src/**') }}
           restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-${{ runner.arch }}-nextjs-prod-v2-node22-api-local4000-googleoff-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', 'package.json', 'tsconfig.base.json', 'app/frontend/package.json', 'app/frontend/tsconfig.json', 'app/frontend/next.config.mjs', 'app/frontend/postcss.config.mjs', 'packages/auth-policy/package.json', 'packages/auth-policy/tsconfig.json') }}-
 
       - name: Verify pnpm version
         run: pnpm --version
@@ -167,8 +167,56 @@ jobs:
       - name: Validate frontend
         run: pnpm validate:frontend
 
-  frontend-e2e:
-    name: Frontend E2E
+  frontend-e2e-compatibility:
+    name: Frontend E2E compatibility
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.0-noble
+    timeout-minutes: 20
+    env:
+      HOME: /root
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+      NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        env:
+          npm_config_audit: "false"
+        with:
+          run_install: false
+
+      # This image lacks zstd. A cold gzip pnpm cache save took 39-43s,
+      # versus a 15s frozen install; do not pay that cost on either E2E lane.
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+          package-manager-cache: false
+
+      - name: Verify pnpm version
+        run: pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run frontend runtime compatibility tests
+        id: compatibility
+        run: pnpm --filter @worksync/frontend test:e2e:compatibility
+
+      - name: Upload compatibility results
+        if: ${{ !cancelled() && (steps.compatibility.outcome == 'success' || steps.compatibility.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-compatibility-results
+          path: app/frontend/test-results/compatibility/junit.xml
+          if-no-files-found: error
+          retention-days: 7
+
+  frontend-e2e-journeys:
+    name: Frontend E2E journeys
     runs-on: ubuntu-latest
     container:
       # Keep this tag aligned with the @playwright/test version in pnpm-lock.yaml.
@@ -208,8 +256,7 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "22.x"
-          cache: "pnpm"
-          cache-dependency-path: pnpm-lock.yaml
+          package-manager-cache: false
 
       - name: Verify pnpm version
         run: pnpm --version
@@ -217,17 +264,53 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run frontend runtime compatibility tests
-        run: pnpm --filter @worksync/frontend test:e2e:compatibility
-
       - name: Run frontend end-to-end tests
+        id: mocked
         run: pnpm --filter @worksync/frontend test:e2e
 
       - name: Apply Prisma migrations for live auth E2E
         run: pnpm prisma:migrate:deploy:test
 
       - name: Run live auth concurrency end-to-end tests
+        id: live
         run: pnpm --filter @worksync/frontend test:e2e:live
+
+      - name: Upload mocked journey results
+        if: ${{ !cancelled() && (steps.mocked.outcome == 'success' || steps.mocked.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-mocked-results
+          path: app/frontend/test-results/mocked/junit.xml
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload live auth results
+        if: ${{ !cancelled() && (steps.live.outcome == 'success' || steps.live.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-live-results
+          path: app/frontend/test-results/live/junit.xml
+          if-no-files-found: error
+          retention-days: 7
+
+  frontend-e2e:
+    name: Frontend E2E
+    needs: [frontend-e2e-compatibility, frontend-e2e-journeys]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Self-test E2E result gate
+        run: node --test scripts/ci-e2e-result-self-test.cjs
+
+      - name: Require both E2E lanes to succeed
+        env:
+          COMPATIBILITY_RESULT: ${{ needs.frontend-e2e-compatibility.result }}
+          JOURNEYS_RESULT: ${{ needs.frontend-e2e-journeys.result }}
+        run: node scripts/ci-e2e-result.cjs "$COMPATIBILITY_RESULT" "$JOURNEYS_RESULT"
 
   containers:
     name: Container topology and images
