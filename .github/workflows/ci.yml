@@ -351,42 +351,15 @@ jobs:
           node --check scripts/docker-images.cjs
           node scripts/docker-test-self-test.cjs
 
-      # All targets share this job's ephemeral BuildKit cache. PR validation
-      # has no downstream consumer for a daemon-loaded image or remote cache.
-      - name: Validate backend image target
-        uses: docker/build-push-action@v7
+      # Concurrent targets retain one shared builder/dependency graph. No
+      # registry push or remote-cache export is required for PR validation.
+      - name: Validate all image targets
+        uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b # v7
         with:
-          context: .
-          target: backend
-          tags: worksync-backend:ci
-          outputs: type=cacheonly
-
-      - name: Validate frontend image target
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          target: frontend
-          tags: worksync-frontend:ci
-          outputs: type=cacheonly
-          build-args: |
-            NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
-            NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=false
-
-      - name: Validate test runner image target
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          target: test-runner
-          tags: worksync-test-runner:ci
-          outputs: type=cacheonly
-
-      - name: Validate Playwright test image target
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          target: test-e2e
-          tags: worksync-test-e2e:ci
-          outputs: type=cacheonly
+          source: .
+          files: docker-bake.hcl
+          targets: ci
+          provenance: mode=max
 
   security:
     name: Dependency audit

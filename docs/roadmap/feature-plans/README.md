@@ -44,6 +44,15 @@ with reviewed PR slices: attachment metadata/storage lifecycle first, the
 Background Jobs scanning worker second, and upload availability/UI integration
 third. Do not create a File Upload <-> Background Jobs dependency cycle.
 
+## Planned Delivery Improvements
+
+These plans improve the delivery workflow without changing the feature
+dependency order above.
+
+| Plan | Branch | Status |
+|---|---|---|
+| [CI Critical Path Optimization](planned/ci-critical-path.md) | `perf/ci-critical-path` | Implemented and locally reviewed/validated - hosted CI pending |
+
 ## File Upload Plan Review - 2026-09-03
 
 The File Upload Foundation was reviewed against the current schema, backend and

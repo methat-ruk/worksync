@@ -179,9 +179,13 @@ CI includes:
 - selected security checks
 - build
 
-Authentication browser E2E runs on every CI validation job. Long-running or
-expensive future checks may run on schedule or before release, but release
-readiness must know what did and did not run.
+Authentication browser E2E runs on every applicable CI workflow, in independent
+compatibility and journey jobs. The journey lane runs mocked tests, test database
+migrations, then live tests; the `Frontend E2E` aggregate requires both lanes to
+succeed. Suite-specific CI JUnit reports retain browser identity and failure
+details. See [CI Validation Workflow](workflows/ci-validation-workflow.md).
+Long-running or expensive future checks may run on schedule or before release,
+but release readiness must know what did and did not run.
 
 ## Open Decisions
 

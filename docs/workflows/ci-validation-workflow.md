@@ -9,22 +9,28 @@ commands change, or required evidence is unclear.
 ## High-Level Flow
 
 ```text
-Install dependencies
--> validate generated and compiled surfaces
--> run backend validation
--> run frontend validation
--> run browser E2E evidence
--> validate container topology and images
--> run dependency audit
+PR / push main
+├─ PR review evidence (PR only)
+├─ Backend validation
+├─ Frontend validation
+├─ E2E compatibility: production build + Chromium/Firefox/WebKit
+├─ E2E journeys: mocked -> test migrations -> live auth
+├─ Container topology + four concurrent Bake targets
+└─ Dependency audit
+
+E2E compatibility + E2E journeys -> Frontend E2E aggregate
 ```
 
 ## CI Job Ownership
 
 | Job | Owns |
 | --- | --- |
+| PR review evidence | PR-only evidence contract and checker self-test |
 | Backend validation | Prisma validation/generation, migrations, backend typecheck, lint, Jest projects, backend build, backend artifact checks |
 | Frontend validation | shared auth policy package tests, frontend typecheck, lint, unit/component tests, frontend build |
-| Frontend E2E | Production-build compatibility on Chromium, Firefox, and WebKit plus critical mocked/live browser journeys |
+| Frontend E2E compatibility | Independent production build and compatibility on Chromium, Firefox, and WebKit; no database service |
+| Frontend E2E journeys | Mocked Chromium journeys followed by test database migrations and live browser journeys |
+| Frontend E2E | Fail-closed aggregate: both E2E lanes must succeed, including report publication |
 | Container topology and images | Development/test Compose config and service lists, Docker orchestration self-test, and production/test image builds |
 | Dependency audit | production dependency vulnerability gate |
 
@@ -33,23 +39,72 @@ make CI look simpler.
 
 ## Why It Works This Way
 
-- Backend tests need PostgreSQL and Redis service setup.
+- Backend tests need PostgreSQL, Redis, and MinIO service setup.
 - Frontend validation should fail fast without waiting for backend database
   suites.
 - Browser E2E failures should be distinguishable from unit or build failures.
 - Docker image builds catch clean-checkout and generated-artifact mistakes that
   local validation may miss.
 
+## Parallelism, Caches, and Results
+
+Only the aggregate has `needs`. Compatibility and journeys use independent
+workspaces, builds, and server lifecycles. Mocked and live journeys remain
+sequential to avoid sharing ports and mutable `.next` output concurrently.
+Workers, retries, browser projects, and test assertions are unchanged. Ref-scoped
+concurrency still cancels superseded runs; there is no fail-fast matrix.
+
+The `Frontend E2E` check keeps its previous name and job ID. Its job-level
+`always()` condition inspects both lane results. Only two `success` values pass;
+failure, skipped, cancelled, missing, or unknown values cannot pass. Whole-run
+cancellation may prevent execution and is incomplete evidence. This aggregate
+does not cover backend, frontend validation, images, audit, or PR evidence;
+those checks remain necessary. Check names do not establish repository-rule
+enforcement by themselves.
+
+E2E lanes intentionally disable package-manager caching: the selected Playwright
+image lacks `zstd`, and observed cold gzip cache saves cost 39-43 seconds versus
+approximately 15 seconds for a frozen dependency install. Both lanes still run
+the complete frozen install. There is no new E2E Next.js or browser cache.
+Backend/frontend/audit pnpm caches remain. Frontend validation caches only
+`.next/cache`, with OS, architecture, Node major, public build arguments,
+lockfile, workspace/configuration, and source identity in its namespace. Cache
+hits never replace builds or tests. Reassess cache choices using total hosted
+restore/save costs, not installation time alone.
+
+`docker-bake.hcl` owns the four CI build targets. One pinned Bake action builds
+them on the same builder so shared stages can be reused. Arguments, target
+names, and cache-only output match the previous builds; CI does not push images,
+load them into the daemon, or export a remote cache. Default Bake build records
+and logs remain available. The Dockerfile and runtime image contracts are
+unchanged.
+
+With `CI=true`, Playwright retains list output and adds JUnit reports at
+`app/frontend/test-results/{compatibility,mocked,live}/junit.xml`. Reports include
+browser project names and use separate directories from attachments, which
+Playwright clears before a run. CI uploads three uniquely named artifacts with
+seven-day retention after successful or failed suite execution; an expected
+missing report fails publication. Skipped suites do not claim a report. Local
+runs without `CI` keep list reporting. No new trace, video, or screenshot capture
+is enabled. When interpreting JUnit, inspect both `failures` and `errors`, plus
+skipped tests and the process exit status; `failures="0"` alone is not a pass.
+
 ## Local Commands
 
 ```bash
 corepack pnpm validate:backend
 corepack pnpm validate:frontend
-corepack pnpm --filter @worksync/frontend test:e2e
+CI=true corepack pnpm --filter @worksync/frontend test:e2e:compatibility
+CI=true corepack pnpm --filter @worksync/frontend test:e2e
+corepack pnpm prisma:migrate:deploy:test
+CI=true corepack pnpm --filter @worksync/frontend test:e2e:live
+node --test scripts/ci-e2e-result-self-test.cjs
 corepack pnpm docker:full:config
 corepack pnpm docker:full:services
 corepack pnpm docker:full:build
 corepack pnpm test:docker-orchestration
+docker buildx bake --print ci
+docker buildx bake ci
 corepack pnpm setup:audit
 corepack pnpm test:audit-production
 corepack pnpm audit:production
@@ -57,6 +112,8 @@ corepack pnpm audit:production
 
 Run only the relevant subset during normal development. Before merging a
 pipeline change, run the closest local equivalent for every affected CI job.
+Hosted `needs` scheduling, artifact upload, cache behavior, queueing and timing
+still require GitHub Actions evidence; local passes are not a speed benchmark.
 
 ## Dependency Audit Failure and Recovery
 
