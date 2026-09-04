@@ -57,6 +57,11 @@ describe("attachment policy", () => {
     );
     expect(() => validateDeclaredAttachmentType("document.svg", "image/svg+xml"))
       .toThrow("UNSUPPORTED_CONTENT_TYPE");
+    expect(() => validateDeclaredAttachmentType("page.html", "text/html")).toThrow(
+      "UNSUPPORTED_CONTENT_TYPE"
+    );
+    expect(() => validateDeclaredAttachmentType("archive.zip", "application/zip"))
+      .toThrow("UNSUPPORTED_CONTENT_TYPE");
   });
 
   it("streams and fingerprints valid PNG content", async () => {
@@ -69,6 +74,52 @@ describe("attachment policy", () => {
       detectedContentType: "image/png",
       sha256: expect.stringMatching(/^[a-f0-9]{64}$/u)
     });
+  });
+
+  it("forwards inspected chunks before a slow source completes", async () => {
+    const signature = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
+    ]);
+    const tail = Buffer.from("slow-tail");
+    let releaseTail!: () => void;
+    const tailReady = new Promise<void>((resolve) => {
+      releaseTail = resolve;
+    });
+    let observeFirstChunk!: () => void;
+    const firstChunkObserved = new Promise<void>((resolve) => {
+      observeFirstChunk = resolve;
+    });
+    const received: Buffer[] = [];
+    const source = Readable.from(
+      (async function* slowSource() {
+        yield signature;
+        await tailReady;
+        yield tail;
+      })()
+    );
+    const inspection = new AttachmentInspectionTransform(
+      "image/png",
+      signature.length + tail.length
+    );
+    const completed = pipeline(
+      source,
+      inspection,
+      new Writable({
+        write: (chunk: Buffer, _encoding, callback) => {
+          received.push(Buffer.from(chunk));
+          if (received.length === 1) {
+            observeFirstChunk();
+          }
+          callback();
+        }
+      })
+    );
+
+    await firstChunkObserved;
+    expect(received).toEqual([signature]);
+    releaseTail();
+    await expect(completed).resolves.toBeUndefined();
+    expect(Buffer.concat(received)).toEqual(Buffer.concat([signature, tail]));
   });
 
   it("rejects signature and authoritative size mismatches", async () => {

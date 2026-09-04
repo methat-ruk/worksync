@@ -44,7 +44,7 @@ function harness() {
 
 describe("AttachmentReconciliationService", () => {
   it("keeps dry-run inspection mutation-free", async () => {
-    const { attachment, storage, service } = harness();
+    const { attachment, storage, logger, service } = harness();
     await expect(service.reconcile(false, 10)).resolves.toMatchObject({
       apply: false,
       pendingMissing: 1,
@@ -55,6 +55,7 @@ describe("AttachmentReconciliationService", () => {
     expect(attachment.updateMany).not.toHaveBeenCalled();
     expect(attachment.deleteMany).not.toHaveBeenCalled();
     expect(storage.delete).not.toHaveBeenCalled();
+    expect(JSON.stringify(logger.info.mock.calls)).not.toContain("private-");
   });
 
   it("applies verified missing-object and delete recovery actions", async () => {

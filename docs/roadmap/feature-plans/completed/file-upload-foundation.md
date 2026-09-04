@@ -418,6 +418,34 @@ migration apply/status, backend typecheck/lint/all Jest projects/build/artifact,
 Docker topology and orchestration self-tests, relevant image builds, and the
 production dependency audit.
 
+### Merge-review evidence coverage
+
+- `app/backend/test/integration/attachments.integration.spec.ts` exercises
+  PostgreSQL and MinIO for nested workspace/project/task isolation, rejected
+  client object keys, completed/mismatched/in-progress idempotency, concurrent
+  task-quota reservations, workspace-byte quota, streamed size rejection, and
+  upload/download/delete lifecycle behavior.
+- The same integration suite delays the real storage call to observe `PENDING`
+  before completion, injects upload/delete and database-transition failures,
+  and verifies real metadata state and MinIO cleanup/recovery. Fault injection
+  is scoped to the failed operation; it is not evidence of a live provider
+  outage or a network timeout.
+- Client cancellation is covered at two boundaries: the multipart parser's
+  request-abort propagation in `test/unit/multipart-upload.spec.ts`, and a
+  canceled file stream through the real database/storage service integration.
+  This is deterministic cancellation evidence, not an external-browser smoke.
+- Reconciliation verifies stale `PENDING` promotion and `DELETE_FAILED` retry
+  against real database rows and MinIO objects. Unit coverage additionally
+  checks dry-run behavior, provider-read failure containment, and omission of
+  private object keys from normal reconciliation logs.
+- The inspection-transform unit suite proves chunks reach the consumer before
+  the source completes, and rejects active/archive types. API contract coverage
+  includes upload `429` alongside the other documented responses.
+- Attachment rate limiting is isolated from the database/storage integration
+  suite to avoid shared attempt-window coupling. Its actor/workspace ordering,
+  exhaustion, and fail-closed store errors remain covered by the dedicated
+  rate-limiter unit suite and the previously recorded Redis regression check.
+
 ## Post-Implementation Review Gate
 
 Review the current diff and affected callers for IDOR/BOLA, task/workspace

@@ -44,6 +44,7 @@ describe("attachment API contract", () => {
       "409": expect.any(Object),
       "413": expect.any(Object),
       "422": expect.any(Object),
+      "429": expect.any(Object),
       "503": expect.any(Object)
     });
     expect(collection?.get?.responses).toHaveProperty("200");

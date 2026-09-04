@@ -30,6 +30,7 @@ import {
   ApiPayloadTooLargeResponse,
   ApiServiceUnavailableResponse,
   ApiTags,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
   ApiUnprocessableEntityResponse
 } from "@nestjs/swagger";
@@ -152,6 +153,7 @@ export class AttachmentsController {
   @ApiNotFoundResponse({ type: ApiErrorResponseDto })
   @ApiConflictResponse({ type: ApiErrorResponseDto })
   @ApiPayloadTooLargeResponse({ type: ApiErrorResponseDto })
+  @ApiTooManyRequestsResponse({ type: ApiErrorResponseDto })
   @ApiUnprocessableEntityResponse({ type: ApiErrorResponseDto })
   @ApiServiceUnavailableResponse({ type: ApiErrorResponseDto })
   async upload(
