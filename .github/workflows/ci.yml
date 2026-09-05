@@ -218,6 +218,9 @@ jobs:
   frontend-e2e-journeys:
     name: Frontend E2E journeys
     runs-on: ubuntu-latest
+    container:
+      # Keep this tag aligned with the @playwright/test version in pnpm-lock.yaml.
+      image: mcr.microsoft.com/playwright:v1.61.0-noble
     timeout-minutes: 20
     services:
       postgres:
@@ -234,9 +237,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
+      HOME: /root
       NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
       NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
-      DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
+      DATABASE_URL: postgresql://worksync:worksync@postgres:5432/worksync_test?schema=public
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -259,12 +263,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # Install only the Chromium engine used by mocked/live journeys. The
-      # separate compatibility lane retains Chromium, Firefox, and WebKit in
-      # the version-aligned Playwright image.
-      - name: Install Playwright Chromium and OS dependencies
-        run: pnpm --filter @worksync/frontend exec playwright install --with-deps chromium
 
       - name: Run frontend end-to-end tests
         id: mocked

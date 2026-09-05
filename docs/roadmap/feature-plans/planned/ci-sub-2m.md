@@ -1,6 +1,6 @@
 # Feature Plan: CI Below Two Minutes
 
-Status: Phase A native journey candidate implemented locally - hosted measurement pending approval
+Status: Phase A native journey candidate rejected - next experiment not authorized
 
 Intended branch / PR: `perf/ci-sub-2m`, a separate follow-up to PR #51
 
@@ -361,7 +361,7 @@ broad cache deletion is needed.
 
 ## Plan Review Outcome
 
-### Phase A local implementation evidence - 2026-09-05
+### Phase A native journey experiment - 2026-09-05
 
 The first candidate changes only the journey lane from the version-aligned
 Playwright job container to the native Ubuntu/Node 22 runner. It installs the
@@ -384,11 +384,34 @@ Local execution is macOS and cannot prove GitHub's Ubuntu OS dependency install,
 service networking, timing or resource behavior. Those remain the decisive
 hosted pilot evidence and are not inferred from syntax or local test success.
 
-Phase A's local native-journey candidate is implemented and ready for review;
-PR #51 is merged and the follow-up branch baseline is verified. The hosted pilot,
-any further readiness/split/cache experiment, commit, push and PR delivery remain
-separate actions. This is not a fixed promise that all optional splits will be
-retained or every run will finish within two minutes.
+The hosted pilot proved the native Ubuntu setup, service networking and all
+required gates. A five-pair confirmation then compared pull-request runs with
+identical workflow, application, package, lockfile and Docker inputs. The
+baseline-to-merge difference was documentation-only. No failed or retried run
+was excluded.
+
+| Pair | Baseline wall | Candidate wall | Baseline journeys | Candidate journeys | Baseline runner-s | Candidate runner-s |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | 164s | 178s | 150s | 168s | 703 | 711 |
+| 2 | 182s | 157s | 167s | 148s | 750 | 685 |
+| 3 | 179s | 193s | 169s | 179s | 705 | 720 |
+| 4 | 178s | 182s | 168s | 169s | 719 | 733 |
+| 5 | 223s | 183s | 174s | 173s | 746 | 744 |
+
+Workflow median regressed from 179s to 182s and journey median regressed from
+168s to 169s. Candidate workflow and journey time improved in only two of five
+pairs. Median runner time was effectively flat at 719s versus 720s. The complete
+journey setup median moved only from 44s to 42s because the native runner's
+Chromium/OS installation replaced nearly all container-initialization savings.
+Every workflow exceeded 120s; the fastest candidate was 157s.
+
+The confirmation batch used 10 starts, approximately 120.3 runner-minutes and
+33m27s elapsed, within its approved limits. The candidate failed the frozen
+median-improvement and four-of-five directional gates, so the native-runner
+change was rejected and the version-aligned Playwright container was restored.
+PR #51 remains the retained baseline. Readiness cadence, lane splitting, backend,
+Docker and conditional frontend experiments remain separately authorized work;
+no sub-two-minute claim has been established.
 
 Review corrections incorporated: distinguish workflow time from job time;
 budget aggregate/setup overhead; retain readiness allowance; make live setup
