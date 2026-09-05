@@ -179,11 +179,20 @@ CI includes:
 - selected security checks
 - build
 
-Authentication browser E2E runs on every applicable CI workflow, in independent
-compatibility and journey jobs. The journey lane runs mocked tests, test database
-migrations, then live tests; the `Frontend E2E` aggregate requires both lanes to
-succeed. Suite-specific CI JUnit reports retain browser identity and failure
-details. See [CI Validation Workflow](workflows/ci-validation-workflow.md).
+Backend CI separates service-independent quality, unit, and build evidence from
+two isolated service-test shards. The shards retain all integration, contract,
+security, and backend E2E suites and each owns PostgreSQL, Redis, MinIO, guarded
+migrations, and Prisma generation. The `Backend validation` aggregate requires
+both lanes and verifies that the shard reports are nonempty, disjoint, and their
+union exactly matches the current service-suite inventory. Missing, failed,
+cancelled, skipped, overlapping, or incomplete evidence cannot pass.
+
+Authentication browser E2E runs on every applicable CI workflow in independent
+compatibility, mocked-journey, and live-auth jobs. Only the live job provisions
+PostgreSQL and applies guarded test migrations; each job owns its workspace and
+server lifecycle. The `Frontend E2E` aggregate requires all three lanes and their
+report uploads to succeed. Suite-specific CI JUnit reports retain browser identity
+and failure details. See [CI Validation Workflow](workflows/ci-validation-workflow.md).
 Long-running or expensive future checks may run on schedule or before release,
 but release readiness must know what did and did not run.
 

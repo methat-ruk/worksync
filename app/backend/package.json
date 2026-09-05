@@ -14,6 +14,7 @@
     "test:contract": "node --disable-warning=ExperimentalWarning --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --selectProjects contract",
     "test:security": "node --disable-warning=ExperimentalWarning --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --selectProjects security",
     "test:e2e": "node --disable-warning=ExperimentalWarning --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --selectProjects e2e",
+    "test:services": "node --disable-warning=ExperimentalWarning --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --selectProjects integration contract security e2e",
     "prisma:generate": "dotenv -e .env.example -- prisma generate",
     "prisma:validate": "dotenv -e .env.example -- prisma validate",
     "prisma:migrate": "dotenv -e .env -- prisma migrate dev",

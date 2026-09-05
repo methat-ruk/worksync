@@ -29,6 +29,7 @@
     "validate:backend:artifact": "node scripts/validate-backend-artifact.cjs",
     "smoke:backend:runtime": "corepack pnpm --filter @worksync/backend smoke:runtime",
     "validate:backend": "corepack pnpm prisma:validate && corepack pnpm prisma:generate && corepack pnpm test:database-environment && corepack pnpm --filter @worksync/backend typecheck && corepack pnpm --filter @worksync/backend lint && corepack pnpm --filter @worksync/backend test && corepack pnpm --filter @worksync/backend build && corepack pnpm validate:backend:artifact",
+    "validate:backend:quality": "corepack pnpm prisma:validate && corepack pnpm prisma:generate && corepack pnpm test:database-environment && corepack pnpm --filter @worksync/backend typecheck && corepack pnpm --filter @worksync/backend lint && corepack pnpm --filter @worksync/backend test:unit && corepack pnpm --filter @worksync/backend build && corepack pnpm validate:backend:artifact",
     "validate:frontend": "corepack pnpm --filter @worksync/auth-policy test && corepack pnpm --filter @worksync/frontend typecheck && corepack pnpm --filter @worksync/frontend lint && corepack pnpm --filter @worksync/frontend test && corepack pnpm --filter @worksync/frontend build",
     "playwright:install": "corepack pnpm --filter @worksync/frontend exec playwright install chromium firefox webkit",
     "playwright:install:with-deps": "corepack pnpm --filter @worksync/frontend exec playwright install --with-deps chromium firefox webkit",
