@@ -1,6 +1,6 @@
 # Feature Plan: CI Below Two Minutes
 
-Status: Phase A native journey candidate rejected - next experiment not authorized
+Status: Phase B mocked/live split implemented locally - hosted measurement not authorized
 
 Intended branch / PR: `perf/ci-sub-2m`, a separate follow-up to PR #51
 
@@ -412,6 +412,56 @@ change was rejected and the version-aligned Playwright container was restored.
 PR #51 remains the retained baseline. Readiness cadence, lane splitting, backend,
 Docker and conditional frontend experiments remain separately authorized work;
 no sub-two-minute claim has been established.
+
+### Phase B local implementation evidence - 2026-09-05
+
+A readiness-cadence-only candidate was eliminated before implementation or new
+hosted runs. In the retained workflow run, the journey PostgreSQL container
+started at `03:13:17.970Z` and PostgreSQL reported readiness at
+`03:13:20.750Z`. The Actions runner observed service state at approximately
+`+0s`, `+2s`, `+6s`, and `+15s`; the current 10-second Docker health cadence
+made the healthy state visible only at the last observation. Even if a faster
+Docker probe made the observed `+2.8s` database readiness visible immediately,
+the runner would next observe it at about `+6s`, an approximately eight-second
+critical-path reduction for that trace. That cannot meet the frozen minimum
+10-second lane-improvement gate, so no readiness setting, predicate, timeout,
+retry count, or startup allowance changed. This is a local evidence-based
+rejection, not a hosted performance result.
+
+The next candidate splits the former journey lane into independent mocked and
+live jobs. The mocked job has no database service. The live job retains the
+same Playwright image, PostgreSQL image and health contract, explicitly builds
+`@worksync/auth-policy`, applies the guarded `_test` migration command, and uses
+the existing runner to generate Prisma Client, build and clean up the backend
+and frontend. Each job has an isolated checkout, `.next` tree, ports, process
+lifecycle, and uniquely named JUnit artifact. Compatibility is unchanged. The
+stable `Frontend E2E` aggregate now fails closed unless compatibility, mocked,
+and live jobs—including their report uploads—all succeed.
+
+The expected wall-clock mechanism is parallel execution of the historical
+44-60-second mocked command and 30-39-second live command. It deliberately pays
+another Playwright-container pull, Node/pnpm setup, and frozen install, so hosted
+runner consumption is expected to rise and remains subject to the +20% cost
+gate. Local checks can prove command independence, suite identity, report paths,
+service isolation, and aggregate semantics; only a separately approved hosted
+pilot can establish runner scheduling, image-pull behavior, wall time, or cost.
+No hosted run, push, or performance claim is authorized by this implementation.
+
+Actionlint 1.7.12 passed and the fail-closed aggregate/report-isolation tests
+passed 4/4, including incomplete and sparse result inputs. The three independent
+local commands passed compatibility 9/9 across Chromium/Firefox/WebKit, mocked
+journeys 25/25, and live journeys 3/3 after the explicit auth-policy build and
+all nine guarded migrations were confirmed applied. All three JUnit reports had
+zero failures, errors, or skips; runner-owned ports 3000 and 4000 were unavailable
+after cleanup. Full frontend validation passed five auth-policy tests, typecheck,
+lint, 209 unit/component tests, seven Node self-tests, and the production build.
+Full backend validation passed Prisma validation/generation, database-environment
+guards, typecheck, lint, 307 tests across 56 suites, build, and inspection of 294
+artifact files. The dependency-audit contract passed 8/8 tests, including two
+live known-vulnerable probes, and the current production scan covered 464/464
+package-versions with no blocking or unknown-severity finding. Local macOS
+evidence does not prove hosted concurrency, fresh container setup, Ubuntu
+networking, artifact upload, timing, or runner cost.
 
 Review corrections incorporated: distinguish workflow time from job time;
 budget aggregate/setup overhead; retain readiness allowance; make live setup

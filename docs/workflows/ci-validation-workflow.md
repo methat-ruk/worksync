@@ -14,11 +14,12 @@ PR / push main
 ├─ Backend validation
 ├─ Frontend validation
 ├─ E2E compatibility: production build + Chromium/Firefox/WebKit
-├─ E2E journeys: mocked -> test migrations -> live auth
+├─ E2E mocked journeys
+├─ E2E live auth: shared policy build -> test migrations -> live journeys
 ├─ Container topology + four concurrent Bake targets
 └─ Dependency audit
 
-E2E compatibility + E2E journeys -> Frontend E2E aggregate
+E2E compatibility + E2E mocked + E2E live -> Frontend E2E aggregate
 ```
 
 ## CI Job Ownership
@@ -29,8 +30,9 @@ E2E compatibility + E2E journeys -> Frontend E2E aggregate
 | Backend validation | Prisma validation/generation, migrations, backend typecheck, lint, Jest projects, backend build, backend artifact checks |
 | Frontend validation | shared auth policy package tests, frontend typecheck, lint, unit/component tests, frontend build |
 | Frontend E2E compatibility | Independent production build and compatibility on Chromium, Firefox, and WebKit; no database service |
-| Frontend E2E journeys | Mocked Chromium journeys followed by test database migrations and live browser journeys |
-| Frontend E2E | Fail-closed aggregate: both E2E lanes must succeed, including report publication |
+| Frontend E2E mocked journeys | Mocked Chromium journeys with no database service |
+| Frontend E2E live auth | Shared auth-policy build, guarded test migrations, backend/Prisma preparation, and live Chromium journeys against an isolated PostgreSQL service |
+| Frontend E2E | Fail-closed aggregate: all three E2E lanes must succeed, including report publication |
 | Container topology and images | Development/test Compose config and service lists, Docker orchestration self-test, and production/test image builds |
 | Dependency audit | production dependency vulnerability gate |
 
@@ -48,14 +50,16 @@ make CI look simpler.
 
 ## Parallelism, Caches, and Results
 
-Only the aggregate has `needs`. Compatibility and journeys use independent
-workspaces, builds, and server lifecycles. Mocked and live journeys remain
-sequential to avoid sharing ports and mutable `.next` output concurrently.
-Workers, retries, browser projects, and test assertions are unchanged. Ref-scoped
-concurrency still cancels superseded runs; there is no fail-fast matrix.
+Only the aggregate has `needs`. Compatibility, mocked, and live use independent
+workspaces, builds, ports, and server lifecycles, so the two journey suites run
+in parallel without sharing mutable `.next` output or PostgreSQL state. Only the
+live lane starts PostgreSQL; it explicitly builds the shared auth-policy package
+before guarded migrations and runner-owned backend preparation. Workers, retries,
+browser projects, and test assertions are unchanged. Ref-scoped concurrency still
+cancels superseded runs; there is no fail-fast matrix.
 
 The `Frontend E2E` check keeps its previous name and job ID. Its job-level
-`always()` condition inspects both lane results. Only two `success` values pass;
+`always()` condition inspects all three lane results. Only three `success` values pass;
 failure, skipped, cancelled, missing, or unknown values cannot pass. Whole-run
 cancellation may prevent execution and is incomplete evidence. This aggregate
 does not cover backend, frontend validation, images, audit, or PR evidence;
@@ -64,7 +68,7 @@ enforcement by themselves.
 
 E2E lanes intentionally disable package-manager caching: the selected Playwright
 image lacks `zstd`, and observed cold gzip cache saves cost 39-43 seconds versus
-approximately 15 seconds for a frozen dependency install. Both lanes still run
+approximately 15 seconds for a frozen dependency install. All three lanes still run
 the complete frozen install. There is no new E2E Next.js or browser cache.
 Backend/frontend/audit pnpm caches remain. Frontend validation caches only
 `.next/cache`, with OS, architecture, Node major, public build arguments,
