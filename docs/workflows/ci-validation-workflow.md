@@ -29,7 +29,7 @@ E2E compatibility + E2E journeys -> Frontend E2E aggregate
 | Backend validation | Prisma validation/generation, migrations, backend typecheck, lint, Jest projects, backend build, backend artifact checks |
 | Frontend validation | shared auth policy package tests, frontend typecheck, lint, unit/component tests, frontend build |
 | Frontend E2E compatibility | Independent production build and compatibility on Chromium, Firefox, and WebKit; no database service |
-| Frontend E2E journeys | Mocked Chromium journeys followed by test database migrations and live browser journeys |
+| Frontend E2E journeys | Native Ubuntu/Node 22 setup, lockfile-selected Playwright Chromium, mocked journeys, test database migrations, then live browser journeys |
 | Frontend E2E | Fail-closed aggregate: both E2E lanes must succeed, including report publication |
 | Container topology and images | Development/test Compose config and service lists, Docker orchestration self-test, and production/test image builds |
 | Dependency audit | production dependency vulnerability gate |
@@ -49,7 +49,11 @@ make CI look simpler.
 ## Parallelism, Caches, and Results
 
 Only the aggregate has `needs`. Compatibility and journeys use independent
-workspaces, builds, and server lifecycles. Mocked and live journeys remain
+workspaces, builds, and server lifecycles. Compatibility stays in the version-
+aligned Playwright image with all three browser engines. Journeys runs directly
+on the Ubuntu/Node 22 runner, installs only its lockfile-selected Chromium with
+required OS dependencies, and reaches its PostgreSQL service through localhost.
+Mocked and live journeys remain
 sequential to avoid sharing ports and mutable `.next` output concurrently.
 Workers, retries, browser projects, and test assertions are unchanged. Ref-scoped
 concurrency still cancels superseded runs; there is no fail-fast matrix.
@@ -62,10 +66,12 @@ does not cover backend, frontend validation, images, audit, or PR evidence;
 those checks remain necessary. Check names do not establish repository-rule
 enforcement by themselves.
 
-E2E lanes intentionally disable package-manager caching: the selected Playwright
-image lacks `zstd`, and observed cold gzip cache saves cost 39-43 seconds versus
-approximately 15 seconds for a frozen dependency install. Both lanes still run
-the complete frozen install. There is no new E2E Next.js or browser cache.
+E2E lanes intentionally disable package-manager caching. The compatibility
+Playwright image lacks `zstd`, and observed cold gzip cache saves cost 39-43
+seconds versus approximately 15 seconds for a frozen dependency install. The
+native journey experiment retains the same no-cache policy so browser/OS setup
+can be measured without adding another variable. Both lanes still run the
+complete frozen install. There is no new E2E Next.js or browser cache.
 Backend/frontend/audit pnpm caches remain. Frontend validation caches only
 `.next/cache`, with OS, architecture, Node major, public build arguments,
 lockfile, workspace/configuration, and source identity in its namespace. Cache

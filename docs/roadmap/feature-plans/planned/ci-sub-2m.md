@@ -1,6 +1,6 @@
 # Feature Plan: CI Below Two Minutes
 
-Status: Implementation-ready experiment plan - awaiting implementation approval
+Status: Phase A native journey candidate implemented locally - hosted measurement pending approval
 
 Intended branch / PR: `perf/ci-sub-2m`, a separate follow-up to PR #51
 
@@ -361,11 +361,34 @@ broad cache deletion is needed.
 
 ## Plan Review Outcome
 
-Ready for approval of measurement-first local implementation; PR #51 is merged
-and the follow-up branch baseline is verified. Begin with A's native journey
-setup, then use the named checkpoints before optional splits/cache changes.
-This is not a fixed promise that all optional splits will be retained or every run
-will finish within two minutes. No implementation is authorized by this file.
+### Phase A local implementation evidence - 2026-09-05
+
+The first candidate changes only the journey lane from the version-aligned
+Playwright job container to the native Ubuntu/Node 22 runner. It installs the
+lockfile-selected Playwright 1.61.0 Chromium engine and OS dependencies after the
+frozen dependency install. PostgreSQL moves from the job-container hostname to
+the host-mapped `localhost:5432`; compatibility remains in the Playwright image
+with Chromium, Firefox and WebKit. Package caching, selectors, assertions,
+workers, retries, reports, migrations, cleanup and the two-lane aggregate are
+unchanged.
+
+Actionlint 1.7.12 passed. The Playwright CLI resolved version 1.61.0 and its
+Chromium installation contract. Local mocked journeys passed 25/25, all nine
+test migrations were already applied to `worksync_test`, and live journeys
+passed 3/3 against local PostgreSQL/Redis; runner-owned frontend/backend health
+ports were unavailable after cleanup. Aggregate/report self-tests passed 4/4.
+The complete frontend validation command also passed auth-policy tests,
+typecheck, lint, 209 unit/component tests, seven Node self-tests and the
+production build.
+Local execution is macOS and cannot prove GitHub's Ubuntu OS dependency install,
+service networking, timing or resource behavior. Those remain the decisive
+hosted pilot evidence and are not inferred from syntax or local test success.
+
+Phase A's local native-journey candidate is implemented and ready for review;
+PR #51 is merged and the follow-up branch baseline is verified. The hosted pilot,
+any further readiness/split/cache experiment, commit, push and PR delivery remain
+separate actions. This is not a fixed promise that all optional splits will be
+retained or every run will finish within two minutes.
 
 Review corrections incorporated: distinguish workflow time from job time;
 budget aggregate/setup overhead; retain readiness allowance; make live setup
