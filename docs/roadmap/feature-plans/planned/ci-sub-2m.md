@@ -1,6 +1,6 @@
 # Feature Plan: CI Below Two Minutes
 
-Status: Phase B mocked/live split provisionally accepted - evidence push not authorized
+Status: Backend split candidate implemented locally - hosted CI pending
 
 Intended branch / PR: `perf/ci-sub-2m`, a separate follow-up to PR #51
 
@@ -92,6 +92,25 @@ paired evidence for PR #51. This follow-up must demonstrate its own improvement
 over the merged parallel pipeline, not count predecessor gains again.
 
 ## Acceptance and Measurement Contract
+
+### Remaining-work evidence revision - 2026-09-05
+
+For the remaining backend and Docker work, the user explicitly selected hosted
+GitHub Actions as the authoritative execution environment and declined local
+test-suite execution and five-pair confirmation. Each candidate revision gets
+one complete pull-request CI run. A rerun is allowed only when the retained logs
+show a runner or external-infrastructure anomaly; it is not used to search for
+a favorable result. All existing correctness, browser, real-service, build,
+artifact, and security gates remain mandatory.
+
+One observation can establish whether that revision's complete CI passed and
+whether that observed run was below 120 seconds. It cannot establish a median,
+directional consistency, p95/p99, or a general performance guarantee. Compare
+the observed workflow and job times with the retained Phase B cohort, label the
+weaker confidence explicitly, and keep the actual next bottleneck visible. This
+task-specific revision supersedes the five-pair confirmation requirement below
+for remaining work; the earlier Phase A and Phase B evidence remains valid and
+unchanged.
 
 - Preserve all required commands or their complete constituent checks, including
   package pre-scripts, Prisma generation/validation, guarded migrations, lint,
@@ -523,6 +542,33 @@ Engineering improvement review: current scope adds only inventory, isolation,
 failure-report and measurement controls necessary for safe parallelization.
 Custom runners/images and broader CI framework work remain future enhancements
 requiring evidence and separate approval. No product requirement is changed.
+
+### Backend quality/service split candidate - 2026-09-05
+
+The retained Phase B run placed backend validation on the critical path at 160
+seconds. Its service initialization took 23 seconds, the frozen install took 25
+seconds, and the serial backend validation step took 80 seconds, including a
+59.963-second Jest run across all 56 suites. The service-independent Prisma,
+database guard, typecheck, lint, unit, build, and artifact work can therefore run
+without waiting for containers, while the remaining integration, contract,
+security, and backend E2E suites can use isolated service runners.
+
+The candidate creates one quality/unit lane and a two-entry service-test matrix
+with `fail-fast: false`. Each service shard provisions its own PostgreSQL,
+Redis, and MinIO, generates Prisma Client, applies guarded test migrations, and
+runs Jest `--shard` in-band across the same four service-backed projects. Unique
+Jest JSON artifacts retain executed outcomes. The stable `Backend validation`
+aggregate requires exact success from quality and the matrix, then verifies two
+nonempty reports are disjoint and their union equals every currently discovered
+service-suite path. Unit, integration, contract, security, and E2E coverage is
+retained; frontend mocked journeys are unrelated and remain unchanged.
+
+Local test suites are intentionally not run under the evidence revision above.
+The implementation receives diff review before push; clean-run syntax, command
+compatibility, shard balance, isolation, report publication, full correctness,
+workflow time, and runner cost are pending one authoritative pull-request CI
+run. If the candidate passes but remains above 120 seconds, use that run's
+critical path as the next decision input rather than starting a five-pair batch.
 
 ## References
 
