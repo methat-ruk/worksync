@@ -1,6 +1,6 @@
 # Feature Plan: CI Below Two Minutes
 
-Status: Phase B mocked/live split implemented locally - hosted measurement not authorized
+Status: Phase B mocked/live split provisionally accepted - evidence push not authorized
 
 Intended branch / PR: `perf/ci-sub-2m`, a separate follow-up to PR #51
 
@@ -413,7 +413,7 @@ PR #51 remains the retained baseline. Readiness cadence, lane splitting, backend
 Docker and conditional frontend experiments remain separately authorized work;
 no sub-two-minute claim has been established.
 
-### Phase B local implementation evidence - 2026-09-05
+### Phase B mocked/live split experiment - 2026-09-05
 
 A readiness-cadence-only candidate was eliminated before implementation or new
 hosted runs. In the retained workflow run, the journey PostgreSQL container
@@ -445,7 +445,8 @@ runner consumption is expected to rise and remains subject to the +20% cost
 gate. Local checks can prove command independence, suite identity, report paths,
 service isolation, and aggregate semantics; only a separately approved hosted
 pilot can establish runner scheduling, image-pull behavior, wall time, or cost.
-No hosted run, push, or performance claim is authorized by this implementation.
+At the local candidate freeze, no hosted run, push, or performance claim was
+authorized by the implementation alone.
 
 Actionlint 1.7.12 passed and the fail-closed aggregate/report-isolation tests
 passed 4/4, including incomplete and sparse result inputs. The three independent
@@ -462,6 +463,48 @@ live known-vulnerable probes, and the current production scan covered 464/464
 package-versions with no blocking or unknown-severity finding. Local macOS
 evidence does not prove hosted concurrency, fresh container setup, Ubuntu
 networking, artifact upload, timing, or runner cost.
+
+The authorized hosted batch compared baseline `85dd6ab` with split candidate
+`769a8b4` on pull-request events and fresh GitHub-hosted runners. The pilot pair
+passed every required check and selected the candidate for confirmation: the
+full E2E aggregate path improved from 170s to 160s, complete workflow time from
+171s to 165s, and summed runner time increased from 676s to 792s (+17.2%). The
+E2E improvement met the 10-second selection floor; the pilot was not used as
+proof of the final speed claim.
+
+The five-pair confirmation retained every run and produced:
+
+| Pair | Baseline wall | Candidate wall | Baseline E2E gate | Candidate E2E gate | Baseline runner-s | Candidate runner-s |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | 189s | 167s | 188s | 136s | 707 | 802 |
+| 2 | 185s | 157s | 181s | 131s | 768 | 788 |
+| 3 | 176s | 160s | 175s | 121s | 718 | 748 |
+| 4 | 191s | 166s | 182s | 145s | 704 | 790 |
+| 5 | 190s | 164s | 189s | 131s | 720 | 807 |
+
+Median workflow time improved from 189s to 164s (-25s), and every pair
+improved. Median E2E aggregate-path time improved from 182s to 131s (-51s), and
+every pair improved. Median summed runner time increased from 718s to 790s
+(+10.0%), within the +20% provisional cost gate. All ten confirmation runs and
+all required jobs passed. Candidate median job durations were 110s mocked, 121s
+live, 110s compatibility, 160s backend, and 136s containers; backend is now the
+dominant median workflow path.
+
+The final candidate artifacts contained compatibility 9/9 across three browser
+engines, mocked 25/25, and live 3/3, with zero failures, errors, or skips and all
+three unique reports present. The whole authorized batch used 12 workflow starts,
+approximately 150.3 runner-minutes, and 42m30s elapsed, within its narrower
+12-start/180-runner-minute/60-minute limits. No run failed or was automatically
+retried. GitHub emitted the existing Node 20 deprecation warning for
+`actions/upload-artifact@v4`; it did not weaken or fail report publication and
+an action-version change remains a separate intervention.
+
+The split is provisionally accepted because it passed correctness, directional,
+median-improvement, non-regression, and cost gates. It does not establish the
+final objective: every candidate workflow remained between 157s and 167s, so no
+run was below 120s. Backend validation is the next measured critical path. Fault
+injection for the new three-lane hosted topology, the evidence-only push, and any
+backend experiment require separately bounded authorization.
 
 Review corrections incorporated: distinguish workflow time from job time;
 budget aggregate/setup overhead; retain readiness allowance; make live setup
@@ -486,6 +529,8 @@ requiring evidence and separate approval. No product requirement is changed.
 - [Predecessor plan](../completed/ci-critical-path.md)
 - [Predecessor hosted validation and benchmarks](../evidence/ci-critical-path-validation.md)
 - [Verified post-merge main CI](https://github.com/methat-ruk/worksync/actions/runs/33855624835)
+- [Phase B baseline confirmation attempts](https://github.com/methat-ruk/worksync/actions/runs/33941209724)
+- [Phase B split-candidate confirmation attempts](https://github.com/methat-ruk/worksync/actions/runs/33951382799)
 - [Current CI workflow](../../../workflows/ci-validation-workflow.md)
 - [Playwright browser installation](https://playwright.dev/docs/browsers)
 - [Playwright CI/cache guidance](https://playwright.dev/docs/ci)
