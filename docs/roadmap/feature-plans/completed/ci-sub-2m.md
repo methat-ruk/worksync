@@ -1,6 +1,6 @@
 # Feature Plan: CI Below Two Minutes
 
-Status: Backend split candidate implemented locally - hosted CI pending
+Status: Completed - owner accepted the measured 2:19 result for PR #52
 
 Intended branch / PR: `perf/ci-sub-2m`, a separate follow-up to PR #51
 
@@ -9,8 +9,8 @@ Impact: Material validation-pipeline change; no application contract change
 Analysis and plan review date: 2026-09-04
 
 Verified starting revision: `5200888eb9a1dcdb18020b8da2cda5a9daa224b3`
-(PR #51 merge into `main`). Local `perf/ci-sub-2m` starts at this revision;
-only this plan and its index entry are pending changes at this review.
+(PR #51 merge into `main`). At the original plan review, local
+`perf/ci-sub-2m` started at this revision with only the plan and index pending.
 
 ## Goal and Delivery Order
 
@@ -563,16 +563,41 @@ nonempty reports are disjoint and their union equals every currently discovered
 service-suite path. Unit, integration, contract, security, and E2E coverage is
 retained; frontend mocked journeys are unrelated and remain unchanged.
 
-Local test suites are intentionally not run under the evidence revision above.
-The implementation receives diff review before push; clean-run syntax, command
-compatibility, shard balance, isolation, report publication, full correctness,
-workflow time, and runner cost are pending one authoritative pull-request CI
-run. If the candidate passes but remains above 120 seconds, use that run's
-critical path as the next decision input rather than starting a five-pair batch.
+No test suite was started manually before push under the evidence revision
+above. The repository's normal pre-push hook was not bypassed: workspace
+typecheck and lint passed, followed by all 32 backend unit suites and 153 unit
+tests. This preserves mandatory developer gates while leaving hosted behavior
+and timing to GitHub Actions.
+
+[Candidate run 33954263210](https://github.com/methat-ruk/worksync/actions/runs/33954263210)
+at head `6756e8b` passed every required check. Backend quality completed in 67
+seconds. Service shard 1 completed in 96 seconds and passed 12 suites / 63
+tests; shard 2 completed in 109 seconds and passed 12 suites / 91 tests. The
+aggregate verified exact success plus a disjoint, complete inventory of 24
+service suites / 154 tests. Together with the pre-push unit evidence, all 56
+backend suites / 307 tests remain represented.
+
+The backend aggregate completed 122 seconds after workflow creation, compared
+with the retained 160-second backend median before the split. Complete workflow
+wall time was 139 seconds (2:19), a 25-second improvement from the retained
+Phase B workflow median of 164 seconds. Summed job execution was approximately
+886 runner-seconds, 12.2% above the 790-second retained median and within the
+accepted +20% cost ceiling. These comparisons are directional because this
+phase intentionally used one hosted observation rather than matched repeated
+samples.
+
+The sub-two-minute target was not met. Container validation is the remaining
+critical path at 135 job-seconds / 138 seconds from workflow creation; backend
+and E2E aggregates completed at 122 and 126 seconds respectively. The Docker
+log identified the test-E2E Playwright installation as a major reusable layer,
+but the owner accepted the current developer wait and ended further
+optimization. This plan is therefore complete by explicit scope closure, not by
+claiming the original numeric target. A future Docker/cache optimization is
+optional new work and requires its own current baseline and authorization.
 
 ## References
 
-- [Predecessor plan](../completed/ci-critical-path.md)
+- [Predecessor plan](ci-critical-path.md)
 - [Predecessor hosted validation and benchmarks](../evidence/ci-critical-path-validation.md)
 - [Verified post-merge main CI](https://github.com/methat-ruk/worksync/actions/runs/33855624835)
 - [Phase B baseline confirmation attempts](https://github.com/methat-ruk/worksync/actions/runs/33941209724)

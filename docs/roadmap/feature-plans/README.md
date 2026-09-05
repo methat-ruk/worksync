@@ -49,9 +49,7 @@ third. Do not create a File Upload <-> Background Jobs dependency cycle.
 These plans improve the delivery workflow without changing the feature
 dependency order above.
 
-| Plan | Branch | Status |
-|---|---|---|
-| [CI Below Two Minutes](planned/ci-sub-2m.md) | `perf/ci-sub-2m` | Implementation-ready experiment plan - awaiting approval |
+No delivery-improvement plan is currently active.
 
 ## Completed Delivery Improvements
 
@@ -60,6 +58,7 @@ deployment. The linked evidence records the verified scope and remaining boundar
 
 | Plan | Branch | Status |
 |---|---|---|
+| [CI Below Two Minutes](completed/ci-sub-2m.md) | `perf/ci-sub-2m` | Done - owner accepted measured 2:19 result; PR #52 awaiting merge |
 | [CI Critical Path Optimization](completed/ci-critical-path.md) | `perf/ci-critical-path` | Done - validated and PR #51 merged 2026-09-04 |
 
 [Hosted CI and benchmark evidence](evidence/ci-critical-path-validation.md)
