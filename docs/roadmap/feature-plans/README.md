@@ -67,7 +67,7 @@ and Docker resource observations without reducing test or security gates.
 | Plan | Branch | Status |
 |---|---|---|
 | [File Upload Backend and Storage Foundation](completed/file-upload-foundation.md) | `feat/file-upload-foundation` | Done - PR #50 merged |
-| [Task Attachment UI Integration](completed/task-attachment-ui-integration.md) | `feat/task-attachment-ui-integration` | Done - locally validated, awaiting PR |
+| [Task Attachment UI Integration](completed/task-attachment-ui-integration.md) | `feat/task-attachment-ui-integration` | Done - locally validated; Draft PR #53 awaiting review |
 
 ## File Upload Plan Review - 2026-09-03
 

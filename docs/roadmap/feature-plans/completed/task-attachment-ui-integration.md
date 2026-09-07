@@ -1,8 +1,9 @@
 # Feature Plan: Task Attachment UI Integration
 
-Status: Implemented and locally validated on `feat/task-attachment-ui-integration`
+Status: Implemented and locally validated; Draft PR #53 awaiting review
 
-Intended PR: `feat/task-attachment-ui-integration`
+PR: [#53](https://github.com/methat-ruk/worksync/pull/53) from
+`feat/task-attachment-ui-integration`
 
 Milestone: 4 - File Uploads and Background Jobs
 
