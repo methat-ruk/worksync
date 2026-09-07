@@ -21,6 +21,7 @@ vi.mock("@/features/projects/components/project-section", () => ({
 }));
 
 const user = {
+  id: "owner-1",
   displayName: "Ada Lovelace"
 };
 

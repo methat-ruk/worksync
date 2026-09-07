@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PublicTask } from "@/features/tasks/model/task-contract";
+import type { WorkspaceRole } from "@/features/workspaces/model/workspace-contract";
+import { AttachmentSection } from "@/features/attachments/components/attachment-section";
 import { taskStatusLabels } from "@/features/tasks/components/task-card";
 
 import { listComments } from "../api/comments-api";
@@ -101,19 +103,23 @@ function CommentItem({ comment }: { comment: PublicComment }) {
 }
 
 export function TaskDetailSheet({
+  actorId,
   open,
   workspaceId,
   projectId,
   task,
   canCreateComment,
+  membershipRole,
   returnFocusRef,
   onOpenChange
 }: {
+  actorId: string;
   open: boolean;
   workspaceId: string;
   projectId: string;
   task: PublicTask | null;
   canCreateComment: boolean;
+  membershipRole: WorkspaceRole;
   returnFocusRef: RefObject<HTMLElement | null>;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -248,6 +254,18 @@ export function TaskDetailSheet({
                 Created by {task.creator.displayName}
               </p>
             </section>
+
+            <Separator />
+
+            {open && (
+              <AttachmentSection
+                actorId={actorId}
+                membershipRole={membershipRole}
+                projectId={projectId}
+                taskId={task.id}
+                workspaceId={workspaceId}
+              />
+            )}
 
             <Separator />
 

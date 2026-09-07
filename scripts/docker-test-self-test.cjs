@@ -115,7 +115,7 @@ function testScopeSelection() {
   });
   assert.deepEqual(createScopePlan("e2e"), {
     build: ["migration-test", "frontend-e2e"],
-    dependencies: ["postgres"],
+    dependencies: ["postgres", "redis", "minio"],
     run: ["migration-test", "frontend-e2e"]
   });
   assert.throws(() => createScopePlan("unknown"), /Unknown Docker test scope/);

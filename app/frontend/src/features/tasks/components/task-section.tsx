@@ -62,9 +62,11 @@ const initialTaskCollection: TaskCollection = {
 };
 
 export function TaskSection({
+  actorId,
   workspace,
   project
 }: {
+  actorId: string;
   workspace: PublicWorkspace;
   project: PublicProject;
 }) {
@@ -495,7 +497,9 @@ export function TaskSection({
       )}
 
       <TaskDetailSheet
+        actorId={actorId}
         canCreateComment={canMutate}
+        membershipRole={workspace.membershipRole}
         onOpenChange={(open) => {
           setDetailOpen(open);
           if (!open) {

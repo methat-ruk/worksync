@@ -62,7 +62,7 @@ describe("ProjectSection", () => {
       () => new Promise(() => undefined)
     );
 
-    render(<ProjectSection workspace={workspace} />);
+    render(<ProjectSection actorId="owner-1" workspace={workspace} />);
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "Loading projects..."
@@ -83,7 +83,7 @@ describe("ProjectSection", () => {
         })
     );
 
-    render(<ProjectSection workspace={workspace} />);
+    render(<ProjectSection actorId="owner-1" workspace={workspace} />);
     expect(
       await screen.findByText("No projects in this workspace")
     ).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe("ProjectSection", () => {
     const user = userEvent.setup();
     vi.mocked(listProjects).mockResolvedValue(projectPage([]));
 
-    render(<ProjectSection workspace={workspace} />);
+    render(<ProjectSection actorId="owner-1" workspace={workspace} />);
     await screen.findByText("No projects in this workspace");
     await user.type(screen.getByLabelText("Project key"), "wsync");
     await user.click(screen.getByRole("button", { name: "Create project" }));
@@ -136,7 +136,7 @@ describe("ProjectSection", () => {
       .mockRejectedValueOnce(new Error("unavailable"))
       .mockResolvedValueOnce(projectPage([]));
 
-    render(<ProjectSection workspace={workspace} />);
+    render(<ProjectSection actorId="owner-1" workspace={workspace} />);
 
     expect(
       await screen.findByText("Something went wrong. Please try again.")
@@ -158,7 +158,7 @@ describe("ProjectSection", () => {
       .mockRejectedValueOnce(new Error("unavailable"))
       .mockResolvedValueOnce(project);
 
-    render(<ProjectSection workspace={workspace} />);
+    render(<ProjectSection actorId="owner-1" workspace={workspace} />);
     await screen.findByText("No projects in this workspace");
     await user.type(screen.getByLabelText("Project name"), "WorkSync");
     await user.type(screen.getByLabelText("Project key"), "wsync");
@@ -181,6 +181,7 @@ describe("ProjectSection", () => {
     vi.mocked(listProjects).mockResolvedValue(projectPage([project]));
     render(
       <ProjectSection
+        actorId="owner-1"
         workspace={{ ...workspace, membershipRole: "VIEWER" }}
       />
     );
@@ -211,13 +212,17 @@ describe("ProjectSection", () => {
           })
       );
 
-    const { rerender } = render(<ProjectSection workspace={workspace} />);
+    const { rerender } = render(
+      <ProjectSection actorId="owner-1" workspace={workspace} />
+    );
     const designWorkspace = {
       ...workspace,
       id: "workspace-2",
       name: "Design Team"
     };
-    rerender(<ProjectSection workspace={designWorkspace} />);
+    rerender(
+      <ProjectSection actorId="owner-1" workspace={designWorkspace} />
+    );
 
     resolveSecond?.(
       projectPage([{ ...project, id: "project-2", name: "Design System" }])
@@ -248,7 +253,7 @@ describe("ProjectSection", () => {
         )
       );
 
-    render(<ProjectSection workspace={workspace} />);
+    render(<ProjectSection actorId="owner-1" workspace={workspace} />);
     await user.click(
       await screen.findByRole("button", { name: "Load more projects" })
     );
@@ -279,7 +284,7 @@ describe("ProjectSection", () => {
       )
       .mockResolvedValueOnce(projectPage([project, secondProject]));
 
-    render(<ProjectSection workspace={workspace} />);
+    render(<ProjectSection actorId="owner-1" workspace={workspace} />);
     await user.click(
       await screen.findByRole("button", { name: "Load more projects" })
     );
@@ -317,7 +322,7 @@ describe("ProjectSection", () => {
         )
       );
 
-    render(<ProjectSection workspace={workspace} />);
+    render(<ProjectSection actorId="owner-1" workspace={workspace} />);
     await user.click(
       await screen.findByRole("button", { name: "Load more projects" })
     );

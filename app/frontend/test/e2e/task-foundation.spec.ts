@@ -93,6 +93,18 @@ test.beforeEach(async ({ page }) => {
       })
   );
   await page.route(
+    /^http:\/\/localhost:4000\/api\/workspaces\/workspace-1\/projects\/project-1\/tasks\/task-1\/attachments(?:\?.*)?$/,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { items: [], nextCursor: null }
+        })
+      })
+  );
+  await page.route(
     /^http:\/\/localhost:4000\/api\/notifications(?:\?.*)?$/,
     (route) =>
       route.fulfill({
@@ -104,6 +116,168 @@ test.beforeEach(async ({ page }) => {
         })
       })
   );
+});
+
+test("uploads, downloads, and confirms attachment deletion", async ({ page }) => {
+  const fixture = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "base64"
+  );
+  const filename = "task-evidence.png";
+  let stored = false;
+  const uploadHeaders: Record<string, string>[] = [];
+  const publicAttachment = {
+    id: "attachment-1",
+    filename,
+    size: fixture.length,
+    contentType: "image/png",
+    status: "AVAILABLE",
+    creator: { id: user.id, displayName: user.displayName },
+    createdAt: "2026-09-07T10:00:00.000Z",
+    updatedAt: "2026-09-07T10:00:00.000Z"
+  };
+  const attachmentPath =
+    "/api/workspaces/workspace-1/projects/project-1/tasks/task-1/attachments";
+
+  await page.route(`${apiBaseUrl}${attachmentPath}**`, async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (url.pathname.endsWith("/attachment-1/content")) {
+      return route.fulfill({
+        status: 200,
+        headers: {
+          "Content-Length": String(fixture.length),
+          "Content-Type": "application/octet-stream"
+        },
+        body: fixture
+      });
+    }
+    if (url.pathname.endsWith("/attachment-1") && request.method() === "DELETE") {
+      stored = false;
+      return route.fulfill({ status: 204, body: "" });
+    }
+    if (request.method() === "POST") {
+      uploadHeaders.push(request.headers());
+      stored = true;
+      return route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { attachment: publicAttachment }
+        })
+      });
+    }
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          items: stored ? [publicAttachment] : [],
+          nextCursor: null
+        }
+      })
+    });
+  });
+  await page.route(`${apiBaseUrl}${attachmentPath}/**`, async (route) => {
+    const request = route.request();
+    if (request.url().endsWith("/content")) {
+      return route.fulfill({
+        status: 200,
+        headers: {
+          "Content-Length": String(fixture.length),
+          "Content-Type": "application/octet-stream"
+        },
+        body: fixture
+      });
+    }
+    stored = false;
+    return route.fulfill({ status: 204, body: "" });
+  });
+  await page.route(
+    `${apiBaseUrl}${attachmentPath.replace("attachments", "comments")}**`,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { items: [], nextCursor: null }
+        })
+      })
+  );
+
+  await page.goto("/app");
+  await page.getByRole("button", { name: "View details" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("No attachments yet")).toBeVisible();
+  await dialog.getByLabel("Choose an image").setInputFiles({
+    name: filename,
+    mimeType: "image/png",
+    buffer: fixture
+  });
+  await dialog.getByRole("button", { name: "Upload attachment" }).click();
+
+  await expect(dialog.getByText(`${filename} uploaded.`)).toBeVisible();
+  await expect(dialog.getByRole("listitem").filter({ hasText: filename })).toBeVisible();
+  expect(uploadHeaders).toHaveLength(1);
+  expect(uploadHeaders[0]?.["idempotency-key"]).toBeTruthy();
+  expect(uploadHeaders[0]?.["x-upload-length"]).toBe(String(fixture.length));
+
+  const downloadPromise = page.waitForEvent("download");
+  await dialog.getByRole("button", { name: "Download" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe(filename);
+  const stream = await download.createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) {
+    chunks.push(Buffer.from(chunk));
+  }
+  expect(Buffer.concat(chunks)).toEqual(fixture);
+
+  await dialog.getByRole("button", { name: `Delete ${filename}` }).click();
+  await page.getByRole("button", { name: "Delete attachment" }).click();
+  await expect(dialog.getByRole("listitem").filter({ hasText: filename })).toHaveCount(0);
+  await expect(dialog.getByText(`${filename} deleted.`)).toBeVisible();
+});
+
+test("keeps attachment controls usable on a mobile viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route(
+    `${apiUrl(
+      "/api/workspaces/workspace-1/projects/project-1/tasks/task-1/comments"
+    )}**`,
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { items: [], nextCursor: null }
+        })
+      })
+  );
+
+  await page.goto("/app");
+  await page.getByRole("button", { name: "View details" }).click();
+  const dialog = page.getByRole("dialog");
+
+  await expect(dialog.getByRole("heading", { name: "Attachments" })).toBeVisible();
+  await expect(dialog.getByLabel("Choose an image")).toBeVisible();
+  await expect(dialog.getByText("No attachments yet")).toBeVisible();
+  await page.waitForTimeout(350);
+  const box = await dialog.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x).toBeGreaterThanOrEqual(-1);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(391);
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth
+      )
+    )
+    .toBe(true);
 });
 
 test("opens task details and posts a validated mention", async ({ page }) => {

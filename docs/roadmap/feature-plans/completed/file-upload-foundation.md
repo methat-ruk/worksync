@@ -9,7 +9,7 @@ Milestone: 4 - File Uploads and Background Jobs
 Impact: Material untrusted-content, persistence, authorization, Redis, and
 object-storage boundary
 
-Follow-up PR: [Task Attachment UI Integration](../planned/task-attachment-ui-integration.md)
+Follow-up PR: [Task Attachment UI Integration](task-attachment-ui-integration.md)
 
 ## Goal
 
@@ -370,7 +370,7 @@ not an incidental configuration tweak.
   selected validation environment
 - MinIO bucket provisioning for local/test and the AWS S3 API subset as the
   production target contract
-- [Task Attachment UI Integration](../planned/task-attachment-ui-integration.md) depends on
+- [Task Attachment UI Integration](task-attachment-ui-integration.md) depends on
   this PR; this PR does not depend on the UI slice
 
 ## Ordered Implementation Plan
@@ -509,7 +509,7 @@ before final validation.
 
 ## Follow-up
 
-- [Task Attachment UI Integration](../planned/task-attachment-ui-integration.md)
+- [Task Attachment UI Integration](task-attachment-ui-integration.md)
 - AWS staging upload/download/delete smoke before production release
 - production reconciliation schedule and owner in deployment readiness
 - scanning/quarantine before broader or inline-rendered file types

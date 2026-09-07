@@ -20,11 +20,10 @@ Prioritize planned work by:
 4. smallest complete slice that can be reviewed deeply
 5. availability of validation evidence
 
-With stored mention notifications complete, this means:
+With stored mention notifications and the task-attachment journey complete,
+this means:
 
-1. add the backend/storage attachment boundary
-2. complete the task-attachment UI journey
-3. add jobs and production readiness in dependency order
+1. add jobs and production readiness in dependency order
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -33,10 +32,8 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [File Upload Backend and Storage Foundation](completed/file-upload-foundation.md) | 4 | Done - awaiting merge |
-| 2 | [Task Attachment UI Integration](planned/task-attachment-ui-integration.md) | 4 | Blocked on file backend/storage |
-| 3 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 4 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 1 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 2 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
 If the approved file-upload policy requires asynchronous malware scanning
 before attachments can be made available, replace the default File/Jobs order
@@ -65,6 +62,13 @@ deployment. The linked evidence records the verified scope and remaining boundar
 records five paired warm rounds, negative-path/report behavior, cache invalidation
 and Docker resource observations without reducing test or security gates.
 
+## Completed Product Features
+
+| Plan | Branch | Status |
+|---|---|---|
+| [File Upload Backend and Storage Foundation](completed/file-upload-foundation.md) | `feat/file-upload-foundation` | Done - PR #50 merged |
+| [Task Attachment UI Integration](completed/task-attachment-ui-integration.md) | `feat/task-attachment-ui-integration` | Done - locally validated; Draft PR #53 awaiting review |
+
 ## File Upload Plan Review - 2026-09-03
 
 The File Upload Foundation was reviewed against the current schema, backend and
@@ -82,8 +86,8 @@ original cross-stack PR is split into two independently reviewable plans:
 2. frontend progress/cancel/retry/list/download/delete behavior plus live
    browser evidence
 
-Implementation remains unstarted. The second PR cannot change the merged
-backend contract without re-planning.
+Both attachment slices are implemented. The UI slice preserved the merged
+backend contract and added real browser/PostgreSQL/Redis/MinIO evidence.
 
 ## Plan Set Review - 2026-07-31
 

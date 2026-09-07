@@ -30,6 +30,24 @@ const { loadTestDatabaseUrl } = require(
   path.join(workspaceRoot, "scripts", "database-environment.cjs")
 );
 const databaseUrl = loadTestDatabaseUrl();
+
+function requireEnvironment(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required for live E2E`);
+  }
+  return value;
+}
+
+const liveServiceEnvironment = {
+  REDIS_URL: requireEnvironment("TEST_REDIS_URL"),
+  S3_REGION: requireEnvironment("S3_REGION"),
+  S3_BUCKET: requireEnvironment("S3_BUCKET"),
+  S3_ACCESS_KEY_ID: requireEnvironment("S3_ACCESS_KEY_ID"),
+  S3_SECRET_ACCESS_KEY: requireEnvironment("S3_SECRET_ACCESS_KEY"),
+  S3_ENDPOINT: requireEnvironment("S3_ENDPOINT"),
+  S3_FORCE_PATH_STYLE: requireEnvironment("S3_FORCE_PATH_STYLE")
+};
 const startupTimeoutMs = 120_000;
 const cleanupTimeoutMs = 10_000;
 const children = [];
@@ -258,9 +276,7 @@ async function main() {
         FRONTEND_URL: "http://localhost:3000",
         CORS_ORIGIN: "http://localhost:3000",
         DATABASE_URL: databaseUrl,
-        REDIS_URL: process.env.TEST_REDIS_URL ?? "redis://localhost:6379/1",
-        S3_REGION: process.env.S3_REGION ?? "us-east-1",
-        S3_BUCKET: process.env.S3_BUCKET ?? "worksync-test",
+        ...liveServiceEnvironment,
         LOG_LEVEL: "silent",
         AUTH_RATE_LIMIT_ENABLED: "false",
         TRUST_PROXY: "false",

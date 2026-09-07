@@ -353,12 +353,9 @@ jobs:
           retention-days: 7
 
   frontend-e2e-live:
-    name: Frontend E2E live auth
+    name: Frontend E2E live services
     runs-on: ubuntu-latest
-    container:
-      # Keep this tag aligned with the @playwright/test version in pnpm-lock.yaml.
-      image: mcr.microsoft.com/playwright:v1.61.0-noble
-    timeout-minutes: 20
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:16-alpine
@@ -373,11 +370,26 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
-      HOME: /root
       NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
       NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED: "false"
-      DATABASE_URL: postgresql://worksync:worksync@postgres:5432/worksync_test?schema=public
+      DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
+      TEST_REDIS_URL: redis://localhost:6379/1
+      S3_REGION: us-east-1
+      S3_BUCKET: worksync-test
+      S3_ACCESS_KEY_ID: worksync
+      S3_SECRET_ACCESS_KEY: worksync-local-secret
+      S3_ENDPOINT: http://localhost:9000
+      S3_FORCE_PATH_STYLE: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -401,17 +413,40 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright Chromium
+        run: pnpm --filter @worksync/frontend exec playwright install --with-deps chromium
+
       - name: Build shared auth policy
         run: pnpm --filter @worksync/auth-policy build
 
-      - name: Apply Prisma migrations for live auth E2E
+      - name: Start MinIO
+        run: >-
+          docker run --detach --rm --name worksync-ci-live-minio
+          --publish 9000:9000
+          --env MINIO_ROOT_USER=worksync
+          --env MINIO_ROOT_PASSWORD=worksync-local-secret
+          minio/minio:RELEASE.2024-06-29T01-20-47Z
+          server /data
+
+      - name: Wait for MinIO
+        run: |
+          for _ in $(seq 1 30); do
+            if curl --fail --silent http://localhost:9000/minio/health/live >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs worksync-ci-live-minio
+          exit 1
+
+      - name: Apply Prisma migrations for live E2E
         run: pnpm prisma:migrate:deploy:test
 
-      - name: Run live auth concurrency end-to-end tests
+      - name: Run live service end-to-end tests
         id: live
         run: pnpm --filter @worksync/frontend test:e2e:live
 
-      - name: Upload live auth results
+      - name: Upload live service results
         if: ${{ !cancelled() && (steps.live.outcome == 'success' || steps.live.outcome == 'failure') }}
         uses: actions/upload-artifact@v4
         with:
