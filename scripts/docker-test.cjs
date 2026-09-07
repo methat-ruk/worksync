@@ -36,7 +36,7 @@ const scopePlans = Object.freeze({
   },
   e2e: {
     build: ["migration-test", "frontend-e2e"],
-    dependencies: ["postgres"],
+    dependencies: ["postgres", "redis", "minio"],
     run: ["migration-test", "frontend-e2e"]
   },
   all: {
@@ -82,6 +82,18 @@ function validateTestEnvironmentValues(values) {
     throw new Error(
       "TEST_REDIS_URL must use redis://redis:6379/1 in docker/.env.test"
     );
+  }
+  requireValue(values, "S3_REGION");
+  requireValue(values, "S3_BUCKET");
+  requireValue(values, "S3_ACCESS_KEY_ID");
+  requireValue(values, "S3_SECRET_ACCESS_KEY");
+  if (requireValue(values, "S3_ENDPOINT") !== "http://minio:9000") {
+    throw new Error(
+      "S3_ENDPOINT must use http://minio:9000 in docker/.env.test"
+    );
+  }
+  if (requireValue(values, "S3_FORCE_PATH_STYLE") !== "true") {
+    throw new Error("S3_FORCE_PATH_STYLE must be true in docker/.env.test");
   }
   if (
     requireValue(values, "NEXT_PUBLIC_API_BASE_URL") !==

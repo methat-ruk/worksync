@@ -7,6 +7,10 @@ import { setAccessToken } from "@/lib/api/session-token";
 import type { PublicTask } from "@/features/tasks/model/task-contract";
 import { TaskDetailSheet } from "./task-detail-sheet";
 
+vi.mock("@/features/attachments/components/attachment-section", () => ({
+  AttachmentSection: () => <div>Attachment section</div>
+}));
+
 const task: PublicTask = {
   id: "task-1",
   projectId: "project-1",
@@ -51,7 +55,9 @@ describe("TaskDetailSheet", () => {
 
     render(
       <TaskDetailSheet
+        actorId="owner-1"
         canCreateComment={false}
+        membershipRole="VIEWER"
         onOpenChange={vi.fn()}
         open
         projectId="project-1"
@@ -84,7 +90,9 @@ describe("TaskDetailSheet", () => {
 
     render(
       <TaskDetailSheet
+        actorId="owner-1"
         canCreateComment
+        membershipRole="OWNER"
         onOpenChange={vi.fn()}
         open
         projectId="project-1"
@@ -139,7 +147,9 @@ describe("TaskDetailSheet", () => {
 
     render(
       <TaskDetailSheet
+        actorId="owner-1"
         canCreateComment={false}
+        membershipRole="OWNER"
         onOpenChange={vi.fn()}
         open
         projectId="project-1"
@@ -191,7 +201,9 @@ describe("TaskDetailSheet", () => {
 
     render(
       <TaskDetailSheet
+        actorId="owner-1"
         canCreateComment
+        membershipRole="OWNER"
         onOpenChange={vi.fn()}
         open
         projectId="project-1"

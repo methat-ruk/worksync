@@ -1,6 +1,6 @@
 # Feature Plan: Task Attachment UI Integration
 
-Status: Reviewed - ready for implementation on baseline `28e7645` (implementation not started)
+Status: Implemented and locally validated on `feat/task-attachment-ui-integration`
 
 Intended PR: `feat/task-attachment-ui-integration`
 
@@ -8,10 +8,12 @@ Milestone: 4 - File Uploads and Background Jobs
 
 Impact: Material authenticated upload/download browser journey
 
-Dependency: [File Upload Backend and Storage Foundation](../completed/file-upload-foundation.md),
+Dependency: [File Upload Backend and Storage Foundation](file-upload-foundation.md),
 satisfied by merged PR #50 at `19c2b09`
 
 Plan review: 2026-09-07
+
+Implementation completed: 2026-09-07
 
 ## Goal
 
@@ -19,7 +21,7 @@ Complete the user-visible task-attachment journey on top of the merged backend
 contract: select, validate, upload with real progress, cancel, recover, retry
 safely, list, download, and delete according to current authorization.
 
-## Existing Foundation
+## Reviewed Baseline
 
 - The backend attachment schema, private S3-compatible adapter, authorization,
   rate/quota controls, reconciliation, HTTP routes, stable error codes, and
@@ -58,8 +60,8 @@ safely, list, download, and delete according to current authorization.
   E2E topology with healthy Redis and MinIO services and explicit test storage
   configuration. This is part of the PR, not an external dependency blocker.
 
-The plan is ready to implement. This review does not authorize implementation;
-it only removes the obsolete dependency block and defines the remaining work.
+The reviewed plan was approved for implementation after the dependency block
+was removed and the remaining work was defined.
 
 If implementation needs to alter the backend transport, public metadata,
 idempotency, authorization, lifecycle, file policy, or security boundary, stop
@@ -386,6 +388,61 @@ rerun affected checks before final validation.
 - live PostgreSQL/Redis/MinIO browser evidence cannot be made deterministic within
   the existing test topology
 
+## Completion Evidence
+
+- Added a dedicated attachment contract, collection reconciliation, safe error
+  mapping, authenticated XHR upload transport, bounded download handling, and
+  task-detail attachment section without coupling attachment state to comments.
+- Preserved the existing shared auth transition while making both fetch and XHR
+  attempts read the current bearer token; refresh retry keeps the same file and
+  idempotency key, and cancellation during refresh suppresses the retry.
+- Threaded the authenticated actor ID and selected workspace role through the
+  existing composition path for creator-aware actions.
+- Extended isolated Docker and GitHub live-E2E topology to require PostgreSQL,
+  Redis, MinIO, and explicit test-only storage settings. The live runner now
+  fails closed when any Redis/S3 setting is absent.
+- Added deterministic mocked desktop/mobile journeys and a live browser journey
+  that uploads a generated-in-memory PNG through the application, compares the
+  downloaded bytes, verifies viewer list/download behavior and outsider denial,
+  and deletes through the UI without direct MinIO seeding or private-key access.
+- Post-implementation review fixed cross-realm `AbortError` recognition, an
+  invalid MinIO GitHub service startup assumption, host-runner `HOME` handling,
+  cleanup-action accessible naming, sub-pixel/mobile animation assertions, and
+  a workspace-root min-content width that only overflowed under true mobile
+  device emulation.
+
+Authoritative local evidence on 2026-09-07:
+
+- `corepack pnpm validate:frontend`: passed 5 auth-policy tests, 245 frontend
+  Vitest tests, 7 frontend script tests, typecheck, lint/canonical Tailwind, and
+  the production Next.js build.
+- `corepack pnpm --filter @worksync/frontend test:e2e`: passed 27/27 mocked
+  Chromium journeys, including attachment desktop and mobile coverage.
+- `corepack pnpm --filter @worksync/frontend test:e2e:compatibility`: passed
+  9/9 production-build compatibility journeys across Chromium, Firefox, and
+  WebKit.
+- `corepack pnpm --filter @worksync/frontend test:e2e:live`: passed 4/4 live
+  Chromium journeys against real backend/PostgreSQL/Redis/MinIO, including the
+  attachment byte, authorization, and deletion journey.
+- Browser + Full CDP retest uploaded a 58,967-byte PNG through the real UI into
+  MinIO and verified browser-generated multipart boundaries, bearer plus
+  idempotency and exact-length headers, a public-only `201` response, bounded
+  download headers, complete object-URL revocation, cancel-delete focus return
+  with no `DELETE` request, no runtime/console errors, and a 390-pixel mobile
+  viewport with no horizontal overflow.
+- Docker Compose config validation and Docker orchestration self-test passed.
+- Focused backend attachment validation passed 7/7 suites and 50/50 tests across
+  unit, contract, security, and real-storage integration projects.
+- Pinned OSV-Scanner 2.5.1 production audit passed with 464/464 production
+  package-versions covered and no moderate-or-higher or unknown-severity
+  production findings.
+- A pre-merge security diff scan reviewed all 24 generated changed-source items
+  plus the directly supporting backend authorization, upload-policy, and storage
+  controls; it reported no findings and no deferred security work.
+- The backend attachment contract, security, and real-storage integration
+  baseline remained unchanged; the live browser journey re-exercised its public
+  upload/list/download/delete and isolation boundary.
+
 ## Engineering Improvement Review
 
 - **Current scope:** truthful progress, shared auth recovery, stable idempotency,
@@ -422,6 +479,22 @@ rerun affected checks before final validation.
 - **Confidence:** high for implementation readiness; production AWS provider
   smoke and production reconciliation scheduling remain release gates owned by
   the backend/deployment plans, not blockers for this PR.
+
+## Completion Verdict
+
+- **Outcome:** the accepted frontend attachment journey and required local/live
+  evidence are complete on the implementation branch.
+- **Backend boundary:** unchanged; no schema, persistence, storage-policy, API,
+  or authorization contract change was made.
+- **Remaining release boundary:** remote CI and code review remain required
+  before merge. AWS provider smoke and scheduled production reconciliation stay
+  with the production deployment work.
+- **Local environment verification:** the existing notifications and
+  file-upload migrations were applied to the developer `worksync` database.
+  Prisma reports all 9 migrations up to date; the original user, workspace,
+  task, and comment counts were preserved, and Browser + Full CDP smoke checks
+  against `.env` returned `200` for both notification and attachment reads with
+  no runtime or console errors.
 
 ## Follow-up
 

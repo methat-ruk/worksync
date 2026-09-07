@@ -24,6 +24,11 @@ export type RefreshSessionHandlerOutcome =
 
 type RefreshSessionHandler = () => Promise<RefreshSessionHandlerOutcome>;
 
+type AuthenticatedRequestOptions<T> = {
+  isUnauthorized: (result: T) => boolean;
+  signal?: AbortSignal | null;
+};
+
 let refreshSessionHandler: RefreshSessionHandler | null = null;
 
 export function setRefreshSessionHandler(
@@ -32,45 +37,68 @@ export function setRefreshSessionHandler(
   refreshSessionHandler = handler;
 }
 
+function throwIfAborted(signal?: AbortSignal | null): void {
+  if (signal?.aborted) {
+    throw new DOMException("Request was canceled", "AbortError");
+  }
+}
+
+export async function runAuthenticatedRequest<T>(
+  attempt: (accessToken: string | null) => Promise<T>,
+  { isUnauthorized, signal }: AuthenticatedRequestOptions<T>
+): Promise<T> {
+  throwIfAborted(signal);
+  const firstResult = await attempt(getAccessToken());
+  if (!isUnauthorized(firstResult) || !refreshSessionHandler) {
+    return firstResult;
+  }
+
+  throwIfAborted(signal);
+  const refreshOutcome = await refreshSessionHandler();
+  throwIfAborted(signal);
+
+  if (refreshOutcome.kind === "refreshed") {
+    return attempt(getAccessToken());
+  }
+  if (refreshOutcome.kind === "recoverable-error") {
+    throw refreshOutcome.error;
+  }
+  return firstResult;
+}
+
 export async function apiRequest(
   path: string,
   init: RequestInit = {},
   options: ApiRequestOptions = {}
 ): Promise<Response> {
-  const headers = new Headers(init.headers);
-  if (init.body && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-  if (options.authenticated) {
-    const accessToken = getAccessToken();
+  const attempt = (accessToken: string | null) => {
+    const headers = new Headers(init.headers);
+    if (init.body && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
     if (accessToken) {
       headers.set("Authorization", `Bearer ${accessToken}`);
     }
+
+    return fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers,
+      credentials: "include"
+    });
+  };
+
+  if (options.authenticated && options.retryAfterRefresh !== false) {
+    return runAuthenticatedRequest(attempt, {
+      isUnauthorized: (response) => response.status === 401,
+      ...(init.signal ? { signal: init.signal } : {})
+    });
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers,
-    credentials: "include"
-  });
-
-  if (
-    response.status === 401 &&
-    options.authenticated &&
-    options.retryAfterRefresh !== false &&
-    refreshSessionHandler
-  ) {
-    const refreshOutcome = await refreshSessionHandler();
-    if (refreshOutcome.kind === "refreshed") {
-      return apiRequest(path, init, {
-        authenticated: true,
-        retryAfterRefresh: false
-      });
-    }
-    if (refreshOutcome.kind === "recoverable-error") {
-      throw refreshOutcome.error;
+  if (options.authenticated) {
+    const accessToken = getAccessToken();
+    if (accessToken) {
+      return attempt(accessToken);
     }
   }
-
-  return response;
+  return attempt(null);
 }

@@ -108,7 +108,9 @@ describe("TaskSection", () => {
   it("renders the selected project task workflow", async () => {
     vi.mocked(listTasks).mockResolvedValue(page([task]));
 
-    render(<TaskSection project={project} workspace={workspace} />);
+    render(
+      <TaskSection actorId="owner-1" project={project} workspace={workspace} />
+    );
 
     expect(await screen.findByText(task.title)).toBeInTheDocument();
     expect(screen.getAllByText("Backlog")).toHaveLength(2);
@@ -123,6 +125,7 @@ describe("TaskSection", () => {
 
     render(
       <TaskSection
+        actorId="owner-1"
         project={project}
         workspace={{ ...workspace, membershipRole: "VIEWER" }}
       />
@@ -155,7 +158,9 @@ describe("TaskSection", () => {
       );
     vi.mocked(createTask).mockResolvedValue(createdTask);
 
-    render(<TaskSection project={project} workspace={workspace} />);
+    render(
+      <TaskSection actorId="owner-1" project={project} workspace={workspace} />
+    );
 
     const createButton = await screen.findByRole("button", {
       name: "Create task"
@@ -191,7 +196,9 @@ describe("TaskSection", () => {
     vi.mocked(listTasks).mockResolvedValue(page([task]));
     vi.mocked(updateTask).mockResolvedValue(updatedTask);
 
-    render(<TaskSection project={project} workspace={workspace} />);
+    render(
+      <TaskSection actorId="owner-1" project={project} workspace={workspace} />
+    );
 
     await user.click(await screen.findByRole("button", { name: "Edit" }));
     const dialog = screen.getByRole("dialog");
@@ -215,7 +222,9 @@ describe("TaskSection", () => {
     const user = userEvent.setup();
     vi.mocked(listTasks).mockResolvedValue(page([task]));
 
-    render(<TaskSection project={project} workspace={workspace} />);
+    render(
+      <TaskSection actorId="owner-1" project={project} workspace={workspace} />
+    );
 
     await screen.findByText(task.title);
     await user.selectOptions(
@@ -240,7 +249,9 @@ describe("TaskSection", () => {
       status: "CANCELED"
     });
 
-    render(<TaskSection project={project} workspace={workspace} />);
+    render(
+      <TaskSection actorId="owner-1" project={project} workspace={workspace} />
+    );
     await user.click(await screen.findByRole("button", { name: "Cancel" }));
 
     expect(
@@ -284,7 +295,9 @@ describe("TaskSection", () => {
       }
     );
 
-    render(<TaskSection project={project} workspace={workspace} />);
+    render(
+      <TaskSection actorId="owner-1" project={project} workspace={workspace} />
+    );
 
     const loadMoreButton = await screen.findByRole("button", {
       name: "Load more tasks"
@@ -316,7 +329,9 @@ describe("TaskSection", () => {
         )
     );
 
-    render(<TaskSection project={project} workspace={workspace} />);
+    render(
+      <TaskSection actorId="owner-1" project={project} workspace={workspace} />
+    );
 
     await user.click(
       await screen.findByRole("button", { name: "Load more tasks" })
@@ -346,7 +361,9 @@ describe("TaskSection", () => {
         )
     );
 
-    render(<TaskSection project={project} workspace={workspace} />);
+    render(
+      <TaskSection actorId="owner-1" project={project} workspace={workspace} />
+    );
 
     await user.click(
       await screen.findByRole("button", { name: "Load more tasks" })

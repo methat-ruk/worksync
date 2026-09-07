@@ -84,6 +84,51 @@ describe("shared API client", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("reads the replacement bearer token for the retry", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ success: false }, 401))
+      .mockResolvedValueOnce(jsonResponse({ success: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { apiRequest, setRefreshSessionHandler } = await import("./api-client");
+    const { setAccessToken } = await import("./session-token");
+    setAccessToken("expired-token");
+    setRefreshSessionHandler(async () => {
+      setAccessToken("replacement-token");
+      return { kind: "refreshed" };
+    });
+
+    await apiRequest("/api/workspaces", {}, { authenticated: true });
+
+    const firstHeaders = fetchMock.mock.calls[0]?.[1]?.headers as Headers;
+    const retryHeaders = fetchMock.mock.calls[1]?.[1]?.headers as Headers;
+    expect(firstHeaders.get("Authorization")).toBe("Bearer expired-token");
+    expect(retryHeaders.get("Authorization")).toBe("Bearer replacement-token");
+  });
+
+  it("suppresses the retry when cancellation happens during refresh", async () => {
+    const controller = new AbortController();
+    const attempt = vi.fn().mockResolvedValue({ status: 401 });
+    vi.stubGlobal("fetch", vi.fn());
+
+    const { runAuthenticatedRequest, setRefreshSessionHandler } = await import(
+      "./api-client"
+    );
+    setRefreshSessionHandler(async () => {
+      controller.abort();
+      return { kind: "refreshed" };
+    });
+
+    await expect(
+      runAuthenticatedRequest<{ status: number }>(attempt, {
+        isUnauthorized: (result) => result.status === 401,
+        signal: controller.signal
+      })
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(attempt).toHaveBeenCalledTimes(1);
+  });
+
   it("does not retry when refresh confirms the session is unauthenticated", async () => {
     const fetchMock = vi
       .fn()

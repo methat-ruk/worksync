@@ -53,7 +53,7 @@ function formatDate(value: Date): string {
 
 export function WorkspaceSkeleton() {
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-5">
+    <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-5">
       <section className={`${surfaceClass} p-6`}>
         <Skeleton className="h-7 w-52" />
         <Skeleton className="mt-3 h-4 w-full max-w-lg" />

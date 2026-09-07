@@ -24,12 +24,16 @@ export class ApiError extends Error {
   }
 }
 
-export async function parseApiError(response: Response): Promise<ApiError> {
-  const parsed = apiErrorSchema.safeParse(await response.json().catch(() => null));
+export function createApiError(status: number, payload: unknown): ApiError {
+  const parsed = apiErrorSchema.safeParse(payload);
   return new ApiError(
-    response.status,
+    status,
     parsed.success
       ? parsed.data
       : { success: false, message: "Request failed" }
   );
+}
+
+export async function parseApiError(response: Response): Promise<ApiError> {
+  return createApiError(response.status, await response.json().catch(() => null));
 }

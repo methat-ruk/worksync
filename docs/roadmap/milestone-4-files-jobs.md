@@ -1,6 +1,6 @@
 # Milestone 4 - File Uploads and Background Jobs
 
-Status: Planned
+Status: In progress
 
 ## Goal
 
@@ -12,15 +12,13 @@ weakening workspace isolation, storage safety, or job reliability.
 - local MinIO service in Docker Compose
 - Redis local service for future cache/queue use
 - deployment and security documentation for file and job concerns
+- task attachment metadata, private storage, authorization, bounded upload and
+  download, reconciliation, and real-storage backend evidence
+- task-detail attachment UI with progress, cancel/retry, list, authenticated
+  download, confirmed delete, role handling, and live browser evidence
 
 ## Still Required
 
-- file metadata model
-- upload flow
-- file access controls
-- storage client integration
-- file type and size policy
-- bounded backend streaming proxy contract
 - email jobs
 - reminder jobs
 - daily summary jobs
@@ -31,7 +29,7 @@ weakening workspace isolation, storage safety, or job reliability.
 Feature plan order:
 
 1. [File Upload Backend and Storage Foundation](feature-plans/completed/file-upload-foundation.md)
-2. [Task Attachment UI Integration](feature-plans/planned/task-attachment-ui-integration.md)
+2. [Task Attachment UI Integration](feature-plans/completed/task-attachment-ui-integration.md)
 3. [Background Jobs Foundation](feature-plans/planned/background-jobs-foundation.md)
 
 This order is conditional. If the approved upload policy requires asynchronous
@@ -42,9 +40,9 @@ file and job work.
 
 ## Exit Criteria
 
-- file upload security tests exist: Not done
+- file upload security tests exist: Done
 - jobs validate payloads and handle retries: Not done
-- storage access is scoped to authorized users: Not done
+- storage access is scoped to authorized users: Done
 
 ## Related Docs
 

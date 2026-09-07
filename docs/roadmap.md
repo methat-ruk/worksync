@@ -4,7 +4,7 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-09-03
+Last updated: 2026-09-07
 
 ## Current Snapshot
 
@@ -13,9 +13,9 @@ and the comments, mentions, and stored-notification foundations in Milestone 3.
 The frontend runtime compatibility, recovery/app-shell copy, task UI, and shared
 pagination findings from the repository health review are resolved. The
 production-dead task read-policy abstraction is also removed with real-database
-role and tenant-isolation evidence. The next planned product capability is the
-File Upload Backend and Storage Foundation, followed by Task Attachment UI
-Integration.
+role and tenant-isolation evidence. The attachment backend and task-detail UI
+journey are complete with real PostgreSQL/Redis/MinIO browser evidence. The
+next planned product capability is Background Jobs Foundation.
 
 Done:
 
@@ -54,12 +54,15 @@ Done:
 - private stored mention notifications with atomic source persistence,
   deterministic read state, recipient-scoped APIs, and an accessible responsive
   app-shell panel
+- private task attachments with bounded PNG/JPEG upload, truthful progress,
+  cancel/retry, list, authenticated byte-checked download, confirmed delete,
+  role/isolation enforcement, and live MinIO browser evidence
 - project setup, workflow, API, security, deployment, and roadmap docs
 
 Still missing before the collaboration MVP works:
 
-- workspace-scoped authorization for file and activity resources
-- realtime, files, jobs, and production readiness
+- workspace-scoped authorization for activity resources
+- realtime, jobs, and production readiness
 
 ## Milestone Status
 
@@ -69,18 +72,14 @@ Still missing before the collaboration MVP works:
 | 1 Identity and Workspace | Partial | Auth, workspace APIs, membership/RBAC, frontend workspace bootstrap, and the reusable actor boundary are in place; remaining downstream resource policy and scoping continue by feature. | [Milestone 1](roadmap/milestone-1-identity-workspace.md) |
 | 2 Projects and Tasks | Partial | Project and task foundations, authorization, UI, and evidence are complete; board view, project update UI, and activity logging remain. | [Milestone 2](roadmap/milestone-2-projects-tasks.md) |
 | 3 Comments, Mentions, and Notifications | In progress | Comments, mentions, and stored notifications are delivered; realtime remains. | [Milestone 3](roadmap/milestone-3-comments-notifications.md) |
-| 4 File Uploads and Background Jobs | Planned | MinIO and Redis local services exist; storage and job features are not implemented. | [Milestone 4](roadmap/milestone-4-files-jobs.md) |
+| 4 File Uploads and Background Jobs | In progress | Task attachments are complete across backend, UI, and live storage evidence; background jobs remain. | [Milestone 4](roadmap/milestone-4-files-jobs.md) |
 | 5 Production Readiness | Partial | CI, Docker, artifact checks, and docs exist; deployment target and production ops are not ready. | [Milestone 5](roadmap/milestone-5-production-readiness.md) |
 
 ## Current Priorities
 
-1. Merge [File Upload Backend and Storage Foundation](roadmap/feature-plans/completed/file-upload-foundation.md)
-   after review of its task-scoped persistence, storage, API, security,
-   reconciliation, and real-MinIO evidence.
-2. [Task Attachment UI Integration](roadmap/feature-plans/planned/task-attachment-ui-integration.md)
-   - complete progress, cancel, retry, list, download, delete, accessibility,
-     and live-browser evidence on the merged backend contract.
-3. Add jobs, activity, and production readiness in
+1. Review and merge [Task Attachment UI Integration](roadmap/feature-plans/completed/task-attachment-ui-integration.md)
+   with its mocked and live PostgreSQL/Redis/MinIO browser evidence.
+2. Add jobs, activity, and production readiness in
    dependency order. If attachments require asynchronous scanning, split the
    work around the attachment lifecycle contract, scan worker, and final
    availability/UI integration rather than creating a file/job dependency

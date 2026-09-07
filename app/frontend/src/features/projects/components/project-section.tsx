@@ -258,8 +258,10 @@ function ProjectCreateForm({
 }
 
 export function ProjectSection({
+  actorId,
   workspace
 }: {
+  actorId: string;
   workspace: PublicWorkspace;
 }) {
   const [loadState, setLoadState] = useState<ProjectLoadState>("loading");
@@ -576,6 +578,7 @@ export function ProjectSection({
       </div>
       {selectedProject && (
         <TaskSection
+          actorId={actorId}
           key={selectedProject.id}
           project={selectedProject}
           workspace={workspace}
