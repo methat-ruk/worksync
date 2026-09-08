@@ -1,0 +1,62 @@
+# Background jobs implementation evidence
+
+Candidate: uncommitted working tree on `feat/background-jobs-foundation`, based
+on plan commit `47aeb76`. Evidence date: 2026-09-08. This is a local implementation
+record, not PR approval, a zero-defect claim, or production rollout approval.
+
+## Executed successfully
+
+| Command/check | Evidence |
+| --- | --- |
+| `corepack pnpm validate:backend:quality` | Prisma validation/generation, environment self-test, typecheck, lint, 33 unit suites / 173 tests, build and 321-file artifact validation |
+| `corepack pnpm --filter @worksync/backend test:services` | 26 suites / 174 tests; existing auth, workspace, project, task, comment, notification and attachment regressions |
+| `corepack pnpm --filter @worksync/backend test:integration --testPathPattern=jobs.integration` | 13 tests, including DB-clock inclusive boundary across users, expiry-update race, lock-timeout rollback/recovery, statement timeout, duplicate cleanup, caps, actual operator retry, a mostly-active expiry-index plan and pool cap evidence |
+| `corepack pnpm --filter @worksync/backend test:e2e --testPathPattern=jobs-process` | 9 compiled-process tests: pre/post-commit SIGKILL, repeated stall exhaustion, watchdog, active-hang shutdown, disconnected bootstrap, scheduling, health and repeated signal drain |
+| `corepack pnpm test:jobs:redis` | Disposable TLS/ACL Redis: auth/CA/hostname rejection, namespace/admin denial, AOF restart, real queue consumption, paused-Redis readiness loss/recovery and bounded forced shutdown |
+| `corepack pnpm audit:production` | 483/483 production package-versions covered; no moderate-or-higher or unknown-severity findings |
+| `corepack pnpm test:docker-orchestration` | Orchestration self-test passed |
+| `corepack pnpm docker:test:backend` | 59 suites / 339 tests, quality/build/artifact checks; disposable stack and volumes cleaned. Build snapshot predates the two additional DB race/lock tests, which passed in the host runs above |
+| Compose `config --quiet` | Full local topology including worker validates |
+| `docker build --target backend -t worksync-backend:local .` | Runtime image built; worker/control are included |
+| Test-owned container from that image | Minimal jobs-only config, `_test` DB, dry-run, scheduler off, readiness and exit code 0 after stop; container and queue prefix removed |
+| `pnpm dev --with-worker` with dry-run/scheduler off | API, frontend and worker started together; all health/HTTP checks passed. A source change reloaded the worker and SIGINT drained it. Worker watch uses separate `dist-worker` output |
+| `git diff --check`; `node --check scripts/dev.mjs`; `node --check scripts/test-jobs-redis.cjs` | Passed |
+
+The process tests use real compiled workers, Redis locks and PostgreSQL. Test-only
+wrappers kill before or after the real handler's commit, or substitute a
+never-settling handler. Together with the disposable TLS Redis fixture they prove
+redelivery/convergence, stall exhaustion, 30-second watchdog termination,
+readiness loss/recovery for dropped Redis replies, and bounded shutdown. They do
+not simulate every possible network or kernel failure.
+
+Earlier bare-Jest attempts failed during setup because they omitted the project's
+Prisma VM-modules runtime flag (one sandboxed attempt also lacked service access).
+They are not counted as successful behavior tests. The fixture now checks the
+runner flag and cleans its generated schema on setup failure. Initial TLS/AOF
+fixture failures were corrected and the fixture rerun successfully.
+
+## Review fixes
+
+- Development worker uses a separate Nest output directory, avoiding shared API
+  `dist` deletion/rebuilds and Node's broad-watch file-descriptor exhaustion.
+- Compose scheduler registration is configurable, allowing the documented
+  disable-schedule procedure to survive restart.
+- Fixture setup failures have an actionable runner prerequisite and scoped
+  schema cleanup.
+
+Review covered the changed queue/handler/control/configuration/lifecycle paths
+and relevant API/auth consumers. This is local self-review, not an independent
+PR review or an audit of every untouched file.
+
+## Remaining evidence / release boundary
+
+No further local blocker is known in the implemented scope. Evidence remains
+bounded: caps and tests are not a throughput guarantee, and no test simulates
+every possible OS, provider, kernel or production-capacity failure.
+
+Browser/CDP was not run: no browser UI or public API contract was changed. Remote
+CI and independent PR review have not run; nothing was committed or pushed.
+
+Production retention/no-hold approval, target TLS/ACL/DB grants, dry-run capacity,
+alert routing, failover/backups and rollout remain separate mandatory release
+gates. No production mutation or deployment was performed.

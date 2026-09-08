@@ -52,6 +52,7 @@
     "docker:test": "node scripts/docker-test.cjs all",
     "docker:test:down": "node scripts/docker-test.cjs down",
     "test:docker-orchestration": "node scripts/docker-test-self-test.cjs",
+    "test:jobs:redis": "node scripts/test-jobs-redis.cjs",
     "docker:up": "corepack pnpm docker:infra:up",
     "docker:down": "corepack pnpm docker:infra:down",
     "docker:app:build": "corepack pnpm docker:full:build",

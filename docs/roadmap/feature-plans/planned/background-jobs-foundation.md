@@ -1,6 +1,9 @@
 # Feature Plan: Background Jobs Foundation
 
-Status: Reviewed — ready for implementation approval; not implemented
+Status: Implemented — local validation and review complete; not release-approved
+
+Current executed evidence and remaining gaps:
+[`background-jobs-validation.md`](../../../workflows/background-jobs-validation.md).
 
 Intended PR: `feat/background-jobs-foundation`
 
@@ -10,7 +13,8 @@ Reviewed against: `5a3fa628a21d7207045d3226c142ab3b1483c03f` (2026-09-08)
 
 Impact: Material asynchronous runtime and session-retention change. Production
 apply performs irreversible deletion and requires a separate release decision.
-This plan review does not authorize implementation or data mutation.
+Implementation was subsequently authorized. Production data mutation remains
+outside that approval and requires the separate release decision above.
 
 ## Goal and First Job Decision
 

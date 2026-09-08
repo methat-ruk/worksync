@@ -21,6 +21,12 @@ Client
 
 The exact provider, hosting target, and CI/CD platform are not selected in this document.
 
+The session-cleanup worker runs from the backend artifact as a separate process.
+Its [operations guide](workflows/background-jobs.md) defines jobs-only variables,
+loopback health, limits, inspection and rollback. Full local Compose starts it in
+dry-run mode. Production apply requires retention approval and target evidence;
+deploying the artifact alone does not authorize session deletion.
+
 ## Environments
 
 Expected environment stages:

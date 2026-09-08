@@ -30,6 +30,7 @@ allowBuilds:
   "@prisma/engines@7.9.0": true
   "@scarf/scarf@1.4.0": false
   "esbuild@0.28.1": true
+  "msgpackr-extract@3.0.4": false
   "prisma@7.9.0": true
   "sharp@0.35.3": true
   "unrs-resolver@1.12.2": true

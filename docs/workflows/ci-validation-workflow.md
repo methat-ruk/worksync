@@ -1,5 +1,12 @@
 # CI Validation Workflow
 
+Background-job evidence runs in backend unit/service suites. Service tests build
+the worker artifact before spawning it, migrate a generated schema inside the
+test database, and use unique queue prefixes. The backend service CI lane also
+runs `pnpm test:jobs:redis` on shard 1 with host Docker/OpenSSL for TLS, ACL and AOF
+restart evidence. The ordinary Docker test Redis remains intentionally ephemeral;
+it does not replace this persistence/secure-transport fixture.
+
 ## Purpose
 
 WorkSync CI proves that the repository still works from a clean checkout, not

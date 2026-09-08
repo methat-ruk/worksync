@@ -171,6 +171,10 @@ jobs:
             --json \
             --outputFile="../../test-results/backend-services/shard-${SHARD_INDEX}.json"
 
+      - name: Verify jobs Redis TLS ACL and persistence
+        if: matrix.shard == 1
+        run: pnpm test:jobs:redis
+
       - name: Upload backend service-test results
         if: ${{ !cancelled() && (steps.services.outcome == 'success' || steps.services.outcome == 'failure') }}
         uses: actions/upload-artifact@v4
@@ -495,7 +499,7 @@ jobs:
       - name: Validate full container services
         run: |
           services="$(docker compose --env-file docker/.env.development.example -f docker/compose.yml -f docker/compose.app.yml config --services | sort | tr '\n' ' ')"
-          test "$services" = "backend frontend minio postgres redis "
+          test "$services" = "backend frontend minio postgres redis worker "
 
       - name: Validate isolated test container topology
         env:

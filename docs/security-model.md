@@ -68,6 +68,10 @@ Required controls:
 - reconcile received invalidations against the current access-token session so
   a delayed event cannot clear a newer active login
 - enforce an absolute session lifetime rather than extending it on refresh
+- the background maintenance worker may delete sessions only after absolute
+  expiry plus a 30-day grace; revocation alone is not cleanup eligibility
+- production cleanup requires retention/no-hold approval and a restricted
+  maintenance identity; see [Background Jobs Operations](workflows/background-jobs.md)
 - validate browser request origins for cookie-authenticated auth commands
 - rate-limit sensitive authentication endpoints using safe, hashed limiter keys
   so login, signup, refresh, and Google OAuth cannot be abused to exhaust CPU,
