@@ -107,7 +107,7 @@ describe("compiled jobs process lifecycle", () => {
     await eventually(async () => await job.getState() === "completed", 100000);
     const recovered = await fixture.queue.getJob(job.id!);
     expect(recovered?.returnvalue).toMatchObject({ deleted: 0 });
-  }, 85000);
+  }, 125000);
 
   it("preserves data and redelivers after process death before the handler commits", async () => {
     const user = await fixture.db.prisma.user.create({ data: { email: "precommit@example.com", displayName: "Precommit fixture" } });
@@ -120,7 +120,7 @@ describe("compiled jobs process lifecycle", () => {
     await start();
     await eventually(async () => await job.getState() === "completed", 100000);
     expect(await fixture.db.prisma.authSession.count()).toBe(0);
-  }, 85000);
+  }, 125000);
 
   it("moves a repeatedly abandoned job to failed after stall exhaustion", async () => {
     const first = await start(false, "pre-commit");
@@ -150,7 +150,7 @@ describe("compiled jobs process lifecycle", () => {
     // Recover the abandoned lock before fixture teardown.
     await start();
     await eventually(async () => await job.getState() === "completed", 100000);
-  }, 110000);
+  }, 150000);
 
   it("bounds shutdown while an active handler cannot settle", async () => {
     const { child } = await start(false, "hang");
@@ -163,7 +163,7 @@ describe("compiled jobs process lifecycle", () => {
     expect(Date.now() - started).toBeLessThan(32000);
     await start();
     await eventually(async () => await job.getState() === "completed", 100000);
-  }, 110000);
+  }, 150000);
 
   it("exits within the bootstrap deadline while Redis is disconnected", async () => {
     const redisPort = await availablePort();

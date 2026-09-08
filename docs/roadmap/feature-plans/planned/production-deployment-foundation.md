@@ -61,7 +61,7 @@ target-specific evidence.
 Once these decisions are known, split Redis hardening, secret-scanning fallback,
 worker deployment, or backup automation into separate PR-sized plans when they
 need independent rollout or evidence. Session cleanup implementation is owned by
-[Background Jobs Foundation](background-jobs-foundation.md); this plan owns its
+[Background Jobs Foundation](../completed/background-jobs-foundation.md); this plan owns its
 target-specific retention approval and production enablement. Do not create a
 second cleanup implementation or block isolated worker development on provider
 selection. This document is not authorization for one broad infrastructure PR.
@@ -205,7 +205,7 @@ in-scope findings; re-plan target or architecture changes.
 
 - core workspace/project/task workflows: satisfied
 - selected production target and accountable owners: unresolved
-- [Background Jobs Foundation](background-jobs-foundation.md) for the selected
+- [Background Jobs Foundation](../completed/background-jobs-foundation.md) for the selected
   scheduled session cleanup worker; this release consumes its artifact and
   evidence. Provider selection is not a prerequisite for that plan's isolated
   implementation. Deferring worker rollout requires an explicit cleanup

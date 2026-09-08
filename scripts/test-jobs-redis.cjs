@@ -123,17 +123,22 @@ async function main() {
     await healthEventually(healthUrl, false, 20000);
     docker("unpause", container);
     await healthEventually(healthUrl, true, 30000);
+    const recoveryClient = await ready(options);
+    queue = new Queue("auth-session-maintenance-v1", { connection: recoveryClient, prefix });
+    queue.on("error", () => undefined);
+    const recoveryJob = await queue.add("auth-session-cleanup", { type: "auth-session-cleanup", version: 1 }, { jobId: "worker-recovery" });
+    await jobStateEventually(queue, recoveryJob.id, "completed", 10000);
+    await queue.close(); queue = undefined;
+    recoveryClient.disconnect();
     const exited = once(workerProcess, "exit");
     const stoppingAt = Date.now();
     workerProcess.kill("SIGTERM");
     const [exitCode] = await exited;
     workerProcess = undefined;
-    // A healthy worker drains with zero; reconnect cleanup may cross the 20-second
-    // force-close budget, which intentionally leaves a nonzero operator signal.
-    assert.equal(exitCode, 1);
+    assert.equal(exitCode, 0);
     assert.ok(Date.now() - stoppingAt < 32000, "Worker shutdown exceeded the hard deadline");
     assert.doesNotMatch(workerOutput, /fixture-password|postgresql:\/\//);
-    process.stdout.write("Jobs Redis TLS/ACL/AOF: PASS (auth, hostname/CA rejection, namespace/admin denial, durable queue restart, consumption, worker disconnect recovery)\n");
+    process.stdout.write("Jobs Redis TLS/ACL/AOF: PASS (auth, hostname/CA rejection, namespace/admin denial, durable queue restart, worker recovery and consumption)\n");
   } finally {
     if (workerProcess?.exitCode === null) {
       const exited = once(workerProcess, "exit");
@@ -146,6 +151,14 @@ async function main() {
   }
 }
 async function jobState(queue) { return (await queue.getJob("persisted"))?.getState(); }
+async function jobStateEventually(queue, jobId, expectedState, timeout) {
+  const started = Date.now();
+  while (Date.now() - started < timeout) {
+    if (await (await queue.getJob(jobId))?.getState() === expectedState) return;
+    await new Promise((done) => setTimeout(done, 25));
+  }
+  throw new Error(`Worker did not reach ${expectedState} after Redis recovery`);
+}
 async function healthEventually(url, expectedReady, timeout) {
   const started = Date.now();
   while (Date.now() - started < timeout) {

@@ -1,11 +1,14 @@
 # Feature Plan: Background Jobs Foundation
 
-Status: Implemented — local validation and review complete; not release-approved
+Status: Implemented and locally validated; Draft PR #54 awaiting review
 
 Current executed evidence and remaining gaps:
 [`background-jobs-validation.md`](../../../workflows/background-jobs-validation.md).
 
-Intended PR: `feat/background-jobs-foundation`
+PR: [#54](https://github.com/methat-ruk/worksync/pull/54) from
+`feat/background-jobs-foundation`
+
+Implementation completed: 2026-09-08
 
 Milestone: 4 - File Uploads and Background Jobs
 

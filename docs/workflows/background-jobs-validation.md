@@ -1,8 +1,9 @@
 # Background jobs implementation evidence
 
-Candidate: uncommitted working tree on `feat/background-jobs-foundation`, based
-on plan commit `47aeb76`. Evidence date: 2026-09-08. This is a local implementation
-record, not PR approval, a zero-defect claim, or production rollout approval.
+Candidate: `feat/background-jobs-foundation` (PR
+[#54](https://github.com/methat-ruk/worksync/pull/54)). Evidence date:
+2026-09-08. This is a local implementation record, not PR approval, a
+zero-defect claim, or production rollout approval.
 
 ## Executed successfully
 
@@ -11,8 +12,8 @@ record, not PR approval, a zero-defect claim, or production rollout approval.
 | `corepack pnpm validate:backend:quality` | Prisma validation/generation, environment self-test, typecheck, lint, 33 unit suites / 173 tests, build and 321-file artifact validation |
 | `corepack pnpm --filter @worksync/backend test:services` | 26 suites / 174 tests; existing auth, workspace, project, task, comment, notification and attachment regressions |
 | `corepack pnpm --filter @worksync/backend test:integration --testPathPattern=jobs.integration` | 13 tests, including DB-clock inclusive boundary across users, expiry-update race, lock-timeout rollback/recovery, statement timeout, duplicate cleanup, caps, actual operator retry, a mostly-active expiry-index plan and pool cap evidence |
-| `corepack pnpm --filter @worksync/backend test:e2e --testPathPattern=jobs-process` | 9 compiled-process tests: pre/post-commit SIGKILL, repeated stall exhaustion, watchdog, active-hang shutdown, disconnected bootstrap, scheduling, health and repeated signal drain |
-| `corepack pnpm test:jobs:redis` | Disposable TLS/ACL Redis: auth/CA/hostname rejection, namespace/admin denial, AOF restart, real queue consumption, paused-Redis readiness loss/recovery and bounded forced shutdown |
+| `corepack pnpm --filter @worksync/backend test:e2e --testPathPattern=jobs-process` | 9 compiled-process tests passed in 417 seconds after the deadline correction: pre/post-commit SIGKILL, repeated stall exhaustion, watchdog, active-hang shutdown, disconnected bootstrap, scheduling, health and repeated signal drain. Recovery assertions may wait up to 100 seconds, and their test deadlines exceed that bound. |
+| `corepack pnpm test:jobs:redis` | Disposable TLS/ACL Redis: auth/CA/hostname rejection, namespace/admin denial, AOF restart, real queue consumption, paused-Redis readiness loss/recovery, post-recovery worker consumption and graceful shutdown |
 | `corepack pnpm audit:production` | 483/483 production package-versions covered; no moderate-or-higher or unknown-severity findings |
 | `corepack pnpm test:docker-orchestration` | Orchestration self-test passed |
 | `corepack pnpm docker:test:backend` | 59 suites / 339 tests, quality/build/artifact checks; disposable stack and volumes cleaned. Build snapshot predates the two additional DB race/lock tests, which passed in the host runs above |
@@ -43,6 +44,11 @@ fixture failures were corrected and the fixture rerun successfully.
   disable-schedule procedure to survive restart.
 - Fixture setup failures have an actionable runner prerequisite and scoped
   schema cleanup.
+- The TLS/ACL Redis recovery fixture now proves a recovered worker consumes a
+  newly queued job and exits cleanly; recovery is not inferred from readiness
+  alone.
+- Process-E2E deadlines now exceed their 100-second recovery assertions, so
+  Jest cannot terminate a valid recovery test before its own oracle finishes.
 
 Review covered the changed queue/handler/control/configuration/lifecycle paths
 and relevant API/auth consumers. This is local self-review, not an independent
@@ -54,8 +60,9 @@ No further local blocker is known in the implemented scope. Evidence remains
 bounded: caps and tests are not a throughput guarantee, and no test simulates
 every possible OS, provider, kernel or production-capacity failure.
 
-Browser/CDP was not run: no browser UI or public API contract was changed. Remote
-CI and independent PR review have not run; nothing was committed or pushed.
+Browser/CDP was not run: no browser UI or public API contract was changed.
+Remote CI previously passed for `31edde6`; the follow-up commit will require its
+own CI result and independent PR review.
 
 Production retention/no-hold approval, target TLS/ACL/DB grants, dry-run capacity,
 alert routing, failover/backups and rollout remain separate mandatory release
