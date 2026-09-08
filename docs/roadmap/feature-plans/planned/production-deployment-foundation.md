@@ -58,10 +58,13 @@ target-specific evidence.
 - logs/metrics/alert destination and operational owner
 - backup provider, retention, restore destination, and recovery objectives
 
-Once these decisions are known, split Redis hardening, refresh-session cleanup,
-secret-scanning fallback, worker deployment, or backup automation into separate
-PR-sized plans when they need independent rollout or evidence. This document is
-not authorization for one broad infrastructure PR.
+Once these decisions are known, split Redis hardening, secret-scanning fallback,
+worker deployment, or backup automation into separate PR-sized plans when they
+need independent rollout or evidence. Session cleanup implementation is owned by
+[Background Jobs Foundation](background-jobs-foundation.md); this plan owns its
+target-specific retention approval and production enablement. Do not create a
+second cleanup implementation or block isolated worker development on provider
+selection. This document is not authorization for one broad infrastructure PR.
 
 ## Scope
 
@@ -70,7 +73,9 @@ not authorization for one broad infrastructure PR.
 - environment and secret ownership/validation
 - hosted or repository-owned secret scanning evidence
 - production health/readiness and basic observability
-- refresh-session retention/cleanup disposition
+- refresh-session retention approval and cleanup rollout: consume the Background
+  Jobs Foundation contract (proposed 30-day post-expiry grace, bounded dry-run/apply),
+  confirm no retention holds, and verify target evidence before enabling deletion
 - production Redis client/transport requirements for delivered dependencies
 - deployment-safe migration procedure
 - PostgreSQL backup and restore evidence
@@ -200,8 +205,11 @@ in-scope findings; re-plan target or architecture changes.
 
 - core workspace/project/task workflows: satisfied
 - selected production target and accountable owners: unresolved
-- [Background Jobs Foundation](background-jobs-foundation.md) only if session
-  cleanup or another required operation uses a scheduled worker
+- [Background Jobs Foundation](background-jobs-foundation.md) for the selected
+  scheduled session cleanup worker; this release consumes its artifact and
+  evidence. Provider selection is not a prerequisite for that plan's isolated
+  implementation. Deferring worker rollout requires an explicit cleanup
+  disposition; do not imply retention is enforced while it is disabled
 - Notifications/File Upload foundations only when those features are included
   in the first production release
 

@@ -32,14 +32,13 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
+| 1 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Reviewed: awaiting implementation approval |
 | 2 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
-If the approved file-upload policy requires asynchronous malware scanning
-before attachments can be made available, replace the default File/Jobs order
-with reviewed PR slices: attachment metadata/storage lifecycle first, the
-Background Jobs scanning worker second, and upload availability/UI integration
-third. Do not create a File Upload <-> Background Jobs dependency cycle.
+Background Jobs Foundation selects expired-session cleanup and has no attachment
+or notification dependency. A future malware-scanning requirement needs a
+separate quarantine/availability plan; it must not silently replace this first
+job or create a File Upload <-> Background Jobs dependency cycle.
 
 ## Planned Delivery Improvements
 

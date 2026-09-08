@@ -10,7 +10,7 @@ weakening workspace isolation, storage safety, or job reliability.
 ## Foundation Already Present
 
 - local MinIO service in Docker Compose
-- Redis local service for future cache/queue use
+- Redis local service, already used for rate protection; queue integration pending
 - deployment and security documentation for file and job concerns
 - task attachment metadata, private storage, authorization, bounded upload and
   download, reconciliation, and real-storage backend evidence
@@ -19,12 +19,11 @@ weakening workspace isolation, storage safety, or job reliability.
 
 ## Still Required
 
-- email jobs
-- reminder jobs
-- daily summary jobs
-- selected BullMQ/Redis integration
-- worker runtime and deployment topology
-- retry, idempotency, and poison-message handling
+- BullMQ/Redis integration with bounded expired-session cleanup as the first job
+- isolated worker runtime, local topology, retry/idempotency and failed-job handling
+- production worker enablement through the production deployment plan
+- email, reminder and daily-summary jobs require their own approved use cases;
+  they are not acceptance criteria for the one-job foundation
 
 Feature plan order:
 
@@ -32,11 +31,11 @@ Feature plan order:
 2. [Task Attachment UI Integration](feature-plans/completed/task-attachment-ui-integration.md)
 3. [Background Jobs Foundation](feature-plans/planned/background-jobs-foundation.md)
 
-This order is conditional. If the approved upload policy requires asynchronous
-malware scanning before availability, split the work into attachment
-metadata/storage lifecycle, Background Jobs scanning worker, and final upload
-availability/UI integration slices. Do not create a dependency cycle between
-file and job work.
+The reviewed Background Jobs plan selects expired-session cleanup and does not
+depend on attachment or notification work. Attachment reconciliation remains a
+manual operation. If a future upload policy requires malware scanning, review
+its quarantine/availability lifecycle as separate feature work; do not silently
+replace the selected foundation job or reopen completed UI work.
 
 ## Exit Criteria
 
