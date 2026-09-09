@@ -23,6 +23,24 @@ zero-defect claim, or production rollout approval.
 | `pnpm dev --with-worker` with dry-run/scheduler off | API, frontend and worker started together; all health/HTTP checks passed. A source change reloaded the worker and SIGINT drained it. Worker watch uses separate `dist-worker` output |
 | `git diff --check`; `node --check scripts/dev.mjs`; `node --check scripts/test-jobs-redis.cjs` | Passed |
 
+## CI follow-up in the current candidate
+
+The long `Backend service tests (1/2)` lane was traced to the nine real process
+tests in `jobs-process.e2e.spec.ts`, which ran sequentially with the other
+service suites. The pushed CI follow-up excludes that suite from the two
+service shards and runs it in a separate required `Backend jobs process tests`
+lane. That lane builds the worker once, runs five independent groups in parallel,
+and merges their JSON evidence while requiring all nine named tests. The backend
+aggregate now requires quality, both service shards, and the jobs lane; the shard
+inventory checker explicitly accounts for the moved suite, and a separate JSON
+validator rejects incomplete or unexpected jobs evidence.
+
+The Container topology and images lane now imports and exports a scoped
+BuildKit GitHub Actions cache with `ignore-error=true` on export. It preserves
+all four Bake targets and rebuilds on a cache miss. The timing benefit is not
+claimed until the new hosted run is measured; remove the cache if its restore or
+export cost does not improve the critical path.
+
 The process tests use real compiled workers, Redis locks and PostgreSQL. Test-only
 wrappers kill before or after the real handler's commit, or substitute a
 never-settling handler. Together with the disposable TLS Redis fixture they prove
@@ -61,8 +79,8 @@ bounded: caps and tests are not a throughput guarantee, and no test simulates
 every possible OS, provider, kernel or production-capacity failure.
 
 Browser/CDP was not run: no browser UI or public API contract was changed.
-Remote CI previously passed for `31edde6`; the follow-up commit will require its
-own CI result and independent PR review.
+Remote CI previously passed for `31edde6`; the follow-up commit requires a new
+hosted result and independent PR review. Its timing impact is pending that run.
 
 Production retention/no-hold approval, target TLS/ACL/DB grants, dry-run capacity,
 alert routing, failover/backups and rollout remain separate mandatory release

@@ -135,7 +135,9 @@ Automated evidence lives in the jobs unit/integration/process suites. Each DB
 fixture applies real migrations to a generated schema in a `_test` database and
 cleans only its own schema/queue prefix. `pnpm test:jobs:redis` requires host Docker
 and OpenSSL and tests TLS, ACL and AOF restart in a disposable container; CI runs
-it in the backend service lane. It is separate from ephemeral Docker test Redis.
+it in the backend service lane. The compiled process-fault suite runs in its own
+required CI lane so its real lease and shutdown waits do not delay the ordinary
+service-test shards. It is separate from ephemeral Docker test Redis.
 Local evidence is not certification of production failover, capacity or backups.
 
 Run suites through the package scripts (`pnpm test:services`, `pnpm test:e2e`),

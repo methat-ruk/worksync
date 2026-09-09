@@ -1,11 +1,12 @@
 # CI Validation Workflow
 
-Background-job evidence runs in backend unit/service suites. Service tests build
-the worker artifact before spawning it, migrate a generated schema inside the
-test database, and use unique queue prefixes. The backend service CI lane also
-runs `pnpm test:jobs:redis` on shard 1 with host Docker/OpenSSL for TLS, ACL and AOF
-restart evidence. The ordinary Docker test Redis remains intentionally ephemeral;
-it does not replace this persistence/secure-transport fixture.
+Background-job evidence runs in backend unit/service suites and a dedicated
+process-test lane. Service tests build the worker artifact before spawning it,
+migrate a generated schema inside the test database, and use unique queue
+prefixes. The backend service CI lane also runs `pnpm test:jobs:redis` on shard 1
+with host Docker/OpenSSL for TLS, ACL and AOF restart evidence. The ordinary
+Docker test Redis remains intentionally ephemeral; it does not replace this
+persistence/secure-transport fixture.
 
 ## Purpose
 
@@ -20,6 +21,7 @@ PR / push main
 ├─ PR review evidence (PR only)
 ├─ Backend quality + unit tests
 ├─ Backend service tests (2 isolated shards)
+├─ Backend jobs process tests
 │  └─ Backend validation aggregate
 ├─ Frontend validation
 ├─ E2E compatibility: production build + Chromium/Firefox/WebKit
@@ -37,8 +39,9 @@ E2E compatibility + E2E mocked + E2E live -> Frontend E2E aggregate
 | --- | --- |
 | PR review evidence | PR-only evidence contract and checker self-test |
 | Backend quality and unit tests | Prisma validation/generation, database-environment guards, backend typecheck, lint, unit tests, build, and backend artifact checks; no service containers |
-| Backend service tests | Two isolated Jest shards covering integration, contract, security, and backend E2E projects against independent PostgreSQL, Redis, and MinIO instances |
-| Backend validation | Fail-closed aggregate: quality and both service-test shards must succeed, and the shard reports must be a nonempty, disjoint, complete service-suite inventory |
+| Backend service tests | Two isolated Jest shards covering integration, contract, security, and backend E2E projects except the long process-fault suite, against independent PostgreSQL, Redis, and MinIO instances |
+| Backend jobs process tests | Dedicated required lane covering the compiled worker's process-fault, lease, watchdog, recovery, scheduling, health, and shutdown suite against PostgreSQL and Redis |
+| Backend validation | Fail-closed aggregate: quality, both service-test shards, and the jobs process lane must succeed; shard reports must be a nonempty, disjoint, complete inventory of all non-process service suites |
 | Frontend validation | shared auth policy package tests, frontend typecheck, lint, unit/component tests, frontend build |
 | Frontend E2E compatibility | Independent production build and compatibility on Chromium, Firefox, and WebKit; no database service |
 | Frontend E2E mocked journeys | Mocked Chromium journeys with no database service |
@@ -66,9 +69,11 @@ Only the backend and E2E aggregates have `needs`. Backend quality runs once
 without service containers. The two service-test shards use independent
 workspaces and independent PostgreSQL, Redis, and MinIO instances;
 `fail-fast: false` preserves evidence from both shards. Jest discovers suites
-from the four service-backed projects, while the aggregate rejects empty shards, overlap,
-missing or unexpected suite paths, failed tests, and skipped tests. The stable
-`Backend validation` check name remains the required aggregate.
+from the four service-backed projects, with the process-fault suite moved to its
+dedicated lane. The aggregate rejects empty shards, overlap, missing or
+unexpected suite paths, failed tests, and skipped tests, and separately
+validates the dedicated jobs report. The stable `Backend validation` check name
+remains the required aggregate.
 
 Compatibility, mocked, and live use independent
 workspaces, builds, ports, and server lifecycles, so the two journey suites run
@@ -98,16 +103,19 @@ restore/save costs, not installation time alone.
 
 `docker-bake.hcl` owns the four CI build targets. One pinned Bake action builds
 them on the same builder so shared stages can be reused. Arguments, target
-names, and cache-only output match the previous builds; CI does not push images,
-load them into the daemon, or export a remote cache. Default Bake build records
-and logs remain available. The Dockerfile and runtime image contracts are
-unchanged.
+names, and cache-only output match the previous builds; CI does not push images
+or load them into the daemon. CI imports and exports a scoped GitHub Actions
+BuildKit cache with export failures ignored, so a cache miss still performs the
+complete build. Default Bake build records and logs remain available. The
+Dockerfile and runtime image contracts are unchanged.
 
 Each backend service shard emits a uniquely named Jest JSON report. CI uploads
 both reports with seven-day retention on test success or failure, and the
 backend aggregate downloads and verifies their exact union against the current
-repository inventory. New suites inside the integration, contract, security,
-or E2E projects therefore enter the check without a maintained file allowlist.
+repository inventory after accounting for the dedicated process suite. The jobs
+lane emits its own seven-day report and exact-suite validator. New suites inside
+the integration, contract, security, or other E2E projects therefore enter the
+service check without a maintained file allowlist.
 
 With `CI=true`, Playwright retains list output and adds JUnit reports at
 `app/frontend/test-results/{compatibility,mocked,live}/junit.xml`. Reports include
@@ -125,12 +133,14 @@ skipped tests and the process exit status; `failures="0"` alone is not a pass.
 corepack pnpm validate:backend
 corepack pnpm validate:backend:quality
 corepack pnpm --filter @worksync/backend test:services
+node scripts/run-jobs-process-ci.cjs test-results/jobs-process
 corepack pnpm validate:frontend
 CI=true corepack pnpm --filter @worksync/frontend test:e2e:compatibility
 CI=true corepack pnpm --filter @worksync/frontend test:e2e
 corepack pnpm prisma:migrate:deploy:test
 CI=true corepack pnpm --filter @worksync/frontend test:e2e:live
 node --test scripts/ci-e2e-result-self-test.cjs
+node --test scripts/ci-backend-result-self-test.cjs scripts/ci-backend-shard-results-self-test.cjs scripts/ci-jobs-process-result-self-test.cjs
 corepack pnpm docker:full:config
 corepack pnpm docker:full:services
 corepack pnpm docker:full:build

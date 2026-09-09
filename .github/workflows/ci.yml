@@ -168,6 +168,7 @@ jobs:
           mkdir -p test-results/backend-services
           pnpm --filter @worksync/backend test:services \
             --shard="${SHARD_INDEX}/${SHARD_TOTAL}" \
+            --testPathIgnorePatterns=jobs-process.e2e.spec.ts \
             --json \
             --outputFile="../../test-results/backend-services/shard-${SHARD_INDEX}.json"
 
@@ -184,9 +185,87 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  backend-jobs-process:
+    name: Backend jobs process tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: worksync_test
+          POSTGRES_USER: worksync
+          POSTGRES_PASSWORD: worksync
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U worksync -d worksync_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
+      TEST_REDIS_URL: redis://localhost:6379/1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        env:
+          npm_config_audit: "false"
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Verify pnpm version
+        run: pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm prisma:generate
+
+      - name: Apply Prisma migrations
+        run: pnpm prisma:migrate:deploy:test
+
+      - name: Run jobs process tests
+        id: jobs
+        run: |
+          mkdir -p test-results/jobs-process
+          node scripts/run-jobs-process-ci.cjs test-results/jobs-process
+
+      - name: Verify jobs process evidence
+        run: node scripts/ci-jobs-process-result.cjs test-results/jobs-process/jobs-process.json
+
+      - name: Upload jobs process results
+        if: ${{ !cancelled() && (steps.jobs.outcome == 'success' || steps.jobs.outcome == 'failure') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jobs-process-results
+          path: test-results/jobs-process/jobs-process.json
+          if-no-files-found: error
+          retention-days: 7
+
   backend:
     name: Backend validation
-    needs: [backend-quality, backend-services]
+    needs: [backend-quality, backend-services, backend-jobs-process]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -201,7 +280,8 @@ jobs:
         env:
           QUALITY_RESULT: ${{ needs.backend-quality.result }}
           SERVICES_RESULT: ${{ needs.backend-services.result }}
-        run: node scripts/ci-backend-result.cjs "$QUALITY_RESULT" "$SERVICES_RESULT"
+          JOBS_RESULT: ${{ needs.backend-jobs-process.result }}
+        run: node scripts/ci-backend-result.cjs "$QUALITY_RESULT" "$SERVICES_RESULT" "$JOBS_RESULT"
 
       - name: Download backend service-test results
         uses: actions/download-artifact@v5
@@ -216,6 +296,7 @@ jobs:
       - name: Verify backend shard coverage
         run: >-
           node scripts/ci-backend-shard-results.cjs
+          --exclude=app/backend/test/e2e/jobs-process.e2e.spec.ts
           test-results/backend-services/shard-1.json
           test-results/backend-services/shard-2.json
 
@@ -527,6 +608,8 @@ jobs:
           files: docker-bake.hcl
           targets: ci
           provenance: mode=max
+          cache-from: type=gha,scope=worksync-ci
+          cache-to: type=gha,mode=max,scope=worksync-ci,ignore-error=true
 
   security:
     name: Dependency audit

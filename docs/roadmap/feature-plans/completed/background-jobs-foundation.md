@@ -425,7 +425,9 @@ Authoritative existing commands after implementation:
 
 - `corepack pnpm validate:backend:quality`
 - `corepack pnpm --filter @worksync/backend test:services` with isolated
-  PostgreSQL/Redis/MinIO; CI shards must collectively execute jobs suites, no skip.
+  PostgreSQL/Redis/MinIO; CI service shards must collectively execute all
+  non-process jobs suites, while the dedicated process lane must pass without
+  a skip.
 - `corepack pnpm validate:backend:artifact` after build and
   `corepack pnpm smoke:backend:runtime` for the API regression.
 - `corepack pnpm docker:test:backend` and
