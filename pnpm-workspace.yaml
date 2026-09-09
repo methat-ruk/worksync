@@ -17,11 +17,11 @@ overrides:
   "fast-uri": "3.1.6"
   "js-yaml": "4.3.1"
   "lodash": "4.18.1"
-  "multer": "2.2.0"
+  "multer": "2.3.0"
   "mysql2": "3.23.1"
   "postcss": "8.5.23"
   "qs": "6.16.0"
-  "next>sharp": "0.35.3"
+  "next>sharp": "0.35.4"
   "undici@7": "7.29.0"
   "vite@7": "7.3.6"
   "vite>esbuild": "0.28.1"
@@ -30,8 +30,9 @@ allowBuilds:
   "@prisma/engines@7.9.0": true
   "@scarf/scarf@1.4.0": false
   "esbuild@0.28.1": true
+  "msgpackr-extract@3.0.4": false
   "prisma@7.9.0": true
-  "sharp@0.35.3": true
+  "sharp@0.35.4": true
   "unrs-resolver@1.12.2": true
 
 minimumReleaseAgeExclude:

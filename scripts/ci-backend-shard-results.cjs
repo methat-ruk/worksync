@@ -27,13 +27,30 @@ function normalizeSuitePath(suitePath) {
   return normalized.slice(markerIndex);
 }
 
-function discoverServiceSuites() {
+function discoverServiceSuites({ excludeSuites = [] } = {}) {
+  const excluded = new Set(excludeSuites);
   return serviceProjects
     .flatMap((project) => collectSpecFiles(path.join(serviceTestRoot, project)))
     .map((suitePath) =>
       path.relative(repositoryRoot, suitePath).replaceAll("\\", "/")
     )
+    .filter((suitePath) => !excluded.has(suitePath))
     .sort();
+}
+
+function parseReportArguments(arguments_) {
+  const excludeSuites = [];
+  const reportPaths = [];
+  for (const argument of arguments_) {
+    if (argument.startsWith("--exclude=")) {
+      const suitePath = argument.slice("--exclude=".length);
+      if (!suitePath) throw new Error("Backend shard exclusion cannot be empty");
+      excludeSuites.push(suitePath);
+    } else {
+      reportPaths.push(argument);
+    }
+  }
+  return { excludeSuites, reportPaths };
 }
 
 function validateShardReports(expectedSuites, reports) {
@@ -118,11 +135,11 @@ function validateShardReports(expectedSuites, reports) {
 }
 
 if (require.main === module) {
-  const reportPaths = process.argv.slice(2);
+  const { excludeSuites, reportPaths } = parseReportArguments(process.argv.slice(2));
   const reports = reportPaths.map((reportPath) =>
     JSON.parse(readFileSync(path.resolve(reportPath), "utf8"))
   );
-  const result = validateShardReports(discoverServiceSuites(), reports);
+  const result = validateShardReports(discoverServiceSuites({ excludeSuites }), reports);
   process.stdout.write(
     `Backend shards covered ${result.suites} service suites and ${result.tests} tests.\n`
   );
@@ -130,6 +147,7 @@ if (require.main === module) {
 
 module.exports = {
   discoverServiceSuites,
+  parseReportArguments,
   normalizeSuitePath,
   validateShardReports
 };

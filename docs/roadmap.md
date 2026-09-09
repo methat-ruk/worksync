@@ -4,7 +4,7 @@ This roadmap is the dashboard for product progress. Milestone details live in
 separate files so this page stays easy to scan. PR-sized feature slices live in
 [Feature Plans](roadmap/feature-plans/README.md).
 
-Last updated: 2026-09-07
+Last updated: 2026-09-09
 
 ## Current Snapshot
 
@@ -15,7 +15,8 @@ pagination findings from the repository health review are resolved. The
 production-dead task read-policy abstraction is also removed with real-database
 role and tenant-isolation evidence. The attachment backend and task-detail UI
 journey are complete with real PostgreSQL/Redis/MinIO browser evidence. The
-next planned product capability is Background Jobs Foundation.
+Background Jobs Foundation is locally validated in PR #55; production
+enablement remains part of the target-specific deployment plan.
 
 Done:
 
@@ -57,12 +58,15 @@ Done:
 - private task attachments with bounded PNG/JPEG upload, truthful progress,
   cancel/retry, list, authenticated byte-checked download, confirmed delete,
   role/isolation enforcement, and live MinIO browser evidence
+- bounded expired-session cleanup on a dedicated BullMQ/Redis worker, with
+  idempotent guarded deletion, retry/recovery, TLS/ACL/AOF and process-fault
+  evidence; PR #55 is open for review
 - project setup, workflow, API, security, deployment, and roadmap docs
 
 Still missing before the collaboration MVP works:
 
 - workspace-scoped authorization for activity resources
-- realtime, jobs, and production readiness
+- realtime and production readiness
 
 ## Milestone Status
 
@@ -72,15 +76,17 @@ Still missing before the collaboration MVP works:
 | 1 Identity and Workspace | Partial | Auth, workspace APIs, membership/RBAC, frontend workspace bootstrap, and the reusable actor boundary are in place; remaining downstream resource policy and scoping continue by feature. | [Milestone 1](roadmap/milestone-1-identity-workspace.md) |
 | 2 Projects and Tasks | Partial | Project and task foundations, authorization, UI, and evidence are complete; board view, project update UI, and activity logging remain. | [Milestone 2](roadmap/milestone-2-projects-tasks.md) |
 | 3 Comments, Mentions, and Notifications | In progress | Comments, mentions, and stored notifications are delivered; realtime remains. | [Milestone 3](roadmap/milestone-3-comments-notifications.md) |
-| 4 File Uploads and Background Jobs | In progress | Task attachments are complete across backend, UI, and live storage evidence; background jobs remain. | [Milestone 4](roadmap/milestone-4-files-jobs.md) |
+| 4 File Uploads and Background Jobs | Locally validated | Attachments are complete; Background Jobs Foundation is locally validated in PR #55, while production enablement remains pending. | [Milestone 4](roadmap/milestone-4-files-jobs.md) |
 | 5 Production Readiness | Partial | CI, Docker, artifact checks, and docs exist; deployment target and production ops are not ready. | [Milestone 5](roadmap/milestone-5-production-readiness.md) |
 
 ## Current Priorities
 
 1. Review and merge [Task Attachment UI Integration](roadmap/feature-plans/completed/task-attachment-ui-integration.md)
    with its mocked and live PostgreSQL/Redis/MinIO browser evidence.
-2. Add jobs, activity, and production readiness in
-   dependency order. If attachments require asynchronous scanning, split the
+2. Review and merge [Background Jobs Foundation](roadmap/feature-plans/completed/background-jobs-foundation.md)
+   after its queue, database, process and TLS/ACL recovery evidence is reviewed.
+3. Add activity, realtime, and production readiness in dependency order. If
+   attachments require asynchronous scanning, split the
    work around the attachment lifecycle contract, scan worker, and final
    availability/UI integration rather than creating a file/job dependency
    cycle.

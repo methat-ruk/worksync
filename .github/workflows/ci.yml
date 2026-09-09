@@ -168,21 +168,104 @@ jobs:
           mkdir -p test-results/backend-services
           pnpm --filter @worksync/backend test:services \
             --shard="${SHARD_INDEX}/${SHARD_TOTAL}" \
+            --testPathIgnorePatterns=jobs-process.e2e.spec.ts \
             --json \
             --outputFile="../../test-results/backend-services/shard-${SHARD_INDEX}.json"
 
+      - name: Verify jobs Redis TLS ACL and persistence
+        if: matrix.shard == 1
+        run: pnpm test:jobs:redis
+
       - name: Upload backend service-test results
         if: ${{ !cancelled() && (steps.services.outcome == 'success' || steps.services.outcome == 'failure') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-services-shard-${{ matrix.shard }}-results
           path: test-results/backend-services/shard-${{ matrix.shard }}.json
           if-no-files-found: error
           retention-days: 7
 
+  backend-jobs-process:
+    name: Backend jobs process tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: worksync_test
+          POSTGRES_USER: worksync
+          POSTGRES_PASSWORD: worksync
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U worksync -d worksync_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://worksync:worksync@localhost:5432/worksync_test?schema=public
+      TEST_REDIS_URL: redis://localhost:6379/1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        env:
+          npm_config_audit: "false"
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.x"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Verify pnpm version
+        run: pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm prisma:generate
+
+      - name: Apply Prisma migrations
+        run: pnpm prisma:migrate:deploy:test
+
+      - name: Run jobs process tests
+        id: jobs
+        run: |
+          mkdir -p test-results/jobs-process
+          node scripts/run-jobs-process-ci.cjs test-results/jobs-process
+
+      - name: Verify jobs process evidence
+        run: node scripts/ci-jobs-process-result.cjs test-results/jobs-process/jobs-process.json
+
+      - name: Upload jobs process results
+        if: ${{ !cancelled() && (steps.jobs.outcome == 'success' || steps.jobs.outcome == 'failure') }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-jobs-process-results
+          path: test-results/jobs-process/*.json
+          if-no-files-found: error
+          retention-days: 7
+
   backend:
     name: Backend validation
-    needs: [backend-quality, backend-services]
+    needs: [backend-quality, backend-services, backend-jobs-process]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -197,10 +280,11 @@ jobs:
         env:
           QUALITY_RESULT: ${{ needs.backend-quality.result }}
           SERVICES_RESULT: ${{ needs.backend-services.result }}
-        run: node scripts/ci-backend-result.cjs "$QUALITY_RESULT" "$SERVICES_RESULT"
+          JOBS_RESULT: ${{ needs.backend-jobs-process.result }}
+        run: node scripts/ci-backend-result.cjs "$QUALITY_RESULT" "$SERVICES_RESULT" "$JOBS_RESULT"
 
       - name: Download backend service-test results
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           pattern: backend-services-shard-*-results
           path: test-results/backend-services
@@ -212,6 +296,7 @@ jobs:
       - name: Verify backend shard coverage
         run: >-
           node scripts/ci-backend-shard-results.cjs
+          --exclude=app/backend/test/e2e/jobs-process.e2e.spec.ts
           test-results/backend-services/shard-1.json
           test-results/backend-services/shard-2.json
 
@@ -298,7 +383,7 @@ jobs:
 
       - name: Upload compatibility results
         if: ${{ !cancelled() && (steps.compatibility.outcome == 'success' || steps.compatibility.outcome == 'failure') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-compatibility-results
           path: app/frontend/test-results/compatibility/junit.xml
@@ -345,7 +430,7 @@ jobs:
 
       - name: Upload mocked journey results
         if: ${{ !cancelled() && (steps.mocked.outcome == 'success' || steps.mocked.outcome == 'failure') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-mocked-results
           path: app/frontend/test-results/mocked/junit.xml
@@ -448,7 +533,7 @@ jobs:
 
       - name: Upload live service results
         if: ${{ !cancelled() && (steps.live.outcome == 'success' || steps.live.outcome == 'failure') }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-live-results
           path: app/frontend/test-results/live/junit.xml
@@ -495,7 +580,7 @@ jobs:
       - name: Validate full container services
         run: |
           services="$(docker compose --env-file docker/.env.development.example -f docker/compose.yml -f docker/compose.app.yml config --services | sort | tr '\n' ' ')"
-          test "$services" = "backend frontend minio postgres redis "
+          test "$services" = "backend frontend minio postgres redis worker "
 
       - name: Validate isolated test container topology
         env:
@@ -514,8 +599,8 @@ jobs:
           node --check scripts/docker-images.cjs
           node scripts/docker-test-self-test.cjs
 
-      # Concurrent targets retain one shared builder/dependency graph. No
-      # registry push or remote-cache export is required for PR validation.
+      # Concurrent targets retain one shared builder/dependency graph. Import
+      # only; exporting four large target caches made this validation slower.
       - name: Validate all image targets
         uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b # v7
         with:
@@ -523,6 +608,8 @@ jobs:
           files: docker-bake.hcl
           targets: ci
           provenance: mode=max
+          set: |
+            *.cache-from=type=gha,scope=worksync-ci
 
   security:
     name: Dependency audit
@@ -565,7 +652,7 @@ jobs:
 
       - name: Upload dependency audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-audit-report
           path: test-results/dependency-audit.json

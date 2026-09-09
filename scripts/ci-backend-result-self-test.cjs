@@ -6,7 +6,7 @@ const path = require("node:path");
 const { test } = require("node:test");
 const { backendSucceeded } = require("./ci-backend-result.cjs");
 
-test("only exact success from both backend lanes passes", () => {
+test("only exact success from all backend lanes passes", () => {
   const results = [
     "success",
     "failure",
@@ -18,17 +18,19 @@ test("only exact success from both backend lanes passes", () => {
   ];
   for (const quality of results) {
     for (const services of results) {
-      assert.equal(
-        backendSucceeded([quality, services]),
-        quality === "success" && services === "success"
-      );
+      for (const jobs of results) {
+        assert.equal(
+          backendSucceeded([quality, services, jobs]),
+          quality === "success" && services === "success" && jobs === "success"
+        );
+      }
     }
   }
   for (const invalid of [
     [],
     new Array(2),
     ["success"],
-    ["success", "success", "success"]
+    ["success", "success", "success", "success"]
   ]) {
     assert.equal(backendSucceeded(invalid), false);
   }
@@ -36,9 +38,9 @@ test("only exact success from both backend lanes passes", () => {
 
 test("the CI entry point preserves the predicate's exit status", () => {
   for (const args of [
-    ["success", "success"],
-    ["success", "failure"],
-    ["skipped", "success"],
+    ["success", "success", "success"],
+    ["success", "success", "failure"],
+    ["success", "skipped", "success"],
     []
   ]) {
     const result = spawnSync(

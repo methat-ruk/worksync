@@ -40,7 +40,7 @@ Not complete yet:
 | Backend | NestJS, TypeScript |
 | Data | PostgreSQL, Prisma |
 | Cache | Redis local service; application integration pending |
-| Queue | BullMQ planned |
+| Queue | BullMQ session-cleanup worker; dry-run by default |
 | Realtime | Socket.IO planned |
 | Storage | MinIO local service; AWS S3 integration planned |
 | API Docs | Swagger / OpenAPI |
@@ -168,7 +168,7 @@ in your uncommitted `.env` files together.
 ### Full Docker mode
 
 Use this mode to verify the container topology or onboard from a fresh clone.
-Docker runs frontend, backend, PostgreSQL, Redis, and MinIO on the same Compose
+Docker runs frontend, backend, the session-cleanup worker, PostgreSQL, Redis, and MinIO on the same Compose
 network. The backend uses service hostnames such as `postgres`, `redis`, and
 `minio`; browser-facing frontend variables still use localhost because the
 browser runs on the host machine.
@@ -230,7 +230,7 @@ staging, production-like, or internet-exposed environment.
 | `pnpm docker:full:config` | Validate the combined infrastructure/application Compose topology |
 | `pnpm docker:full:services` | List services in the full Docker topology |
 | `pnpm docker:full:build` | Build frontend and backend Docker targets |
-| `pnpm docker:full:up` | Build and start frontend, backend, PostgreSQL, Redis, and MinIO |
+| `pnpm docker:full:up` | Build and start frontend, backend, dry-run worker, PostgreSQL, Redis, and MinIO |
 | `pnpm docker:full:down` | Stop the complete container stack |
 | `pnpm docker:images:prepare` | Pull infrastructure images and build all WorkSync images without creating containers |
 | `pnpm docker:test:config` | Validate the isolated test environment and Compose topology |

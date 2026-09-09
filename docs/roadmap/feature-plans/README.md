@@ -20,10 +20,11 @@ Prioritize planned work by:
 4. smallest complete slice that can be reviewed deeply
 5. availability of validation evidence
 
-With stored mention notifications and the task-attachment journey complete,
-this means:
+With stored mention notifications, the task-attachment journey, and the
+background-jobs foundation complete, this means:
 
-1. add jobs and production readiness in dependency order
+1. review and merge the locally validated feature PRs
+2. decide the production target, then deliver production readiness
 
 Do not start project/task/comment/file work before workspace ownership and
 tenant-isolation evidence exist.
@@ -32,14 +33,12 @@ tenant-isolation evidence exist.
 
 | Order | Plan | Milestone | Status |
 |---|---|---|---|
-| 1 | [Background Jobs Foundation](planned/background-jobs-foundation.md) | 4 | Planned |
-| 2 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
+| 1 | [Production Deployment Foundation](planned/production-deployment-foundation.md) | 5 | Blocked: target decision |
 
-If the approved file-upload policy requires asynchronous malware scanning
-before attachments can be made available, replace the default File/Jobs order
-with reviewed PR slices: attachment metadata/storage lifecycle first, the
-Background Jobs scanning worker second, and upload availability/UI integration
-third. Do not create a File Upload <-> Background Jobs dependency cycle.
+Background Jobs Foundation selects expired-session cleanup and has no attachment
+or notification dependency. A future malware-scanning requirement needs a
+separate quarantine/availability plan; it must not silently replace this first
+job or create a File Upload <-> Background Jobs dependency cycle.
 
 ## Planned Delivery Improvements
 
@@ -68,6 +67,7 @@ and Docker resource observations without reducing test or security gates.
 |---|---|---|
 | [File Upload Backend and Storage Foundation](completed/file-upload-foundation.md) | `feat/file-upload-foundation` | Done - PR #50 merged |
 | [Task Attachment UI Integration](completed/task-attachment-ui-integration.md) | `feat/task-attachment-ui-integration` | Done - locally validated; Draft PR #53 awaiting review |
+| [Background Jobs Foundation](completed/background-jobs-foundation.md) | `feat/background-jobs-foundation` | Done - locally validated; PR #55 open for review |
 
 ## File Upload Plan Review - 2026-09-03
 

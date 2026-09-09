@@ -3,6 +3,7 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
 const {
+  parseReportArguments,
   normalizeSuitePath,
   validateShardReports
 } = require("./ci-backend-shard-results.cjs");
@@ -42,6 +43,21 @@ test("accepts two nonempty, successful shards with an exact inventory", () => {
 test("normalizes hosted Linux and Windows suite paths", () => {
   assert.equal(normalizeSuitePath(`/github/workspace/${suiteA}`), suiteA);
   assert.equal(normalizeSuitePath(`C:\\repo\\${suiteA}`), suiteA);
+});
+
+test("parses explicit suite exclusions without changing report paths", () => {
+  assert.deepEqual(
+    parseReportArguments([
+      "--exclude=app/backend/test/e2e/jobs-process.e2e.spec.ts",
+      "test-results/shard-1.json",
+      "test-results/shard-2.json"
+    ]),
+    {
+      excludeSuites: ["app/backend/test/e2e/jobs-process.e2e.spec.ts"],
+      reportPaths: ["test-results/shard-1.json", "test-results/shard-2.json"]
+    }
+  );
+  assert.throws(() => parseReportArguments(["--exclude="]), /cannot be empty/);
 });
 
 test("rejects incomplete, overlapping, failed, skipped, and empty evidence", () => {

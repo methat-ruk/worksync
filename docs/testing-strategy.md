@@ -180,12 +180,15 @@ CI includes:
 - build
 
 Backend CI separates service-independent quality, unit, and build evidence from
-two isolated service-test shards. The shards retain all integration, contract,
-security, and backend E2E suites and each owns PostgreSQL, Redis, MinIO, guarded
-migrations, and Prisma generation. The `Backend validation` aggregate requires
-both lanes and verifies that the shard reports are nonempty, disjoint, and their
-union exactly matches the current service-suite inventory. Missing, failed,
-cancelled, skipped, overlapping, or incomplete evidence cannot pass.
+two isolated service-test shards and a dedicated jobs process lane. The shards
+retain all integration, contract, security, and backend E2E suites except the
+long process-fault suite; each owns PostgreSQL, Redis, MinIO, guarded
+migrations, and Prisma generation. The dedicated lane owns the compiled worker
+process-fault evidence against PostgreSQL and Redis. The `Backend validation`
+aggregate requires quality, both shards, and the jobs lane, while verifying that
+the shard reports are nonempty, disjoint, and their union exactly matches the
+non-process service-suite inventory. Missing, failed, cancelled, skipped,
+overlapping, or incomplete evidence cannot pass.
 
 Authentication browser E2E runs on every applicable CI workflow in independent
 compatibility, mocked-journey, and live-auth jobs. Only the live job provisions

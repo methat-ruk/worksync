@@ -57,6 +57,35 @@ services:
       retries: 5
     restart: unless-stopped
 
+  worker:
+    image: worksync-backend:local
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: backend
+    command: ["node", "dist/worker.js"]
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      JOBS_DATABASE_URL: postgresql://worksync:worksync@postgres:5432/worksync?schema=public
+      JOBS_REDIS_URL: redis://redis:6379
+      JOBS_QUEUE_PREFIX: worksync-local-jobs
+      JOBS_SESSION_CLEANUP_MODE: ${JOBS_SESSION_CLEANUP_MODE:-dry-run}
+      JOBS_SCHEDULER_ENABLED: ${JOBS_SCHEDULER_ENABLED:-true}
+      JOBS_HEALTH_PORT: "4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4001/health/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    stop_grace_period: 40s
+    restart: "on-failure:5"
+
   frontend:
     image: worksync-frontend:local
     container_name: worksync-frontend

@@ -26,6 +26,8 @@ function collectFiles(directory) {
 }
 
 requirePath(join(backendDist, "main.js"), "backend runtime entrypoint");
+requirePath(join(backendDist, "worker.js"), "worker runtime entrypoint");
+requirePath(join(backendDist, "jobs", "control.js"), "jobs control entrypoint");
 requirePath(
   join(backendDist, "generated", "prisma", "client.js"),
   "compiled Prisma client"

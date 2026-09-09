@@ -33,7 +33,7 @@ Local app URLs use hostnames reachable from the developer machine:
 
 ### Full Docker Mode
 
-Docker runs frontend, backend, PostgreSQL, Redis, and MinIO on the same Compose
+Docker runs frontend, backend, the dry-run session-cleanup worker, PostgreSQL, Redis, and MinIO on the same Compose
 network.
 
 ```bash
