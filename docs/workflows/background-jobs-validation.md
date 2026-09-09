@@ -49,6 +49,25 @@ redelivery/convergence, stall exhaustion, 30-second watchdog termination,
 readiness loss/recovery for dropped Redis replies, and bounded shutdown. They do
 not simulate every possible network or kernel failure.
 
+## Non-blocking validation finding
+
+Hosted CI run [34300832780](https://github.com/methat-ruk/worksync/actions/runs/34300832780)
+emitted `[DEP0005] DeprecationWarning: Buffer() is deprecated` while
+`actions/download-artifact@v8` downloaded the backend shard artifacts. Both
+artifacts completed SHA-256 digest verification, the `Backend validation` gate
+passed, and the complete CI run passed. This is an upstream artifact-action
+dependency warning, not a WorkSync runtime or project-dependency finding, and
+it was not the cause of an artifact failure. The workflow uses
+`actions/upload-artifact@v7` and `actions/download-artifact@v8`, both on Node.js
+24; the project runtime remains Node.js 22.
+
+Do not add `NODE_OPTIONS=--no-deprecation` or another suppression. Monitor the
+[upstream artifact-action report](https://github.com/actions/upload-artifact/issues/811)
+and future `actions/download-artifact`/`@actions/artifact` releases for a real
+resolution. Re-check the hosted log and artifact digest/extraction evidence when
+the upstream fix is released, or escalate this finding if the warning becomes a
+failure or artifact integrity is affected.
+
 Earlier bare-Jest attempts failed during setup because they omitted the project's
 Prisma VM-modules runtime flag (one sandboxed attempt also lacked service access).
 They are not counted as successful behavior tests. The fixture now checks the
