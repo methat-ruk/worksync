@@ -1,6 +1,6 @@
 # Milestone 4 - File Uploads and Background Jobs
 
-Status: Locally validated; Draft PR #54 awaiting review
+Status: Locally validated; PR #55 open for review
 
 ## Goal
 
@@ -43,7 +43,7 @@ replace the selected foundation job or reopen completed UI work.
 ## Exit Criteria
 
 - file upload security tests exist: Done
-- jobs validate payloads and handle retries: Done locally; Draft PR #54 awaits review
+- jobs validate payloads and handle retries: Done locally; PR #55 is open for review
 - storage access is scoped to authorized users: Done
 
 ## Related Docs

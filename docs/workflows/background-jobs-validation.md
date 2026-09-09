@@ -1,8 +1,8 @@
 # Background jobs implementation evidence
 
 Candidate: `feat/background-jobs-foundation` (PR
-[#54](https://github.com/methat-ruk/worksync/pull/54)). Evidence date:
-2026-09-08. This is a local implementation record, not PR approval, a
+[#55](https://github.com/methat-ruk/worksync/pull/55), head `ac282dd`). Evidence
+date: 2026-09-09. This is a local implementation record, not PR approval, a
 zero-defect claim, or production rollout approval.
 
 ## Executed successfully

@@ -67,7 +67,7 @@ and Docker resource observations without reducing test or security gates.
 |---|---|---|
 | [File Upload Backend and Storage Foundation](completed/file-upload-foundation.md) | `feat/file-upload-foundation` | Done - PR #50 merged |
 | [Task Attachment UI Integration](completed/task-attachment-ui-integration.md) | `feat/task-attachment-ui-integration` | Done - locally validated; Draft PR #53 awaiting review |
-| [Background Jobs Foundation](completed/background-jobs-foundation.md) | `feat/background-jobs-foundation` | Done - locally validated; Draft PR #54 awaiting review |
+| [Background Jobs Foundation](completed/background-jobs-foundation.md) | `feat/background-jobs-foundation` | Done - locally validated; PR #55 open for review |
 
 ## File Upload Plan Review - 2026-09-03
 

@@ -1,11 +1,11 @@
 # Feature Plan: Background Jobs Foundation
 
-Status: Implemented and locally validated; Draft PR #54 awaiting review
+Status: Implemented and locally validated; PR #55 open for review
 
 Current executed evidence and remaining gaps:
 [`background-jobs-validation.md`](../../../workflows/background-jobs-validation.md).
 
-PR: [#54](https://github.com/methat-ruk/worksync/pull/54) from
+PR: [#55](https://github.com/methat-ruk/worksync/pull/55) from
 `feat/background-jobs-foundation`
 
 Implementation completed: 2026-09-08
