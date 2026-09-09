@@ -178,7 +178,7 @@ jobs:
 
       - name: Upload backend service-test results
         if: ${{ !cancelled() && (steps.services.outcome == 'success' || steps.services.outcome == 'failure') }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: backend-services-shard-${{ matrix.shard }}-results
           path: test-results/backend-services/shard-${{ matrix.shard }}.json
@@ -256,7 +256,7 @@ jobs:
 
       - name: Upload jobs process results
         if: ${{ !cancelled() && (steps.jobs.outcome == 'success' || steps.jobs.outcome == 'failure') }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: backend-jobs-process-results
           path: test-results/jobs-process/*.json
@@ -284,7 +284,7 @@ jobs:
         run: node scripts/ci-backend-result.cjs "$QUALITY_RESULT" "$SERVICES_RESULT" "$JOBS_RESULT"
 
       - name: Download backend service-test results
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           pattern: backend-services-shard-*-results
           path: test-results/backend-services
@@ -383,7 +383,7 @@ jobs:
 
       - name: Upload compatibility results
         if: ${{ !cancelled() && (steps.compatibility.outcome == 'success' || steps.compatibility.outcome == 'failure') }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-compatibility-results
           path: app/frontend/test-results/compatibility/junit.xml
@@ -430,7 +430,7 @@ jobs:
 
       - name: Upload mocked journey results
         if: ${{ !cancelled() && (steps.mocked.outcome == 'success' || steps.mocked.outcome == 'failure') }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-mocked-results
           path: app/frontend/test-results/mocked/junit.xml
@@ -533,7 +533,7 @@ jobs:
 
       - name: Upload live service results
         if: ${{ !cancelled() && (steps.live.outcome == 'success' || steps.live.outcome == 'failure') }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-live-results
           path: app/frontend/test-results/live/junit.xml
@@ -652,7 +652,7 @@ jobs:
 
       - name: Upload dependency audit report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-audit-report
           path: test-results/dependency-audit.json
