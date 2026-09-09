@@ -104,10 +104,11 @@ restore/save costs, not installation time alone.
 `docker-bake.hcl` owns the four CI build targets. One pinned Bake action builds
 them on the same builder so shared stages can be reused. Arguments, target
 names, and cache-only output match the previous builds; CI does not push images
-or load them into the daemon. CI imports and exports a scoped GitHub Actions
-BuildKit cache with export failures ignored, so a cache miss still performs the
-complete build. Default Bake build records and logs remain available. The
-Dockerfile and runtime image contracts are unchanged.
+or load them into the daemon. CI imports a scoped GitHub Actions BuildKit cache;
+it does not export one because the measured four-target export added about 149
+seconds to the lane, dominated by the Playwright and test-runner layers. A cache
+miss still performs the complete build. Default Bake build records and logs
+remain available. The Dockerfile and runtime image contracts are unchanged.
 
 Each backend service shard emits a uniquely named Jest JSON report. CI uploads
 both reports with seven-day retention on test success or failure, and the

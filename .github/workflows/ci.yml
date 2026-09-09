@@ -599,8 +599,8 @@ jobs:
           node --check scripts/docker-images.cjs
           node scripts/docker-test-self-test.cjs
 
-      # Concurrent targets retain one shared builder/dependency graph. No
-      # registry push or remote-cache export is required for PR validation.
+      # Concurrent targets retain one shared builder/dependency graph. Import
+      # only; exporting four large target caches made this validation slower.
       - name: Validate all image targets
         uses: docker/bake-action@d3418bd7d0e9324001bca92fa8ba175ea7e6dc9b # v7
         with:
@@ -610,7 +610,6 @@ jobs:
           provenance: mode=max
           set: |
             *.cache-from=type=gha,scope=worksync-ci
-            *.cache-to=type=gha,mode=max,scope=worksync-ci,ignore-error=true
 
   security:
     name: Dependency audit

@@ -5,7 +5,6 @@ const { mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
 const {
   JOBS_PROCESS_TEST_NAMES,
-  assertJobsProcessTestInventory,
   validateJobsProcessReport
 } = require("./ci-jobs-process-result.cjs");
 
@@ -64,8 +63,40 @@ function runGroup(group, outputDirectory) {
   });
 }
 
+function sameNames(actual, expected) {
+  return actual.size === expected.size && [...expected].every((name) => actual.has(name));
+}
+
+function validateJobsProcessReports(completed) {
+  const assertions = [];
+  const discoveredNames = new Set();
+  for (const { group, report } of completed) {
+    validateJobsProcessReport(report, { expectedTests: group.tests, allowPending: true });
+    const suiteAssertions = report.testResults[0].assertionResults;
+    for (const assertion of suiteAssertions) {
+      if (!assertion || typeof assertion.fullName !== "string" || typeof assertion.status !== "string") {
+        throw new Error("Jobs process report contains an invalid assertion result");
+      }
+      discoveredNames.add(assertion.fullName);
+    }
+    assertions.push(...group.tests.map((fullName) =>
+      suiteAssertions.find((assertion) => assertion.fullName === fullName)
+    ));
+  }
+  const expectedNames = new Set(JOBS_PROCESS_TEST_NAMES);
+  if (!sameNames(discoveredNames, expectedNames)) {
+    throw new Error(
+      `Jest discovered ${discoveredNames.size} jobs process tests, but CI inventory contains ${expectedNames.size}`
+    );
+  }
+  const selectedNames = new Set(assertions.map((assertion) => assertion.fullName));
+  if (assertions.length !== expectedNames.size || !sameNames(selectedNames, expectedNames)) {
+    throw new Error("Jobs process groups did not execute the current test inventory exactly once");
+  }
+  return assertions;
+}
+
 async function main() {
-  assertJobsProcessTestInventory();
   const groupedNames = groups.flatMap((group) => group.tests);
   const expectedNames = new Set(JOBS_PROCESS_TEST_NAMES);
   if (groupedNames.length !== expectedNames.size || new Set(groupedNames).size !== expectedNames.size ||
@@ -82,21 +113,9 @@ async function main() {
     stdio: "inherit"
   });
   const completed = await Promise.all(groups.map((group) => runGroup(group, outputDirectory)));
-  const assertions = [];
-  for (const { group, reportPath } of completed) {
-    const report = JSON.parse(readFileSync(reportPath, "utf8"));
-    const result = validateJobsProcessReport(report, {
-      expectedTests: group.tests,
-      allowPending: true
-    });
-    assertions.push(...group.tests.map((fullName) =>
-      report.testResults[0].assertionResults.find((assertion) => assertion.fullName === fullName)
-    ));
-  }
-  const names = new Set(assertions.map((assertion) => assertion.fullName));
-  if (names.size !== JOBS_PROCESS_TEST_NAMES.length) {
-    throw new Error(`Jobs process groups covered ${names.size}/${JOBS_PROCESS_TEST_NAMES.length} tests`);
-  }
+  const assertions = validateJobsProcessReports(completed.map(({ group, reportPath }) => ({
+    group, report: JSON.parse(readFileSync(reportPath, "utf8"))
+  })));
   const merged = {
     success: true,
     numFailedTestSuites: 0,
@@ -128,4 +147,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { createTestNamePattern, escapeRegex, groups };
+module.exports = { createTestNamePattern, escapeRegex, groups, validateJobsProcessReports };

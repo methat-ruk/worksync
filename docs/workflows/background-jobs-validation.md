@@ -35,11 +35,12 @@ aggregate now requires quality, both service shards, and the jobs lane; the shar
 inventory checker explicitly accounts for the moved suite, and a separate JSON
 validator rejects incomplete or unexpected jobs evidence.
 
-The Container topology and images lane now imports and exports a scoped
-BuildKit GitHub Actions cache with `ignore-error=true` on export. It preserves
-all four Bake targets and rebuilds on a cache miss. The timing benefit is not
-claimed until the new hosted run is measured; remove the cache if its restore or
-export cost does not improve the critical path.
+The Container topology and images lane keeps all four Bake targets and imports a
+scoped BuildKit GitHub Actions cache. The first hosted run with cache export
+enabled took 5:04; cache export alone consumed up to 149 seconds for the
+Playwright target and 143 seconds for the test-runner target. The workflow now
+omits cache export for this validation lane, retaining cache import while
+avoiding that measured critical-path cost.
 
 The process tests use real compiled workers, Redis locks and PostgreSQL. Test-only
 wrappers kill before or after the real handler's commit, or substitute a
@@ -79,8 +80,9 @@ bounded: caps and tests are not a throughput guarantee, and no test simulates
 every possible OS, provider, kernel or production-capacity failure.
 
 Browser/CDP was not run: no browser UI or public API contract was changed.
-Remote CI previously passed for `31edde6`; the follow-up commit requires a new
-hosted result and independent PR review. Its timing impact is pending that run.
+Hosted CI for `fb7d063` passed all required checks, including the process suite,
+Redis fixture and dependency audit. The cache-export timing observation and the
+follow-up import-only workflow change remain CI-specific evidence.
 
 Production retention/no-hold approval, target TLS/ACL/DB grants, dry-run capacity,
 alert routing, failover/backups and rollout remain separate mandatory release

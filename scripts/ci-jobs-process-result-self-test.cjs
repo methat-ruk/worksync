@@ -7,10 +7,9 @@ const { test } = require("node:test");
 const {
   JOBS_PROCESS_SUITE,
   JOBS_PROCESS_TEST_NAMES,
-  discoverJobsProcessTestNames,
   validateJobsProcessReport
 } = require("./ci-jobs-process-result.cjs");
-const { createTestNamePattern, groups } = require("./run-jobs-process-ci.cjs");
+const { createTestNamePattern, groups, validateJobsProcessReports } = require("./run-jobs-process-ci.cjs");
 
 function report(overrides = {}) {
   return {
@@ -64,8 +63,23 @@ test("accepts a selected group with pending nonselected tests", () => {
   assert.throws(() => validateJobsProcessReport(partial, { expectedTests: [selected] }));
 });
 
-test("keeps the CI inventory synchronized with the executable suite", () => {
-  assert.deepEqual(discoverJobsProcessTestNames(), JOBS_PROCESS_TEST_NAMES);
+test("rejects a Jest assertion outside the maintained process inventory", () => {
+  const selected = JOBS_PROCESS_TEST_NAMES[0];
+  const extra = "compiled jobs process lifecycle newly declared regression case";
+  const partial = report({
+    numTotalTests: JOBS_PROCESS_TEST_NAMES.length + 1,
+    numPassedTests: 1,
+    numPendingTests: JOBS_PROCESS_TEST_NAMES.length,
+    testResults: [{
+      name: `/github/workspace/${JOBS_PROCESS_SUITE}`,
+      status: "focused",
+      assertionResults: JOBS_PROCESS_TEST_NAMES.concat(extra).map((fullName) => ({
+        fullName,
+        status: fullName === selected ? "passed" : "pending"
+      }))
+    }]
+  });
+  assert.throws(() => validateJobsProcessReports([{ group: { tests: [selected] }, report: partial }]), /discovered/);
 });
 
 test("parallel process groups cover each jobs test exactly once", () => {
