@@ -10,7 +10,7 @@ weakening workspace isolation, storage safety, or job reliability.
 ## Foundation Already Present
 
 - local MinIO service in Docker Compose
-- Redis local service, already used for rate protection; queue integration pending
+- Redis local service, already used for rate protection; BullMQ queue integration delivered in the Background Jobs Foundation
 - deployment and security documentation for file and job concerns
 - task attachment metadata, private storage, authorization, bounded upload and
   download, reconciliation, and real-storage backend evidence

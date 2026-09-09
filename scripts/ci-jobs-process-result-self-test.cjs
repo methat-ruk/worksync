@@ -7,6 +7,7 @@ const { test } = require("node:test");
 const {
   JOBS_PROCESS_SUITE,
   JOBS_PROCESS_TEST_NAMES,
+  discoverJobsProcessTestNames,
   validateJobsProcessReport
 } = require("./ci-jobs-process-result.cjs");
 const { createTestNamePattern, groups } = require("./run-jobs-process-ci.cjs");
@@ -49,7 +50,7 @@ test("accepts a selected group with pending nonselected tests", () => {
     numPendingTests: JOBS_PROCESS_TEST_NAMES.length - 1,
     testResults: [{
       name: `/github/workspace/${JOBS_PROCESS_SUITE}`,
-      status: "passed",
+      status: "focused",
       assertionResults: JOBS_PROCESS_TEST_NAMES.map((fullName) => ({
         fullName,
         status: fullName === selected ? "passed" : "pending"
@@ -61,6 +62,10 @@ test("accepts a selected group with pending nonselected tests", () => {
     { suite: JOBS_PROCESS_SUITE, tests: 1 }
   );
   assert.throws(() => validateJobsProcessReport(partial, { expectedTests: [selected] }));
+});
+
+test("keeps the CI inventory synchronized with the executable suite", () => {
+  assert.deepEqual(discoverJobsProcessTestNames(), JOBS_PROCESS_TEST_NAMES);
 });
 
 test("parallel process groups cover each jobs test exactly once", () => {

@@ -16,6 +16,27 @@ const JOBS_PROCESS_TEST_NAMES = Object.freeze([
   "compiled jobs process lifecycle exits within the bootstrap deadline while Redis is disconnected"
 ]);
 
+function discoverJobsProcessTestNames() {
+  const sourcePath = path.resolve(__dirname, "..", JOBS_PROCESS_SUITE);
+  const source = readFileSync(sourcePath, "utf8");
+  const describe = source.match(/describe\(\s*["']([^"']+)["']/);
+  const tests = [...source.matchAll(/^\s*it\(\s*["']([^"']+)["']/gm)].map((match) => match[1]);
+  if (!describe || tests.length === 0) throw new Error("Unable to discover jobs process test inventory");
+  return tests.map((name) => `${describe[1]} ${name}`);
+}
+
+function assertJobsProcessTestInventory() {
+  const discovered = discoverJobsProcessTestNames();
+  if (discovered.length !== JOBS_PROCESS_TEST_NAMES.length ||
+      discovered.some((name, index) => name !== JOBS_PROCESS_TEST_NAMES[index])) {
+    throw new Error(
+      `Jobs process test inventory is stale: CI expects ${JOBS_PROCESS_TEST_NAMES.length} tests, ` +
+      `but the suite declares ${discovered.length}. Update the CI grouping before merging.`
+    );
+  }
+  return discovered;
+}
+
 function normalizeSuitePath(suitePath) {
   const normalized = suitePath.replaceAll("\\", "/");
   const marker = "app/backend/test/";
@@ -62,7 +83,9 @@ function validateJobsProcessReport(
   if (!suite || typeof suite.name !== "string" || typeof suite.status !== "string") {
     throw new Error("Jobs process report suite identity is invalid");
   }
-  if (normalizeSuitePath(suite.name) !== JOBS_PROCESS_SUITE || suite.status !== "passed") {
+  const completeSuite = suite.status === "passed";
+  const focusedSuite = allowPending && suite.status === "focused";
+  if (normalizeSuitePath(suite.name) !== JOBS_PROCESS_SUITE || (!completeSuite && !focusedSuite)) {
     throw new Error("Jobs process report contains an unexpected or failed suite");
   }
   const passedTests = suite.assertionResults?.filter((result) => result.status === "passed") ?? [];
@@ -87,6 +110,7 @@ if (require.main === module) {
   if (!reportPath || process.argv.length !== 3) {
     throw new Error("Usage: node scripts/ci-jobs-process-result.cjs <report.json>");
   }
+  assertJobsProcessTestInventory();
   const result = validateJobsProcessReport(
     JSON.parse(readFileSync(path.resolve(reportPath), "utf8"))
   );
@@ -96,6 +120,8 @@ if (require.main === module) {
 module.exports = {
   JOBS_PROCESS_SUITE,
   JOBS_PROCESS_TEST_NAMES,
+  discoverJobsProcessTestNames,
+  assertJobsProcessTestInventory,
   normalizeSuitePath,
   validateJobsProcessReport
 };

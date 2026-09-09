@@ -259,7 +259,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: backend-jobs-process-results
-          path: test-results/jobs-process/jobs-process.json
+          path: test-results/jobs-process/*.json
           if-no-files-found: error
           retention-days: 7
 
@@ -608,8 +608,9 @@ jobs:
           files: docker-bake.hcl
           targets: ci
           provenance: mode=max
-          cache-from: type=gha,scope=worksync-ci
-          cache-to: type=gha,mode=max,scope=worksync-ci,ignore-error=true
+          set: |
+            *.cache-from=type=gha,scope=worksync-ci
+            *.cache-to=type=gha,mode=max,scope=worksync-ci,ignore-error=true
 
   security:
     name: Dependency audit

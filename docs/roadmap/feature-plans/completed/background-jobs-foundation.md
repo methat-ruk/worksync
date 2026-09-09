@@ -359,7 +359,7 @@ handler/tests PRs would create incomplete technical layers with no independently
 proved outcome. No upstream attachment, notification or schema PR is required.
 
 Production Redis provisioning/auth transport hardening and worker rollout already
-belong to [Production Deployment Foundation](production-deployment-foundation.md).
+belong to [Production Deployment Foundation](../planned/production-deployment-foundation.md).
 That release consumes this tested artifact; this implementation does not wait
 for the production provider. Keep the dependency one-way.
 

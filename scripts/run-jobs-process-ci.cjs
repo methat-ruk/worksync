@@ -5,6 +5,7 @@ const { mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const path = require("node:path");
 const {
   JOBS_PROCESS_TEST_NAMES,
+  assertJobsProcessTestInventory,
   validateJobsProcessReport
 } = require("./ci-jobs-process-result.cjs");
 
@@ -64,6 +65,13 @@ function runGroup(group, outputDirectory) {
 }
 
 async function main() {
+  assertJobsProcessTestInventory();
+  const groupedNames = groups.flatMap((group) => group.tests);
+  const expectedNames = new Set(JOBS_PROCESS_TEST_NAMES);
+  if (groupedNames.length !== expectedNames.size || new Set(groupedNames).size !== expectedNames.size ||
+      groupedNames.some((name) => !expectedNames.has(name))) {
+    throw new Error("Jobs process groups do not cover the current test inventory exactly once");
+  }
   const outputDirectory = path.resolve(process.argv[2] ?? "test-results/jobs-process");
   mkdirSync(outputDirectory, { recursive: true });
   for (const group of groups) rmSync(path.join(outputDirectory, `${group.id}.json`), { force: true });
